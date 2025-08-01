@@ -1,4 +1,10 @@
-# naga: Linked-Read Alignment Tool
+# naga: linked-read aligner
+
+> **Warning**
+This is a work in progress. It's broken. Terribly broken. I don't know **anything**
+about writing/reading ing Go, yet here I am trying to upgrade Lariat so it accepts
+paired-end reads for all linked-read data types EXCEPT 10X. Wish me luck. Please
+send help.
 
 naga is an aligner for barcoded linked reads, produced by the 10X Genomics GemCode™ platform. All the linked reads for a single barcode are aligned simultaneously, with the prior knowledge that the reads arise from a small number of long (10kb - 200kb) molecules. This approach allows reads to be mapped in repetitive regions of the genome.
 
