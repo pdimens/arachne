@@ -6,6 +6,7 @@ import (
 	"bufio"
 	"io"
 	"log"
+	"regexp"
 	"strings"
 )
 
@@ -18,6 +19,7 @@ type FastQRecord struct {
 	Read2       []byte
 	ReadQual2   []byte
 	Barcode     []byte
+	Valid       bool
 	ReadInfo    string
 	ReadGroupId string
 }
@@ -50,19 +52,14 @@ func Min(x, y int) int {
  * as well as sets of records (on the same barcode) from a fastq file
  */
 type FastQReader struct {
-	Line int
-
-	R1Source        *ZipReader
-	R1Buffer        *bufio.Reader
-	R1DefferedError error
-	R1Pending       *FastQRecord
-	R1LastBarcode   []byte
-
-	R2Source        *ZipReader
-	R2Buffer        *bufio.Reader
-	R2DefferedError error
-	R2Pending       *FastQRecord
-	R2LastBarcode   []byte
+	Line          int
+	LastBarcode   []byte
+	DefferedError error
+	Pending       *FastQRecord
+	R1Source      *ZipReader
+	R1Buffer      *bufio.Reader
+	R2Source      *ZipReader
+	R2Buffer      *bufio.Reader
 }
 
 /* Open a new fastQ file */
@@ -94,25 +91,41 @@ func OpenFastQ(R1 string, R2 string) (*FastQReader, error) {
 //	return b[:idx]
 //}
 
-func ParseBarcode(seq_id []byte) [2]byte {
-	var _header byte
-	var _barcode byte
-	var res [2]byte
+/* Parase a read header and find the barcode. Return the sanitized header, barcode, and 1/0 whether it's valid or not */
+func ParseHeader(seq_id string) (string, []byte, bool) {
+	var _barcode []byte
+	var _valid bool
 
-	// BARCODE LOGIC
+	// stringify the input
+	// get the first part before the whitespaces
+	_id := strings.Fields(seq_id)[0]
+	_header := _id[:len(_id)-2]
 
-	res[0] = _header
-	res[1] = _barcode
-	return res
+	// regex match BX:Z:*
+	bxRe := regexp.MustCompile(`BX:Z:(\S+)\s`)
+	bxMatches := bxRe.FindStringSubmatch(seq_id)
+	if len(bxMatches) > 1 {
+		_barcode = []byte(bxMatches[1])
+	} else {
+		return "", []byte(""), false
+	}
+	// regex match VX:i:[01]
+	vxRe := regexp.MustCompile(`VX:i:([01])\s`)
+	vxMatches := vxRe.FindStringSubmatch(seq_id)
+	if len(vxMatches) > 1 {
+		if vxMatches[1] == "0" {
+			_valid = false
+		} else {
+			_valid = true
+		}
+	}
+	return _header, _barcode, _valid
 }
 
 /*
-  - Read a single record from a fastQ file
-
-TODO GOTTA MAKE THIS ITERATE BOTH FILES
-RM TRIM
+- Read a single record from a fastQ file
 */
-func (fqr *FastQReader) ReadOneLine(result *FastQRecord, trim int) error {
+func (fqr *FastQReader) ReadOneLine(result *FastQRecord) error {
 
 	/* Search for the next start-of-record.*/
 	for {
@@ -127,10 +140,11 @@ func (fqr *FastQReader) ReadOneLine(result *FastQRecord, trim int) error {
 		}
 		if R1_line[0] == byte('@') {
 			/* Found it! */
+			result.ReadInfo, result.Barcode, result.Valid = ParseHeader(string(R1_line[1:]))
 			R1_fields := strings.Fields(string(R1_line[1 : len(R1_line)-1]))
-			R2_fields := strings.Fields(string(R2_line[1 : len(R2_line)-1]))
 
-			result.ReadInfo = R1_fields[0]
+			// TODO
+			// I GET THE SENSE THIS IS WRONG FOR STANDARD FORMAT FASTQ
 			if len(R1_fields) < 2 {
 				result.ReadGroupId = "" // no RGID found
 			} else {
@@ -145,8 +159,8 @@ func (fqr *FastQReader) ReadOneLine(result *FastQRecord, trim int) error {
 
 	/* Load the 4 lines for this record */
 	var fastq_lines [6][]byte
-	for i := 0; i < 4; i++ {
-		// skip the + sign line
+	for i := range 4 {
+		// skip the line with the + sign
 		if i == 2 {
 			continue
 		}
@@ -164,26 +178,18 @@ func (fqr *FastQReader) ReadOneLine(result *FastQRecord, trim int) error {
 		}
 	}
 
-	// THE BARCODE NEEDS TO BE PLUCKED OUT OF THE READ HEADER
-	// HERE
-	// SOME FUNC THAT TAKES THE HEADER AND RETURNS A MODIFIED HEADER AND BARCODE AS A 2-VECTOR
-	// WERE DO THE SEQ IDs GO?
-	// HOW ARE FW/RV HANDLED?
 	/* Assign them to the right fields in the FastQRecord struct */
 	result.Read1 = fastq_lines[1]
 	result.ReadQual1 = fastq_lines[2]
 	result.Read2 = fastq_lines[4]
 	result.ReadQual2 = fastq_lines[5]
 	// MAYBE A THING FOR COMMENTS?
-	// THE BARCODE WILL ALREADY HAVE BEEN REMOVED
-	barcodes := strings.Split(string(fastq_lines[4]), ",")
-	result.Barcode10X = []byte(barcodes[0])
 
 	return nil
 }
 
 /*
- * Decide of two reads come from different gems
+ * Decide of two reads come from different barcodes
  */
 func DifferentBarcode(a []byte, b []byte) bool {
 	if SliceCompare(a, b) {
@@ -203,7 +209,6 @@ func (fqr *FastQReader) ReadBarcodeSet(space *[]FastQRecord) ([]FastQRecord, err
 	if fqr.DefferedError != nil {
 		return nil, fqr.DefferedError, false
 	}
-
 	var record_array []FastQRecord
 	if space == nil {
 		/* Allocate some space, guessing at most 1 million reads per
@@ -229,7 +234,6 @@ func (fqr *FastQReader) ReadBarcodeSet(space *[]FastQRecord) ([]FastQRecord, err
 	/* Load fastQ records into record_array */
 	for ; index < 30000; index++ {
 		record_array = append(record_array, FastQRecord{})
-		// RM trim from ReadOneLine func
 		err := fqr.ReadOneLine(&record_array[index])
 
 		if err != nil {
@@ -249,25 +253,25 @@ func (fqr *FastQReader) ReadBarcodeSet(space *[]FastQRecord) ([]FastQRecord, err
 			}
 		}
 
-		if DifferentBarcode(record_array[0].BARCODE10X, record_array[index].BARCODE10X) {
-			/* Just transitioned to a new GEM. This record needs to
+		if DifferentBarcode(record_array[0].Barcode, record_array[index].Barcode) {
+			/* Just transitioned to a new barcode. This record needs to
 			 * be defered for next time we're called (since its on the
-			 * _new_ gem).
+			 * _new_ barcode).
 			 */
 			fqr.Pending = new(FastQRecord)
 			*fqr.Pending = record_array[index]
 			new_barcode = true
 			break
-		} else if fqr.LastBarcode != nil && !DifferentBarcode(record_array[0].BARCODE10X, fqr.LastBarcode) && index >= 200 {
+		} else if fqr.LastBarcode != nil && !DifferentBarcode(record_array[0].Barcode, fqr.LastBarcode) && index >= 200 {
 			new_barcode = false
-			log.Printf("abnormal break: %s", string(record_array[0].BARCODE10X))
+			log.Printf("abnormal break: %s", string(record_array[0].Barcode))
 			break
 		}
 
 	}
 	if len(record_array) > 0 {
-		tmp := make([]byte, len(record_array[0].BARCODE10X))
-		copy(tmp, record_array[0].BARCODE10X)
+		tmp := make([]byte, len(record_array[0].Barcode))
+		copy(tmp, record_array[0].Barcode)
 		fqr.LastBarcode = tmp
 	}
 	//log.Printf("Load %v record %s %s %s %s", index, string(record_array[0].BARCODE10X), string(record_array[index].BARCODE10X), string(record_array[0].Barcode), string(record_array[index].Barcode))
