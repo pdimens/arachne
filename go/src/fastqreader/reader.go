@@ -17,18 +17,41 @@ type FastQRecord struct {
 	ReadQual1 []byte
 	Read2     []byte
 	ReadQual2 []byte
-    TrimBases []byte
-    TrimQuals []byte
+	TrimBases []byte
+	TrimQuals []byte
 
 	Barcode10X     []byte
 	Barcode10XQual []byte
-    RawBarcode10X  []byte
+	RawBarcode10X  []byte
 
 	Barcode     []byte
 	BarcodeQual []byte
 
-	ReadInfo string
+	ReadInfo    string
 	ReadGroupId string
+}
+
+/*
+* A utility function to compare two slices
+ */
+func SliceCompare(a []byte, b []byte) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := 0; i < len(a); i++ {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+
+}
+
+func Min(x, y int) int {
+	if x < y {
+		return x
+	}
+	return y
 }
 
 /*
@@ -42,22 +65,6 @@ type FastQReader struct {
 	DefferedError error
 	Pending       *FastQRecord
 	LastBarcode   []byte
-}
-
-/*
- * A utility function to compare two slices
- */
-func SliceCompare(a []byte, b []byte) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i := 0; i < len(a); i++ {
-		if a[i] != b[i] {
-			return false
-		}
-	}
-	return true
-
 }
 
 /* Open a new fastQ files */
@@ -76,14 +83,6 @@ func OpenFastQ(path string) (*FastQReader, error) {
 	res.Line = 0
 	return res, nil
 }
-
-func Min(x, y int) int {
-    if x < y {
-        return x
-    }
-    return y
-}
-
 
 /*
  * Read a single record from a fastQ file
@@ -126,21 +125,21 @@ func (fqr *FastQReader) ReadOneLine(result *FastQRecord, trim int) error {
 	}
 
 	/* Assign them to the right fields in the FastQRecord struct */
-    var to_trim = Min(len(stuff_to_get[0]), trim)
-    r1 := stuff_to_get[0][to_trim:]
-    rq := stuff_to_get[1][to_trim:]
-    tb := stuff_to_get[0][0:to_trim]
-    tq := stuff_to_get[1][0:to_trim]
+	var to_trim = Min(len(stuff_to_get[0]), trim)
+	r1 := stuff_to_get[0][to_trim:]
+	rq := stuff_to_get[1][to_trim:]
+	tb := stuff_to_get[0][0:to_trim]
+	tq := stuff_to_get[1][0:to_trim]
 	result.Read1 = r1
 	result.ReadQual1 = rq
-    result.TrimBases = tb
-    result.TrimQuals = tq
+	result.TrimBases = tb
+	result.TrimQuals = tq
 	result.Read2 = stuff_to_get[2]
 	result.ReadQual2 = stuff_to_get[3]
 
-    barcodes := strings.Split(string(stuff_to_get[4]), ",")
-    result.Barcode10X = []byte(barcodes[0])
-    result.RawBarcode10X = []byte(barcodes[len(barcodes)-1])
+	barcodes := strings.Split(string(stuff_to_get[4]), ",")
+	result.Barcode10X = []byte(barcodes[0])
+	result.RawBarcode10X = []byte(barcodes[len(barcodes)-1])
 	result.Barcode10XQual = stuff_to_get[5]
 	result.Barcode = stuff_to_get[6]
 	result.BarcodeQual = stuff_to_get[7]
@@ -160,12 +159,12 @@ func DifferentBarcode(a []byte, b []byte) bool {
 }
 
 func NotWhitelist(a *FastQRecord) bool {
-    for i := 0; i < len(a.Barcode10X); i++ {
-        if a.Barcode10X[i] == '-' {
-            return false
-        }
-    }
-    return true
+	for i := 0; i < len(a.Barcode10X); i++ {
+		if a.Barcode10X[i] == '-' {
+			return false
+		}
+	}
+	return true
 }
 
 /*

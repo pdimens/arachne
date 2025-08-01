@@ -3,7 +3,6 @@
 package inference
 
 import (
-	"code.google.com/p/biogo.bam"
 	"fmt"
 	"gobwa"
 	"log"
@@ -43,7 +42,7 @@ type BAMWriter struct {
 	Record  bam.Record
 }
 
-func CreateBAM(ref *gobwa.GoBwaReference, path, read_groups, sample_id string, firstChunk bool) (*BAMWriter, error) {
+func CreateBAM(ref *gobwa.GoBwaReference, path, read_groups, sample_id string) (*BAMWriter, error) {
 	bw := &BAMWriter{}
 	bw.Contigs = make(map[string]*bam.Reference)
 
@@ -60,9 +59,6 @@ func CreateBAM(ref *gobwa.GoBwaReference, path, read_groups, sample_id string, f
 
 	// Only include the CO headers on the first chunk: avoid having them duplicated during samtools merge
 	comments := []byte("")
-	if firstChunk {
-		comments = []byte("@CO\t10x_bam_to_fastq:R1(RX:QX,TR:TQ,SEQ:QUAL)\n@CO\t10x_bam_to_fastq:R2(SEQ:QUAL)\n@CO\t10x_bam_to_fastq:I1(BC:QT)")
-	}
 	h, err := bam.NewHeader(comments, references)
 
 	if err != nil {
@@ -80,14 +76,14 @@ func CreateBAM(ref *gobwa.GoBwaReference, path, read_groups, sample_id string, f
 			log.Printf("RG is not fully specified, skipping: %s", rg_id)
 		} else {
 			rg, err := bam.NewReadGroup(
-				rg_id, //ID
-				"",    //CN
-				"",    //DS
+				rg_id,                         //ID
+				"",                            //CN
+				"",                            //DS
 				rg_fields[1]+"."+rg_fields[2], //LB = (input library).(gem group)
-				"",           //PG
-				"ILLUMINA",   //PL
-				rg_id,        //PU: just make same as ID?
-				rg_fields[0], //SM
+				"",                            //PG
+				"ILLUMINA",                    //PL
+				rg_id,                         //PU: just make same as ID?
+				rg_fields[0],                  //SM
 				time.Now(),
 				0,
 				nil,
@@ -101,11 +97,11 @@ func CreateBAM(ref *gobwa.GoBwaReference, path, read_groups, sample_id string, f
 
 	// Add a program line for lariat
 	prog := bam.NewProgram(
-		"lariat",                   // ID
-		"longranger.lariat",        // PN
+		"naga",                     // ID
+		"naga",                     // PN
 		strings.Join(os.Args, " "), // CL
-		"",          // PP - no need to indicate previous, since Lariat produces the initial BAM
-		__VERSION__) // VN
+		"",                         // PP - no need to indicate previous, since Lariat produces the initial BAM
+		__VERSION__)                // VN
 	h.AddProgram(prog)
 
 	file, err := os.Create(path)
@@ -130,10 +126,10 @@ func (b BAMWriters) getPositionBucketedBamForAlignment(aln *Alignment, unmapped 
 	return b.PositionBucketedBams[aln.contig][aln.pos/int64(b.positionChunkSize)]
 }
 
-func CreateBAMs(ref *gobwa.GoBwaReference, basePath, read_groups, sample_id string, _positionChunkSize int, debugTags bool, firstChunk bool) (*BAMWriters, error) {
+func CreateBAMs(ref *gobwa.GoBwaReference, basePath, read_groups, sample_id string, _positionChunkSize int, debugTags bool) (*BAMWriters, error) {
 	positionChunkSize := int64(_positionChunkSize)
 
-	barcodeSortedBam, err := CreateBAM(ref, basePath+"/bc_sorted_bam.bam", read_groups, sample_id, firstChunk)
+	barcodeSortedBam, err := CreateBAM(ref, basePath+"/bc_sorted_bam.bam", read_groups, sample_id)
 	if err != nil {
 		return nil, err
 	}
@@ -142,28 +138,25 @@ func CreateBAMs(ref *gobwa.GoBwaReference, basePath, read_groups, sample_id stri
 	var lastBamWriter *BAMWriter = nil
 	var running_size int64 = 0
 	// Only add the @CO headers to the first chunk, so that we don't end up with duplicates
-	var chrFirstChunk bool = firstChunk
 
 	for index, contigName := range contigNames {
 		chr_size := contigLengths[index]
-		num_chunks := int(math.Ceil(float64(chr_size)/float64(positionChunkSize)))
+		num_chunks := int(math.Ceil(float64(chr_size) / float64(positionChunkSize)))
 		PositionBucketedBams[contigName] = make([]*BAMWriter, num_chunks)
 		indexStr := fmt.Sprintf("%0*d", 6, index)
 
 		if num_chunks > 1 {
-			for chunkIndex := 0; chunkIndex < num_chunks; chunkIndex ++ {
+			for chunkIndex := 0; chunkIndex < num_chunks; chunkIndex++ {
 				offsetStr := fmt.Sprintf("%0*d", 10, int64(chunkIndex)*positionChunkSize)
-				PositionBucketedBams[contigName][chunkIndex], err = CreateBAM(ref, basePath+"/"+indexStr+"-"+contigName+"_"+offsetStr+"_pos_bucketed.bam", read_groups, sample_id, chrFirstChunk)
-				chrFirstChunk = false
+				PositionBucketedBams[contigName][chunkIndex], err = CreateBAM(ref, basePath+"/"+indexStr+"-"+contigName+"_"+offsetStr+"_pos_bucketed.bam", read_groups, sample_id)
 				if err != nil {
 					return nil, err
 				}
 			}
 		} else {
-			if running_size ==0 || running_size + chr_size > positionChunkSize {
+			if running_size == 0 || running_size+chr_size > positionChunkSize {
 				// use a new chunk and running_size is the size of chr_size
-				lastBamWriter, err = CreateBAM(ref, basePath+"/"+indexStr+"-"+contigName+"_0000000000_pos_bucketed.bam", read_groups, sample_id, chrFirstChunk)
-				chrFirstChunk = false
+				lastBamWriter, err = CreateBAM(ref, basePath+"/"+indexStr+"-"+contigName+"_0000000000_pos_bucketed.bam", read_groups, sample_id)
 				if err != nil {
 					return nil, err
 				}
@@ -172,14 +165,14 @@ func CreateBAMs(ref *gobwa.GoBwaReference, basePath, read_groups, sample_id stri
 				running_size += chr_size
 			}
 			if lastBamWriter == nil {
-			        fmt.Println("Panicking!")
+				fmt.Println("Panicking!")
 				panic("lastBamWriter uninitilized in CreateBAMs")
 			}
 			PositionBucketedBams[contigName][0] = lastBamWriter
 		}
 	}
 
-	unmappedBam, err := CreateBAM(ref, basePath+"/"+"ZZZ_unmapped_pos_bucketed.bam", read_groups, sample_id, firstChunk)
+	unmappedBam, err := CreateBAM(ref, basePath+"/"+"ZZZ_unmapped_pos_bucketed.bam", read_groups, sample_id)
 	if err != nil {
 		return nil, err
 	}
@@ -496,7 +489,7 @@ func (b *BAMWriter) AppendBam(aln *Alignment, primary *Alignment, debugTags bool
 		aux = append(aux, bam.Aux(sa))
 	}
 	if debugTags && aln.mapq_data != nil {
-		// NOTE: these statistics generally refer to the configuration of the active molecules after the 
+		// NOTE: these statistics generally refer to the configuration of the active molecules after the
 		// Lariat optimization process has finished.
 
 		// Total number of alignments returned by BWA
@@ -657,8 +650,8 @@ func DoDumpToBam(alignments [][]*Alignment, b *BAMWriters, debugTags bool, attac
 }
 
 /*
- Convert from "soft" clipping to "hard" clipping. Truncate the sequence and quality
- and convert "S" to "H" in teh cigar string.
+Convert from "soft" clipping to "hard" clipping. Truncate the sequence and quality
+and convert "S" to "H" in teh cigar string.
 */
 func HardClip(seq []byte, qual []byte, cigar []uint32, reversed bool) ([]byte, []byte, []uint32) {
 	var start, end int

@@ -7,6 +7,7 @@ import (
 	"bufio"
 	"crypto/md5"
 	"encoding/binary"
+
 	//"github.com/davecheney/profile"
 	"fastqreader"
 	"fmt"
@@ -20,7 +21,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"syscall"
 	"unsafe"
 )
@@ -31,20 +31,16 @@ var __VERSION__ string
 type LariatArgs struct {
 	Reads                 *string
 	Improper_pair_penalty *float64
-	SIMULATED_DATA        *bool
 	Output                *string
 	Read_groups           *string
 	Sample_id             *string
 	Threads               *int
-	Max_bcs               *int
 	DEBUG                 *bool
 	PositionChunkSize     *int
 	DebugTags             *bool
 	DebugPrintMove        *bool
-	Genome                *string
+	Reference             *string
 	Centromeres           *string
-	Trim                  *int
-        FirstChunk            *bool
 }
 
 type ChainedHit struct {
@@ -65,6 +61,7 @@ type ChainedHit struct {
 	trim_qual *[]byte
 }
 
+// #TODO ALIGNMENT NEEDS tO GET RID OF 10X STUFF
 type Alignment struct {
 	id                                int
 	read1                             bool
@@ -163,8 +160,8 @@ type MapQData struct {
 }
 
 /*
- Holds configuration parameters for the optimizer. These to be constant
- after set in main.
+Holds configuration parameters for the optimizer. These to be constant
+after set in main.
 */
 type RFAConfig struct {
 	improper_penalty float64
@@ -249,18 +246,16 @@ type Data struct {
 /*Command line arguments*/
 var reads *string
 var improper_pair_penalty *float64
-var SIMULATED_DATA *bool
 var output *string
 var read_groups *string
 var sample_id *string
 var threads *int
-var max_bcs *int
+
 var DEBUG *bool
 var positionChunkSize *int
 var debugTags *bool
 var debugPrintMove *bool
 var genome *string
-var trimLength *int
 var firstChunk *bool
 
 type Region struct {
@@ -276,20 +271,16 @@ func Lariat(args LariatArgs) {
 
 	reads = args.Reads
 	improper_pair_penalty = args.Improper_pair_penalty
-	SIMULATED_DATA = args.SIMULATED_DATA
 	output = args.Output
 	read_groups = args.Read_groups
 	sample_id = args.Sample_id
 	threads = args.Threads
-	max_bcs = args.Max_bcs
 	DEBUG = args.DEBUG
 	positionChunkSize = args.PositionChunkSize
 	debugTags = args.DebugTags
 	debugPrintMove = args.DebugPrintMove
-	genome = args.Genome
+	genome = args.Reference
 	centromeres = loadCentromeres(args.Centromeres)
-	trimLength = args.Trim
-	firstChunk = args.FirstChunk
 
 	// Use worker thread count request on cmdline, or
 	// all CPUs if -threads wasn't specified
@@ -326,7 +317,7 @@ func Lariat(args LariatArgs) {
 	var w *bufio.Writer
 
 	barcode_num := 0
-	bams, err := CreateBAMs(ref, *output, *read_groups, *sample_id, *positionChunkSize, *debugTags, *firstChunk)
+	bams, err := CreateBAMs(ref, *output, *read_groups, *sample_id, *positionChunkSize, *debugTags)
 	if err != nil {
 		panic(err)
 	}
@@ -362,13 +353,9 @@ func Lariat(args LariatArgs) {
 		//fmt.Println(len(barcode_reads))
 		barcode_reads = barcode_reads[0 : len(barcode_reads)-1]
 		barcode_reads_lock.Unlock()
+		// TODO the function needs to be revised
 		bc_reads, err, full_barcode := fastq.ReadBarcodeSet(&bc_reads, *trimLength)
 		if err != nil {
-			break
-		}
-
-		// Max BCs to process
-		if barcode_num == *max_bcs {
 			break
 		}
 
@@ -480,10 +467,10 @@ func DoRFAForOneBarcode(work *WorkUnit,
 
 	if len(barcode_reads) > 2 {
 		fmt.Printf("working on barcode %s  num reads: %d  doing RFA: %v  unique_barcode %v \n",
-				string(barcode_reads[0].Barcode10X),
-				len(barcode_reads),
-				worthRunningRFA,
-				work.unique_barcode)
+			string(barcode_reads[0].Barcode10X),
+			len(barcode_reads),
+			worthRunningRFA,
+			work.unique_barcode)
 	}
 
 	if !worthRunningRFA {
@@ -494,7 +481,6 @@ func DoRFAForOneBarcode(work *WorkUnit,
 		arena.Free()
 		return
 	}
-
 
 	candidate_molecules := inferMolecules(positions)
 	markBestAlignmentForReadInMolecule(candidate_molecules)
@@ -513,33 +499,6 @@ func DoRFAForOneBarcode(work *WorkUnit,
 	optimized := optimizer.Optimize(optimizer.Optimizable(*optimizer_obj), 1, 2, 4*len(candidate_molecules)).(Optimizer)
 
 	estimateMapQualities(barcode_num, optimized.alignments, optimized.candidate_molecules, optimized.log_unpaired_probability, stats)
-
-	if *SIMULATED_DATA {
-		//check
-		for j := 0; j < len(optimized.candidate_molecules); j++ {
-			molecule := optimized.candidate_molecules[j]
-			for _, alignment := range molecule.active_alignments.Iter() {
-				atomic.AddInt64(&(stats.total), 1)
-				if alignment.mapq >= 10 {
-					atomic.AddInt64(&(stats.total_mapq10), 1)
-				}
-				var pos float64
-				if alignment.read1 {
-					pos, _ = strconv.ParseFloat(strings.Split(*alignment.read_name, ":")[5], 64)
-				} else {
-					pos, _ = strconv.ParseFloat(strings.TrimSpace(strings.Split(*alignment.read_name, ":")[6]), 64)
-				}
-
-				if math.Abs(pos-float64(alignment.pos)) < 600 {
-					atomic.AddInt64(&(stats.correct), 1)
-					alignment.correctly_placed = true
-					if alignment.mapq >= 10 {
-						atomic.AddInt64(&(stats.correct_mapq10), 1)
-					}
-				}
-			}
-		}
-	}
 	markDuplicates(alignments)
 	CheckSplitReads(stashed_alignments, centromeres)
 	DumpToBams(&Data{optimized.alignments, reads, true}, bams)
@@ -626,17 +585,15 @@ func scoreAlignment(aln *Alignment, mate *Alignment, log_molecule_penalty float6
 func SetArgsForTests(args LariatArgs) {
 	reads = args.Reads
 	improper_pair_penalty = args.Improper_pair_penalty
-	SIMULATED_DATA = args.SIMULATED_DATA
 	output = args.Output
 	read_groups = args.Read_groups
 	sample_id = args.Sample_id
 	threads = args.Threads
-	max_bcs = args.Max_bcs
 	DEBUG = args.DEBUG
 	positionChunkSize = args.PositionChunkSize
 	debugTags = args.DebugTags
 	debugPrintMove = args.DebugPrintMove
-	genome = args.Genome
+	genome = args.Reference
 }
 
 // If two reads have the same value, then they are duplicates
@@ -738,32 +695,6 @@ func appendPsuedocountAlignmentScore(scores []float64, alignmentArray []*Alignme
 	return scores
 }
 
-func simulatedDataCheck(alignments [][]*Alignment, candidate_molecules []*CandidateMolecule) {
-	if *SIMULATED_DATA {
-		for _, alignmentArray := range alignments {
-			for _, alignment := range alignmentArray {
-				name := strings.Split(*alignment.read_name, ":")
-				pos := int64(0)
-				if alignment.read1 {
-					pos, _ = strconv.ParseInt(name[5], 10, 64)
-				} else {
-					blah, _ := strconv.ParseFloat(strings.TrimSpace(strings.Split(*alignment.read_name, ":")[6]), 64)
-					pos = int64(blah)
-				}
-				chrom := name[2]
-				for i := 0; i < len(candidate_molecules); i++ {
-					mol := candidate_molecules[i]
-					if mol.chrom == chrom {
-						if mol.stop >= pos && mol.start <= pos {
-							mol.true_molecule = true
-						}
-					}
-				}
-			}
-		}
-	}
-}
-
 func moleculeMapqProbabilitySums(candidate_molecules []*CandidateMolecule, log_unpaired_probability float64) {
 	for mol_id, sourceMolecule := range candidate_molecules {
 		for mol2_id, sinkMolecule := range candidate_molecules {
@@ -846,24 +777,24 @@ func checkMates(alignments [][]*Alignment) {
 }
 
 // So the basic strategy here is two-fold
-// 1. is based on calculating a mapq vs being able to move that read to any of the other
-//    alignments that it has. This includes the probabilities of a read being a singleton vs being in an active molecule.
-//    Every alignment has some probability calculated from its alignment score/cigar string. Then alignments are
-//    penalized for improper_pair and for being outside of active molecules. The mapq is then calculated by normalizing the sum of
-//    alignment probabilities to 1 and then the mapq is -10*log10(1-probability_of_chosen_alignment)
-//    If there is a problem with this method it is that it dings alignments for not being in an active read, but if a whole
-//    molecule could have moved to that location with very little probability change making it an active molecule, the read
-//    shouldn't have gotten that ding. I have tried not dinging reads in candidate molecules that are inactive but have
-//    greater than some number of alignments but have found it better to just include method #2
-// 2. is a mapq considering the probability change in the case of a candidate molecule making a sub-move (moving all of the reads
-//    that can move from this molecule to another candidate molecule) to every candidate molecule that it can make a sub move to.
-//    So for each active molecule we calculate the probability change of a sub-move to every candidate molecule that it can. For each
-//    sub-move calculated, every alignment that was involved in that sub move gets that probability change added to a sum.
-//    The log probability change of making a sub-move from a molecule to itself is 0 so probability 1.0. then we normalize the probability
-//    of the final selected sub-move which is the molecule moving to itself p = 1.0 vs the sum of all of the probabilities of the moves
-//    which is p_final = 1.0/sum_i(p(move_i)) and then calculate a mapq from that probability = -10*log10(1-p_final)
-//Finally we take the min of the two approaches as the final mapq
+//  1. is based on calculating a mapq vs being able to move that read to any of the other
+//     alignments that it has. This includes the probabilities of a read being a singleton vs being in an active molecule.
+//     Every alignment has some probability calculated from its alignment score/cigar string. Then alignments are
+//     penalized for improper_pair and for being outside of active molecules. The mapq is then calculated by normalizing the sum of
+//     alignment probabilities to 1 and then the mapq is -10*log10(1-probability_of_chosen_alignment)
+//     If there is a problem with this method it is that it dings alignments for not being in an active read, but if a whole
+//     molecule could have moved to that location with very little probability change making it an active molecule, the read
+//     shouldn't have gotten that ding. I have tried not dinging reads in candidate molecules that are inactive but have
+//     greater than some number of alignments but have found it better to just include method #2
+//  2. is a mapq considering the probability change in the case of a candidate molecule making a sub-move (moving all of the reads
+//     that can move from this molecule to another candidate molecule) to every candidate molecule that it can make a sub move to.
+//     So for each active molecule we calculate the probability change of a sub-move to every candidate molecule that it can. For each
+//     sub-move calculated, every alignment that was involved in that sub move gets that probability change added to a sum.
+//     The log probability change of making a sub-move from a molecule to itself is 0 so probability 1.0. then we normalize the probability
+//     of the final selected sub-move which is the molecule moving to itself p = 1.0 vs the sum of all of the probabilities of the moves
+//     which is p_final = 1.0/sum_i(p(move_i)) and then calculate a mapq from that probability = -10*log10(1-p_final)
 //
+// Finally we take the min of the two approaches as the final mapq
 func estimateMapQualities(barcode int,
 	alignments [][]*Alignment,
 	candidate_molecules []*CandidateMolecule,
@@ -881,7 +812,6 @@ func estimateMapQualities(barcode int,
 	// Now to update alignment probabilities for being singleton/outside active molecules
 	// this part only happens if we ran RFA, bad barcodes etc get no more probability updates
 	updateAlignmentsMoleculeStatus(alignments, candidate_molecules, read_copies_in_active_molecule, read_copies_not_in_active_molecule, unique_molecules_active)
-	simulatedDataCheck(alignments, candidate_molecules)
 	log_molecule_penalty := calculateLogMoleculePenalty(candidate_molecules, 3200000000.0) //hard coding length of human genome
 	//now go through every read_id and normalize all alternate alignment probabilities
 	for read_id, alignmentArray := range alignments {
@@ -1548,7 +1478,7 @@ func tagBestAlignments(alignments [][]*Alignment, improper_pair_penalty float64)
 	return positions
 }
 
-//returns a map from read id to a map of
+// returns a map from read id to a map of
 func GetAlignments(ref *GoBwaReference, settings *GoBwaSettings, barcode_chains [][]ChainedHit, delta int, arena *Arena) ([][]*Alignment, [][]*Alignment) {
 
 	toReturn := make([][]*Alignment, len(barcode_chains))
