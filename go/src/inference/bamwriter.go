@@ -3,6 +3,7 @@
 package inference
 
 import (
+	"code.google.com/p/biogo.bam"
 	"fmt"
 	"gobwa"
 	"log"
@@ -31,7 +32,7 @@ type BAMWriters struct {
 	debugTags            bool
 	channel              chan *Data
 	/* This mutex is Rlocked by the worker thread. When we close, we wait
-	 * for the mutex to be unlocked to ensure data is flushed before continuing
+	 * for the mutex to be unlocked to ensure data is flushed before continueing
 	 */
 	done sync.RWMutex
 }
@@ -79,14 +80,14 @@ func CreateBAM(ref *gobwa.GoBwaReference, path, read_groups, sample_id string, f
 			log.Printf("RG is not fully specified, skipping: %s", rg_id)
 		} else {
 			rg, err := bam.NewReadGroup(
-				rg_id,                         //ID
-				"",                            //CN
-				"",                            //DS
+				rg_id, //ID
+				"",    //CN
+				"",    //DS
 				rg_fields[1]+"."+rg_fields[2], //LB = (input library).(gem group)
-				"",                            //PG
-				"ILLUMINA",                    //PL
-				rg_id,                         //PU: just make same as ID?
-				rg_fields[0],                  //SM
+				"",           //PG
+				"ILLUMINA",   //PL
+				rg_id,        //PU: just make same as ID?
+				rg_fields[0], //SM
 				time.Now(),
 				0,
 				nil,
@@ -98,13 +99,13 @@ func CreateBAM(ref *gobwa.GoBwaReference, path, read_groups, sample_id string, f
 		}
 	}
 
-	// Add a program line for naga
+	// Add a program line for lariat
 	prog := bam.NewProgram(
-		"naga",                     // ID
-		"naga",                     // PN
+		"lariat",                   // ID
+		"longranger.lariat",        // PN
 		strings.Join(os.Args, " "), // CL
-		"",                         // PP - no need to indicate previous, since naga produces the initial BAM
-		__VERSION__)                // VN
+		"",          // PP - no need to indicate previous, since Lariat produces the initial BAM
+		__VERSION__) // VN
 	h.AddProgram(prog)
 
 	file, err := os.Create(path)
@@ -145,12 +146,12 @@ func CreateBAMs(ref *gobwa.GoBwaReference, basePath, read_groups, sample_id stri
 
 	for index, contigName := range contigNames {
 		chr_size := contigLengths[index]
-		num_chunks := int(math.Ceil(float64(chr_size) / float64(positionChunkSize)))
+		num_chunks := int(math.Ceil(float64(chr_size)/float64(positionChunkSize)))
 		PositionBucketedBams[contigName] = make([]*BAMWriter, num_chunks)
 		indexStr := fmt.Sprintf("%0*d", 6, index)
 
 		if num_chunks > 1 {
-			for chunkIndex := 0; chunkIndex < num_chunks; chunkIndex++ {
+			for chunkIndex := 0; chunkIndex < num_chunks; chunkIndex ++ {
 				offsetStr := fmt.Sprintf("%0*d", 10, int64(chunkIndex)*positionChunkSize)
 				PositionBucketedBams[contigName][chunkIndex], err = CreateBAM(ref, basePath+"/"+indexStr+"-"+contigName+"_"+offsetStr+"_pos_bucketed.bam", read_groups, sample_id, chrFirstChunk)
 				chrFirstChunk = false
@@ -159,7 +160,7 @@ func CreateBAMs(ref *gobwa.GoBwaReference, basePath, read_groups, sample_id stri
 				}
 			}
 		} else {
-			if running_size == 0 || running_size+chr_size > positionChunkSize {
+			if running_size ==0 || running_size + chr_size > positionChunkSize {
 				// use a new chunk and running_size is the size of chr_size
 				lastBamWriter, err = CreateBAM(ref, basePath+"/"+indexStr+"-"+contigName+"_0000000000_pos_bucketed.bam", read_groups, sample_id, chrFirstChunk)
 				chrFirstChunk = false
@@ -171,7 +172,7 @@ func CreateBAMs(ref *gobwa.GoBwaReference, basePath, read_groups, sample_id stri
 				running_size += chr_size
 			}
 			if lastBamWriter == nil {
-				fmt.Println("Panicking!")
+			        fmt.Println("Panicking!")
 				panic("lastBamWriter uninitilized in CreateBAMs")
 			}
 			PositionBucketedBams[contigName][0] = lastBamWriter
@@ -495,8 +496,8 @@ func (b *BAMWriter) AppendBam(aln *Alignment, primary *Alignment, debugTags bool
 		aux = append(aux, bam.Aux(sa))
 	}
 	if debugTags && aln.mapq_data != nil {
-		// NOTE: these statistics generally refer to the configuration of the active molecules after the
-		// naga optimization process has finished.
+		// NOTE: these statistics generally refer to the configuration of the active molecules after the 
+		// Lariat optimization process has finished.
 
 		// Total number of alignments returned by BWA
 		cp := auxify_string([]byte("CP"), []byte(strconv.FormatInt(int64(aln.mapq_data.copies), 10)))
@@ -656,8 +657,8 @@ func DoDumpToBam(alignments [][]*Alignment, b *BAMWriters, debugTags bool, attac
 }
 
 /*
-Convert from "soft" clipping to "hard" clipping. Truncate the sequence and quality
-and convert "S" to "H" in teh cigar string.
+ Convert from "soft" clipping to "hard" clipping. Truncate the sequence and quality
+ and convert "S" to "H" in teh cigar string.
 */
 func HardClip(seq []byte, qual []byte, cigar []uint32, reversed bool) ([]byte, []byte, []uint32) {
 	var start, end int
