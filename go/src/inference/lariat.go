@@ -29,7 +29,8 @@ import (
 var __VERSION__ string
 
 type LariatArgs struct {
-	Reads                 *string
+	R1                    *string
+	R2                    *string
 	Improper_pair_penalty *float64
 	Output                *string
 	Read_groups           *string
@@ -244,7 +245,8 @@ type Data struct {
 }
 
 /*Command line arguments*/
-var reads *string
+var r1 *string
+var r2 *string
 var improper_pair_penalty *float64
 var output *string
 var read_groups *string
@@ -255,8 +257,7 @@ var DEBUG *bool
 var positionChunkSize *int
 var debugTags *bool
 var debugPrintMove *bool
-var genome *string
-var firstChunk *bool
+var reference *string
 
 type Region struct {
 	start int
@@ -265,11 +266,13 @@ type Region struct {
 
 var centromeres map[string]Region
 
+// this is the actual lariat program
 func Lariat(args LariatArgs) {
 
 	print(fmt.Sprintf("Starting lariat. Version: %s\n", __VERSION__))
 
-	reads = args.Reads
+	r1 = args.R1
+	r2 = args.R2
 	improper_pair_penalty = args.Improper_pair_penalty
 	output = args.Output
 	read_groups = args.Read_groups
@@ -279,7 +282,7 @@ func Lariat(args LariatArgs) {
 	positionChunkSize = args.PositionChunkSize
 	debugTags = args.DebugTags
 	debugPrintMove = args.DebugPrintMove
-	genome = args.Reference
+	reference = args.Reference
 	centromeres = loadCentromeres(args.Centromeres)
 
 	// Use worker thread count request on cmdline, or
@@ -290,24 +293,27 @@ func Lariat(args LariatArgs) {
 	}
 	runtime.GOMAXPROCS(*threads + 2)
 
-	if _, err := os.Stat(*reads); os.IsNotExist(err) {
-		panic(fmt.Sprintf("File does not exist %s", *reads))
+	if _, err := os.Stat(*r1); os.IsNotExist(err) {
+		panic(fmt.Sprintf("File does not exist %s", *r1))
 	}
-	if _, err := os.Stat(*genome); os.IsNotExist(err) {
-		panic(fmt.Sprintf("Fasta file not found %s", *genome))
+	if _, err := os.Stat(*r2); os.IsNotExist(err) {
+		panic(fmt.Sprintf("File does not exist %s", *r2))
+	}
+	if _, err := os.Stat(*reference); os.IsNotExist(err) {
+		panic(fmt.Sprintf("Fasta file not found %s", *reference))
 	}
 	if syscall.Access(*output, 2) != nil { //is output writable
 		panic(fmt.Sprintf("Output directory not writable by this process %s", *output))
 	}
-
+	//TODO IS THIS GOING TO BE ONE THING OR TWO?
 	fastq, err := fastqreader.OpenFastQ(*reads)
 
 	if err != nil {
 		panic(err)
 	}
-	print(fmt.Sprintf("Loading reference genome: %s\n", *genome))
+	print(fmt.Sprintf("Loading reference: %s\n", *reference))
 
-	ref := GoBwaLoadReference(*genome)
+	ref := GoBwaLoadReference(*reference)
 	print("Reference loaded\n")
 	settings := GoBwaAllocSettings()
 	config := &RFAConfig{}
@@ -593,7 +599,7 @@ func SetArgsForTests(args LariatArgs) {
 	positionChunkSize = args.PositionChunkSize
 	debugTags = args.DebugTags
 	debugPrintMove = args.DebugPrintMove
-	genome = args.Reference
+	reference = args.Reference
 }
 
 // If two reads have the same value, then they are duplicates
@@ -720,7 +726,7 @@ func moleculeMapqProbabilitySums(candidate_molecules []*CandidateMolecule, log_u
 	}
 }
 
-func calculateLogMoleculePenalty(candidate_molecules []*CandidateMolecule, genomeLength float64) float64 {
+func calculateLogMoleculePenalty(candidate_molecules []*CandidateMolecule, referenceLength float64) float64 {
 	dnaLength := 1000.0
 	numMolecules := 0
 	if candidate_molecules == nil || len(candidate_molecules) == 0 {
@@ -750,7 +756,7 @@ func calculateLogMoleculePenalty(candidate_molecules []*CandidateMolecule, genom
 		}
 	}
 	singletonProb := 0.05
-	moleculePenalty := math.Log10(dnaLength / genomeLength * singletonProb)
+	moleculePenalty := math.Log10(dnaLength / referenceLength * singletonProb)
 	return moleculePenalty
 
 }
@@ -812,7 +818,7 @@ func estimateMapQualities(barcode int,
 	// Now to update alignment probabilities for being singleton/outside active molecules
 	// this part only happens if we ran RFA, bad barcodes etc get no more probability updates
 	updateAlignmentsMoleculeStatus(alignments, candidate_molecules, read_copies_in_active_molecule, read_copies_not_in_active_molecule, unique_molecules_active)
-	log_molecule_penalty := calculateLogMoleculePenalty(candidate_molecules, 3200000000.0) //hard coding length of human genome
+	log_molecule_penalty := calculateLogMoleculePenalty(candidate_molecules, 3200000000.0) //hard coding length of human reference
 	//now go through every read_id and normalize all alternate alignment probabilities
 	for read_id, alignmentArray := range alignments {
 		// find best pair for alignments and make list of those alignment pair scores for use of probability normalization to sum to 1.0

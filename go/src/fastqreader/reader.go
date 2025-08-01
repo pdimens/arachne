@@ -158,15 +158,6 @@ func DifferentBarcode(a []byte, b []byte) bool {
 	}
 }
 
-func NotWhitelist(a *FastQRecord) bool {
-	for i := 0; i < len(a.Barcode10X); i++ {
-		if a.Barcode10X[i] == '-' {
-			return false
-		}
-	}
-	return true
-}
-
 /*
  * Reaturn an array of all of the reads from the same GEM.
  * "space" may be null or may be the result of a previous call to this function.
@@ -222,7 +213,7 @@ func (fqr *FastQReader) ReadBarcodeSet(space *[]FastQRecord, trim int) ([]FastQR
 			}
 		}
 
-		if DifferentBarcode(record_array[0].Barcode10X, record_array[index].Barcode10X) || (NotWhitelist(&record_array[0]) && index >= 200) {
+		if DifferentBarcode(record_array[0].Barcode10X, record_array[index].Barcode10X) {
 			/* Just transitioned to a new GEM. This record needs to
 			 * be defered for next time we're called (since its on the
 			 * _new_ gem).

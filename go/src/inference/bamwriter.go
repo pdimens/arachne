@@ -137,7 +137,6 @@ func CreateBAMs(ref *gobwa.GoBwaReference, basePath, read_groups, sample_id stri
 	PositionBucketedBams := make(map[string][]*BAMWriter, len(contigNames)+1)
 	var lastBamWriter *BAMWriter = nil
 	var running_size int64 = 0
-	// Only add the @CO headers to the first chunk, so that we don't end up with duplicates
 
 	for index, contigName := range contigNames {
 		chr_size := contigLengths[index]
