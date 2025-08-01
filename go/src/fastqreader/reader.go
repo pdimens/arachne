@@ -163,7 +163,7 @@ func DifferentBarcode(a []byte, b []byte) bool {
  * "space" may be null or may be the result of a previous call to this function.
  * If present the array will be destructively re-used
  */
-func (fqr *FastQReader) ReadBarcodeSet(space *[]FastQRecord, trim int) ([]FastQRecord, error, bool) {
+func (fqr *FastQReader) ReadBarcodeSet(space *[]FastQRecord) ([]FastQRecord, error, bool) {
 	new_barcode := false
 	if fqr.DefferedError != nil {
 		return nil, fqr.DefferedError, false
@@ -194,7 +194,8 @@ func (fqr *FastQReader) ReadBarcodeSet(space *[]FastQRecord, trim int) ([]FastQR
 	/* Load fastQ records into record_array */
 	for ; index < 30000; index++ {
 		record_array = append(record_array, FastQRecord{})
-		err := fqr.ReadOneLine(&record_array[index], trim)
+		// RM trim from ReadOneLine func
+		err := fqr.ReadOneLine(&record_array[index])
 
 		if err != nil {
 			/* Something went wrong. If we have data, return it and

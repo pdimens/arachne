@@ -359,8 +359,7 @@ func Lariat(args LariatArgs) {
 		//fmt.Println(len(barcode_reads))
 		barcode_reads = barcode_reads[0 : len(barcode_reads)-1]
 		barcode_reads_lock.Unlock()
-		// TODO the function needs to be revised
-		bc_reads, err, full_barcode := fastq.ReadBarcodeSet(&bc_reads, *trimLength)
+		bc_reads, err, full_barcode := fastq.ReadBarcodeSet(&bc_reads)
 		if err != nil {
 			break
 		}
