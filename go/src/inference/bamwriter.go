@@ -98,12 +98,12 @@ func CreateBAM(ref *gobwa.GoBwaReference, path, read_groups, sample_id string, f
 		}
 	}
 
-	// Add a program line for lariat
+	// Add a program line for naga
 	prog := bam.NewProgram(
-		"arachne",                  // ID
-		"arachne",                  // PN
+		"naga",                     // ID
+		"naga",                     // PN
 		strings.Join(os.Args, " "), // CL
-		"",                         // PP - no need to indicate previous, since Lariat produces the initial BAM
+		"",                         // PP - no need to indicate previous, since naga produces the initial BAM
 		__VERSION__)                // VN
 	h.AddProgram(prog)
 
@@ -496,7 +496,7 @@ func (b *BAMWriter) AppendBam(aln *Alignment, primary *Alignment, debugTags bool
 	}
 	if debugTags && aln.mapq_data != nil {
 		// NOTE: these statistics generally refer to the configuration of the active molecules after the
-		// Lariat optimization process has finished.
+		// naga optimization process has finished.
 
 		// Total number of alignments returned by BWA
 		cp := auxify_string([]byte("CP"), []byte(strconv.FormatInt(int64(aln.mapq_data.copies), 10)))

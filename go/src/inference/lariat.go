@@ -29,7 +29,7 @@ import (
 // build version -- get set statically by a linker flag
 var __VERSION__ string
 
-type LariatArgs struct {
+type nagaArgs struct {
 	Reads_R1              *string
 	Reads_R2              *string
 	Improper_pair_penalty *float64
@@ -272,9 +272,9 @@ type Region struct {
 
 var centromeres map[string]Region
 
-func Lariat(args LariatArgs) {
+func naga(args nagaArgs) {
 
-	print(fmt.Sprintf("Starting arachne. Version: %s\n", __VERSION__))
+	print(fmt.Sprintf("Starting naga. Version: %s\n", __VERSION__))
 
 	reads_R1 = args.Reads_R2
 	reads_R2 = args.Reads_R1
@@ -393,7 +393,7 @@ func Lariat(args LariatArgs) {
 
 	/* Close and flush the BAM file */
 	bams.Close()
-	fmt.Println("Lariat completed successfully")
+	fmt.Println("naga completed successfully")
 }
 
 func loadCentromeres(filename *string) map[string]Region {
@@ -629,7 +629,7 @@ func scoreAlignment(aln *Alignment, mate *Alignment, log_molecule_penalty float6
 	return score
 }
 
-func SetArgsForTests(args LariatArgs) {
+func SetArgsForTests(args nagaArgs) {
 	reads = args.Reads
 	improper_pair_penalty = args.Improper_pair_penalty
 	SIMULATED_DATA = args.SIMULATED_DATA

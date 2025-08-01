@@ -4,7 +4,6 @@ package main
 
 import (
 	"flag"
-	"inference"
 )
 
 /*Command line arguments*/
@@ -28,7 +27,7 @@ var firstChunk = flag.Bool("first_chunk", false, "First chunk of multi-chunk rea
 func main() {
 	flag.Parse()
 
-	args := inference.LariatArgs{
+	args := inference.nagaArgs{
 		R1:                    reads_R1,
 		R2:                    reads_R2,
 		Improper_pair_penalty: improper_pair_penalty,
@@ -46,5 +45,5 @@ func main() {
 		Trim:                  trim_length,
 		FirstChunk:            firstChunk,
 	}
-	inference.Lariat(args)
+	inference.naga(args)
 }
