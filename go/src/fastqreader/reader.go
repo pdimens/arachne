@@ -145,6 +145,7 @@ func (fqr *FastQReader) ReadOneLine(result *FastQRecord) error {
 
 			// TODO
 			// I GET THE SENSE THIS IS WRONG FOR STANDARD FORMAT FASTQ
+			// IT IS, THIS SHOULD BE IGNORED OR REPLACED WITH THE RG ADDED IN THE CLI
 			if len(R1_fields) < 2 {
 				result.ReadGroupId = "" // no RGID found
 			} else {
@@ -274,7 +275,7 @@ func (fqr *FastQReader) ReadBarcodeSet(space *[]FastQRecord) ([]FastQRecord, err
 		copy(tmp, record_array[0].Barcode)
 		fqr.LastBarcode = tmp
 	}
-	//log.Printf("Load %v record %s %s %s %s", index, string(record_array[0].BARCODE10X), string(record_array[index].BARCODE10X), string(record_array[0].Barcode), string(record_array[index].Barcode))
+	//log.Printf("Load %v record %s %s %s %s", index, string(record_array[0].Barcode), string(record_array[index].Barcode), string(record_array[0].Barcode), string(record_array[index].Barcode))
 	/* Truncate the last record of the array. It is either eroneous and ill defined
 	 * or it belongs to the next GEM.
 	 */

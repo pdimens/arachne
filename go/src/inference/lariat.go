@@ -58,18 +58,20 @@ type ChainedHit struct {
 	read      *[]byte
 	fastq     *fastqreader.FastQRecord
 	aln       *EasyAlignment
-	trim_seq  *[]byte
-	trim_qual *[]byte
+	// trim_seq  *[]byte
+	// trim_qual *[]byte
 }
 
 // #TODO ALIGNMENT NEEDS tO GET RID OF 10X STUFF
 type Alignment struct {
+	//	trim_seq                          *[]byte
+	//	trim_qual                         *[]byte
+	//	raw_barcode                       *[]byte
 	id                                int
 	read1                             bool
 	is_proper                         bool
 	soft_clipped                      int
 	soft_clipped_length               int
-	raw_barcode                       *[]byte
 	barcode                           *[]byte
 	barcode_qual                      *[]byte
 	read_name                         *string
@@ -77,8 +79,6 @@ type Alignment struct {
 	read_qual                         *[]byte
 	sample_index                      *[]byte
 	sample_index_qual                 *[]byte
-	trim_seq                          *[]byte
-	trim_qual                         *[]byte
 	mapq                              int
 	molecule_difference               float64
 	contig                            string
@@ -305,8 +305,8 @@ func Lariat(args LariatArgs) {
 	if syscall.Access(*output, 2) != nil { //is output writable
 		panic(fmt.Sprintf("Output directory not writable by this process %s", *output))
 	}
-	//TODO IS THIS GOING TO BE ONE THING OR TWO?
-	fastq, err := fastqreader.OpenFastQ(*reads)
+
+	fastq, err := fastqreader.OpenFastQ(*r1, *r2)
 
 	if err != nil {
 		panic(err)
@@ -339,6 +339,7 @@ func Lariat(args LariatArgs) {
 	 */
 	var worker_lock sync.RWMutex
 
+	// IS THIS A CONTAINER OF FASTQ RECORDS THAT ALL HAVE THE SAME BARCODE?
 	barcode_reads = [][]fastqreader.FastQRecord{}
 
 	/* Start some workers */
@@ -472,7 +473,7 @@ func DoRFAForOneBarcode(work *WorkUnit,
 
 	if len(barcode_reads) > 2 {
 		fmt.Printf("working on barcode %s  num reads: %d  doing RFA: %v  unique_barcode %v \n",
-			string(barcode_reads[0].Barcode10X),
+			string(barcode_reads[0].Barcode),
 			len(barcode_reads),
 			worthRunningRFA,
 			work.unique_barcode)
@@ -1024,7 +1025,7 @@ func worthRunningRFA(barcode_reads []fastqreader.FastQRecord, uniqueBarcode bool
 	if len(barcode_reads) == 0 || !uniqueBarcode {
 		return false
 	}
-	bcParts := strings.Split(string(barcode_reads[0].Barcode10X), "-")
+	bcParts := strings.Split(string(barcode_reads[0].Barcode), "-")
 	if len(bcParts) < 2 {
 		return false
 	}
@@ -1584,8 +1585,8 @@ func GetAlignments(ref *GoBwaReference, settings *GoBwaSettings, barcode_chains 
 				aend = chain.pos + 1
 			}
 
-			trim_seq := &chain.fastq.TrimBases
-			trim_qual := &chain.fastq.TrimQuals
+			//trim_seq := &chain.fastq.TrimBases
+			//trim_qual := &chain.fastq.TrimQuals
 
 			full_alignment := Alignment{
 				id:                          chain.hit_id,
@@ -1602,9 +1603,7 @@ func GetAlignments(ref *GoBwaReference, settings *GoBwaSettings, barcode_chains 
 				soft_clipped_length:         soft_clipping_length,
 				read1:                       chain.read1,
 				mapq_data:                   &MapQData{active_alignments_in_molecules: ""},
-				barcode:                     &chain.fastq.Barcode10X,
-				raw_barcode:                 &chain.fastq.RawBarcode10X,
-				barcode_qual:                &chain.fastq.Barcode10XQual,
+				barcode:                     &chain.fastq.Barcode,
 				contig:                      alignment.Chrom,
 				pos:                         pos,
 				molecule_id:                 -1,
@@ -1619,8 +1618,8 @@ func GetAlignments(ref *GoBwaReference, settings *GoBwaSettings, barcode_chains 
 				sum_move_probability_change: 1.0,
 				molecule_confidence:         0.00075 * 0.025,
 				duplicate:                   false,
-				trim_seq:                    trim_seq,
-				trim_qual:                   trim_qual,
+				//trim_seq:                    trim_seq,
+				//trim_qual:                   trim_qual,
 			}
 
 			full_alignment.log_alignment_probability = scoreAlignment(&full_alignment, nil, 0.0) - *improper_pair_penalty //remove improper pair penalty
@@ -1644,7 +1643,7 @@ func GetChains(ref *GoBwaReference, settings *GoBwaSettings, reads_for_barcode [
 	var barcode string
 	for i := 0; i < len(reads_for_barcode); i++ {
 		read1_chains, read2_chains := GoBwaMemMateSW(ref, settings, &reads_for_barcode[i].Read1, &reads_for_barcode[i].Read2, arena, score_delta)
-		barcode = string(reads_for_barcode[i].Barcode10X)
+		barcode = string(reads_for_barcode[i].Barcode)
 		read1_num := 0
 		toReturn = append(toReturn, []ChainedHit{})
 		for j := 0; j < len(read1_chains); j++ {
@@ -1662,8 +1661,8 @@ func GetChains(ref *GoBwaReference, settings *GoBwaSettings, reads_for_barcode [
 				fastq:     &reads_for_barcode[i],
 				read:      &reads_for_barcode[i].Read1,
 				aln:       &read1_chains[j],
-				trim_seq:  &reads_for_barcode[i].TrimBases,
-				trim_qual: &reads_for_barcode[i].TrimQuals,
+				//trim_seq:  &reads_for_barcode[i].TrimBases,
+				//trim_qual: &reads_for_barcode[i].TrimQuals,
 			}
 			read1_num++
 			toReturn[len(toReturn)-1] = append(toReturn[len(toReturn)-1], read1_chain_n)
@@ -1671,15 +1670,15 @@ func GetChains(ref *GoBwaReference, settings *GoBwaSettings, reads_for_barcode [
 		}
 		if read1_num == 0 {
 			toReturn[len(toReturn)-1] = append(toReturn[len(toReturn)-1], ChainedHit{
-				read_id:   i * 2,
-				mate_id:   i*2 + 1,
-				pos:       -1,
-				read1:     true,
-				chain:     nil,
-				fastq:     &reads_for_barcode[i],
-				read:      &reads_for_barcode[i].Read1,
-				trim_seq:  &reads_for_barcode[i].TrimBases,
-				trim_qual: &reads_for_barcode[i].TrimQuals,
+				read_id: i * 2,
+				mate_id: i*2 + 1,
+				pos:     -1,
+				read1:   true,
+				chain:   nil,
+				fastq:   &reads_for_barcode[i],
+				read:    &reads_for_barcode[i].Read1,
+				//trim_seq:  &reads_for_barcode[i].TrimBases,
+				//trim_qual: &reads_for_barcode[i].TrimQuals,
 			})
 			hit_num++
 		}
