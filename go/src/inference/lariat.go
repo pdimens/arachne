@@ -7,8 +7,6 @@ import (
 	"bufio"
 	"crypto/md5"
 	"encoding/binary"
-
-	//"github.com/davecheney/profile"
 	"fastqreader"
 	"fmt"
 	. "gobwa"
@@ -67,18 +65,18 @@ type Alignment struct {
 	//	trim_seq                          *[]byte
 	//	trim_qual                         *[]byte
 	//	raw_barcode                       *[]byte
+	//  barcode_qual                      *[]byte
+	//  sample_index                      *[]byte
+	//  sample_index_qual                 *[]byte
 	id                                int
 	read1                             bool
 	is_proper                         bool
 	soft_clipped                      int
 	soft_clipped_length               int
 	barcode                           *[]byte
-	barcode_qual                      *[]byte
 	read_name                         *string
 	read_seq                          *[]byte
 	read_qual                         *[]byte
-	sample_index                      *[]byte
-	sample_index_qual                 *[]byte
 	mapq                              int
 	molecule_difference               float64
 	contig                            string
@@ -589,7 +587,8 @@ func scoreAlignment(aln *Alignment, mate *Alignment, log_molecule_penalty float6
 }
 
 func SetArgsForTests(args LariatArgs) {
-	reads = args.Reads
+	r1 = args.R1
+	r2 = args.R2
 	improper_pair_penalty = args.Improper_pair_penalty
 	output = args.Output
 	read_groups = args.Read_groups
@@ -1589,37 +1588,34 @@ func GetAlignments(ref *GoBwaReference, settings *GoBwaSettings, barcode_chains 
 			//trim_qual := &chain.fastq.TrimQuals
 
 			full_alignment := Alignment{
-				id:                          chain.hit_id,
-				aend:                        aend,
-				read_name:                   &chain.fastq.ReadInfo,
-				read_seq:                    chain.read,
-				read_qual:                   quals,
-				matches:                     matches,
-				mismatches:                  mismatches,
-				mismatchLocs:                mismatchLocs,
-				mismatchReadLocs:            mismatchReadLocs,
-				indels:                      indels,
-				soft_clipped:                soft_clipping,
-				soft_clipped_length:         soft_clipping_length,
-				read1:                       chain.read1,
-				mapq_data:                   &MapQData{active_alignments_in_molecules: ""},
-				barcode:                     &chain.fastq.Barcode,
-				contig:                      alignment.Chrom,
-				pos:                         pos,
-				molecule_id:                 -1,
-				score:                       chain.score,
-				cigar:                       alignment.Cigar,
-				read_id:                     chain.read_id,
-				mate_id:                     chain.mate_id,
-				reversed:                    alignment.Reversed,
-				sample_index:                &chain.fastq.Barcode,
-				sample_index_qual:           &chain.fastq.BarcodeQual,
+				id:                  chain.hit_id,
+				aend:                aend,
+				read_name:           &chain.fastq.ReadInfo,
+				read_seq:            chain.read,
+				read_qual:           quals,
+				matches:             matches,
+				mismatches:          mismatches,
+				mismatchLocs:        mismatchLocs,
+				mismatchReadLocs:    mismatchReadLocs,
+				indels:              indels,
+				soft_clipped:        soft_clipping,
+				soft_clipped_length: soft_clipping_length,
+				read1:               chain.read1,
+				mapq_data:           &MapQData{active_alignments_in_molecules: ""},
+				barcode:             &chain.fastq.Barcode,
+				contig:              alignment.Chrom,
+				pos:                 pos,
+				molecule_id:         -1,
+				score:               chain.score,
+				cigar:               alignment.Cigar,
+				read_id:             chain.read_id,
+				mate_id:             chain.mate_id,
+				reversed:            alignment.Reversed,
+				//sample_index:                &chain.fastq.Barcode,
 				read_group:                  &chain.fastq.ReadGroupId,
 				sum_move_probability_change: 1.0,
 				molecule_confidence:         0.00075 * 0.025,
 				duplicate:                   false,
-				//trim_seq:                    trim_seq,
-				//trim_qual:                   trim_qual,
 			}
 
 			full_alignment.log_alignment_probability = scoreAlignment(&full_alignment, nil, 0.0) - *improper_pair_penalty //remove improper pair penalty
@@ -1661,8 +1657,8 @@ func GetChains(ref *GoBwaReference, settings *GoBwaSettings, reads_for_barcode [
 				fastq:     &reads_for_barcode[i],
 				read:      &reads_for_barcode[i].Read1,
 				aln:       &read1_chains[j],
-				//trim_seq:  &reads_for_barcode[i].TrimBases,
-				//trim_qual: &reads_for_barcode[i].TrimQuals,
+				//seq:       &reads_for_barcode[i].TrimBases,
+				//qual:      &reads_for_barcode[i].TrimQuals,
 			}
 			read1_num++
 			toReturn[len(toReturn)-1] = append(toReturn[len(toReturn)-1], read1_chain_n)

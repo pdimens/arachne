@@ -1,5 +1,3 @@
 {
-    "go.toolsEnvVars": {
-        "GOPATH": "/home/pdimens/Documents/naga/go"
-    }
+    "go.toolsEnvVars": {}
 }

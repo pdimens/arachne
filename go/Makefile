@@ -1,5 +1,5 @@
 
-GOBINS=naga
+GOBINS=arachne
 export CGO_LDFLAGS = -L$(shell pwd)/src/gobwa/bwa -L$(shell pwd)/src/jemalloc
 export GOPATH=$(shell pwd)
 

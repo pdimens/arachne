@@ -12,7 +12,8 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"unsafe"
+
+	bam "code.google.com/p/biogo.bam"
 )
 
 const (
@@ -97,10 +98,10 @@ func CreateBAM(ref *gobwa.GoBwaReference, path, read_groups, sample_id string) (
 
 	// Add a program line for lariat
 	prog := bam.NewProgram(
-		"naga",                     // ID
-		"naga",                     // PN
+		"arachne",                  // ID
+		"arachne",                  // PN
 		strings.Join(os.Args, " "), // CL
-		"",                         // PP - no need to indicate previous, since Lariat produces the initial BAM
+		"",                         // PP - no need to indicate previous, since Arachne produces the initial BAM
 		__VERSION__)                // VN
 	h.AddProgram(prog)
 
@@ -188,7 +189,7 @@ func auxify_string(name []byte, data []byte) []byte {
 	vec[0] = name[0]
 	vec[1] = name[1]
 	vec[2] = byte('Z')
-	for i := 0; i < len(data); i++ {
+	for i := range data {
 		vec[3+i] = data[i]
 	}
 	return vec
@@ -199,32 +200,32 @@ func auxify_int(name string, data int) []byte {
 	vec[0] = name[0]
 	vec[1] = name[1]
 	vec[2] = byte('i')
-	for i := uint(0); i < 4; i++ {
+	for i := range uint(4) {
 		vec[3+i] = byte(((data) >> (8 * i)) & 0xff)
 	}
 	return vec
 }
 
-func auxify_float(name string, data float32) []byte {
-	vec := make([]byte, 7)
-	vec[0] = name[0]
-	vec[1] = name[1]
-	vec[2] = byte('f')
-
-	for i := 0; i < 4; i++ {
-
-		vec[3+i] = *(*byte)(unsafe.Pointer(uintptr(unsafe.Pointer(&data)) + uintptr(i)))
-	}
-
-	return vec
-}
+//func auxify_float(name string, data float32) []byte {
+//	vec := make([]byte, 7)
+//	vec[0] = name[0]
+//	vec[1] = name[1]
+//	vec[2] = byte('f')
+//
+//	for i := range 4 {
+//
+//		vec[3+i] = *(*byte)(unsafe.Pointer(uintptr(unsafe.Pointer(&data)) + uintptr(i)))
+//	}
+//
+//	return vec
+//}
 
 func FixCigar(in []uint32) bam.Cigar {
 
 	count := (len(in) / 2)
 	cigar := make(bam.Cigar, count)
 
-	for i := (0); i < count; i++ {
+	for i := range count {
 		cigar[i] = bam.NewCigarOp(bam.CigarOpType(in[i*2]), int(in[i*2+1]))
 	}
 
@@ -383,25 +384,25 @@ func (b *BAMWriter) AppendBam(aln *Alignment, primary *Alignment, debugTags bool
 
 	barcode := strings.Split(string(*aln.barcode), "-")
 	aux := []bam.Aux{}
-	qx := auxify_string([]byte("QX"), *aln.barcode_qual)
-	rx := auxify_string([]byte("RX"), *aln.raw_barcode)
-	aux = append(aux, bam.Aux(rx))
-	aux = append(aux, bam.Aux(qx))
-
-	bc := auxify_string([]byte("BC"), *aln.sample_index)
-	qt := auxify_string([]byte("QT"), *aln.sample_index_qual)
 	as := auxify_int("AS", aln.score)
+	//	qx := auxify_string([]byte("QX"), *aln.barcode_qual)
+	//	rx := auxify_string([]byte("RX"), *aln.raw_barcode)
+	//	aux = append(aux, bam.Aux(rx))
+	//	aux = append(aux, bam.Aux(qx))
 
-	if aln.read1 {
-		tx := auxify_string([]byte("TR"), *aln.trim_seq)
-		tq := auxify_string([]byte("TQ"), *aln.trim_qual)
-		aux = append(aux, bam.Aux(tx))
-		aux = append(aux, bam.Aux(tq))
-	}
-	if len(*aln.sample_index) > 1 {
-		aux = append(aux, bam.Aux(bc))
-		aux = append(aux, bam.Aux(qt))
-	}
+	//bc := auxify_string([]byte("BC"), *aln.sample_index)
+	//qt := auxify_string([]byte("QT"), *aln.sample_index_qual)
+
+	//if aln.read1 {
+	//	tx := auxify_string([]byte("TR"), *aln.trim_seq)
+	//	tq := auxify_string([]byte("TQ"), *aln.trim_qual)
+	//	aux = append(aux, bam.Aux(tx))
+	//	aux = append(aux, bam.Aux(tq))
+	//}
+	//if len(*aln.sample_index) > 1 {
+	//	aux = append(aux, bam.Aux(bc))
+	//	aux = append(aux, bam.Aux(qt))
+	//}
 	if len(*aln.read_group) > 0 {
 		rg := auxify_string([]byte("RG"), []byte(*aln.read_group))
 		aux = append(aux, bam.Aux(rg))
@@ -550,6 +551,9 @@ func (b *BAMWriter) AppendBam(aln *Alignment, primary *Alignment, debugTags bool
 	if len(barcode) > 1 && attach_bx {
 		bx := auxify_string([]byte("BX"), *aln.barcode)
 		aux = append(aux, bam.Aux(bx))
+		vx := auxify_int("VX", 1)
+		aux = append(aux, bam.Aux(vx))
+
 		if aln.active_molecule {
 			md := auxify_string([]byte("DM"), []byte(strconv.FormatFloat(aln.molecule_difference, 'f', 6, 64)))
 			aux = append(aux, bam.Aux(md))
@@ -580,7 +584,7 @@ var complement = [256]byte{
 
 func reverseComp(seq []byte) []byte {
 	toReturn := make([]byte, len(seq))
-	for i := 0; i < len(seq); i++ {
+	for i := range seq {
 		toReturn[i] = complement[seq[len(seq)-i-1]]
 	}
 	return toReturn
@@ -597,7 +601,7 @@ func reverseCigar(cig []uint32) []uint32 {
 
 func reverseQual(qual []byte) []byte {
 	toReturn := make([]byte, len(qual))
-	for i := 0; i < len(qual); i++ {
+	for i := range qual {
 		toReturn[i] = qual[len(qual)-i-1]
 	}
 	return toReturn
@@ -626,24 +630,24 @@ func BamThread(b *BAMWriters) {
 func DoDumpToBam(alignments [][]*Alignment, b *BAMWriters, debugTags bool, attach_bx bool) {
 	reads := 0
 	for _, alignmentArray := range alignments {
-		if alignmentArray == nil || len(alignmentArray) == 0 {
-			panic(fmt.Sprintf("not all read_ids are spoken for"))
+		if len(alignmentArray) == 0 {
+			panic("not all read_ids are spoken for")
 		}
 		read_output := false
-		if alignmentArray != nil {
-			for _, alignment := range alignmentArray {
-				if alignment.active {
-					b.AppendBams(alignment, alignment, debugTags, attach_bx)
-					if alignment.secondary != nil {
-						b.AppendBams(alignment.secondary, alignment, debugTags, attach_bx)
-					}
-					reads++
-					read_output = true
+		//if alignmentArray != nil {
+		for _, alignment := range alignmentArray {
+			if alignment.active {
+				b.AppendBams(alignment, alignment, debugTags, attach_bx)
+				if alignment.secondary != nil {
+					b.AppendBams(alignment.secondary, alignment, debugTags, attach_bx)
 				}
+				reads++
+				read_output = true
 			}
 		}
+		//}
 		if !read_output {
-			panic(fmt.Sprintf("read_id has no active alignment but more than one alignment"))
+			panic("read_id has no active alignment but more than one alignment")
 		}
 	}
 }

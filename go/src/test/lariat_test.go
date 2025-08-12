@@ -17,7 +17,7 @@ func TestLariatZeroLengthRead(t *testing.T) {
 	improper := -17.0
 	inference.SetArgsForTests(inference.LariatArgs{Improper_pair_penalty: &improper})
 	bc_reads := make([]fastqreader.FastQRecord, 0, 50000)
-	bc_reads, _, _ = fastq.ReadBarcodeSet(&bc_reads, 7)
+	bc_reads, _, _ = fastq.ReadBarcodeSet(&bc_reads)
 	barcode_chains, _ := inference.GetChains(ref, settings, bc_reads, arena, 25)
 	inference.GetAlignments(ref, settings, barcode_chains, 17.0, arena)
 	// if it did not crash, it passes

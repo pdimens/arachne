@@ -19,9 +19,7 @@ var DEBUG = flag.Bool("debug", false, "debug mode")
 var positionChunkSize = flag.Int("position_chunk_size", 40000000, "bases across which to chunk within a chromosome for the purposes of bucketing by barcode, sorting, merging, so that we can do a fast samtools cat on the final bams")
 var debugTags = flag.Bool("debugBamTags", false, "debug bam tags")
 var debugPrintMove = flag.Bool("debugPrintMove", false, "print full debug for moves")
-var reference = flag.String("reference", "", "Reference genome FASTA path")
 var centromeres = flag.String("centromeres", "", "tsv with CEN<chrname> <chrname> <start> <stop>, other rows will be ignored")
-var pos_args = "d"
 
 //var R1 = flag.String("R1 reads", "", "fastq.R1.gz input file containing reads [required]")
 //var R2 = flag.String("R2 reads", "", "fastq.R1.gz input file containing reads [required]")
@@ -29,16 +27,18 @@ var pos_args = "d"
 
 func main() {
 	flag.Parse()
-	positionalArgs := flag.Args()
-	if len(positionalArgs) != 3 {
+	if flag.NArg() != 3 {
 		fmt.Fprintf(os.Stderr, "Usage: %s [options] reference.fa reads.R1.fq reads.R2.fq\n", os.Args[0])
-		fmt.Fprintf(os.Stderr, "Expected 3 arguments, got %d\n", len(positionalArgs))
+		fmt.Fprintf(os.Stderr, "Expected 3 arguments, got %d\n", len(flag.Args()))
 		os.Exit(1)
 	}
+	ref := flag.Arg(0)
+	r1 := flag.Arg(1)
+	r2 := flag.Arg(2)
 
 	args := inference.LariatArgs{
-		R1:                    positionalArgs[1],
-		R2:                    positionalArgs[2],
+		R1:                    &r1,
+		R2:                    &r2,
 		Improper_pair_penalty: improper_pair_penalty,
 		Output:                output,
 		Read_groups:           read_groups,
@@ -48,7 +48,7 @@ func main() {
 		PositionChunkSize:     positionChunkSize,
 		DebugTags:             debugTags,
 		DebugPrintMove:        debugPrintMove,
-		Reference:             positionalArgs[0],
+		Reference:             &ref,
 		Centromeres:           centromeres,
 	}
 	inference.Lariat(args)
