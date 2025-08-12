@@ -467,7 +467,8 @@ func DoRFAForOneBarcode(work *WorkUnit,
 	alignments, stashed_alignments := GetAlignments(ref, settings, barcode_chains, 17, arena)
 	//stashed_alignments := StashAlignments(alignments);
 
-	positions := tagBestAlignments(alignments, -17)
+	//	positions := tagBestAlignments(alignments, -17)
+	positions := tagBestAlignments(alignments)
 
 	if len(barcode_reads) > 2 {
 		fmt.Printf("working on barcode %s  num reads: %d  doing RFA: %v  unique_barcode %v \n",
@@ -519,6 +520,7 @@ func DeAlignCrappyReads(reads [][]*Alignment) {
 	}
 }
 
+// TODO FLAG FOR REMOVAL IT'S UNUSED
 func unbarcodeAlignments(alignments [][]*Alignment) {
 	for _, alignmentList := range alignments {
 		for _, alignment := range alignmentList {
@@ -531,7 +533,7 @@ func unbarcodeAlignments(alignments [][]*Alignment) {
 }
 
 func setMoleculeDifferences(candidate_molecules []*CandidateMolecule, setBad bool) {
-	for i := 0; i < len(candidate_molecules); i++ {
+	for i := range candidate_molecules {
 		differences := 0
 		for _, alignment := range candidate_molecules[i].active_alignments.Iter() {
 			differences += alignment.mismatches
@@ -717,7 +719,7 @@ func moleculeMapqProbabilitySums(candidate_molecules []*CandidateMolecule, log_u
 			moleculeMoveProbability := math.Pow(10, sourceSinkChange)
 			for _, alignment := range sourceAlignments {
 				if alignment.active != true {
-					panic(fmt.Sprintf("setting molecule mapq for non active alignment"))
+					panic("setting molecule mapq for non active alignment")
 				}
 				alignment.sum_move_probability_change += moleculeMoveProbability
 			}
@@ -728,10 +730,10 @@ func moleculeMapqProbabilitySums(candidate_molecules []*CandidateMolecule, log_u
 func calculateLogMoleculePenalty(candidate_molecules []*CandidateMolecule, referenceLength float64) float64 {
 	dnaLength := 1000.0
 	numMolecules := 0
-	if candidate_molecules == nil || len(candidate_molecules) == 0 {
+	if len(candidate_molecules) == 0 {
 		return 0.0
 	}
-	for i := 0; i < len(candidate_molecules); i++ {
+	for i := range candidate_molecules {
 		mol := candidate_molecules[i]
 		if mol.active_molecule {
 			smallest := int64(math.MaxInt64)
@@ -774,7 +776,7 @@ func checkMates(alignments [][]*Alignment) {
 							activeMate = mateAln
 						}
 					}
-					panic(fmt.Sprintf("something wrong with mate of ", alignment.id, alignment.read_id, " is ", alignment.mate_alignment.id, alignment.mate_alignment.read_id, "actually active id", activeMate.id, activeMate.read_id))
+					panic(fmt.Sprint("something wrong with mate of ", alignment.id, alignment.read_id, " is ", alignment.mate_alignment.id, alignment.mate_alignment.read_id, "actually active id", activeMate.id, activeMate.read_id))
 				}
 			}
 		}
@@ -800,11 +802,11 @@ func checkMates(alignments [][]*Alignment) {
 //     which is p_final = 1.0/sum_i(p(move_i)) and then calculate a mapq from that probability = -10*log10(1-p_final)
 //
 // Finally we take the min of the two approaches as the final mapq
-func estimateMapQualities(barcode int,
+func estimateMapQualities(barcode int, //TODO remove, this isn't used
 	alignments [][]*Alignment,
 	candidate_molecules []*CandidateMolecule,
 	log_unpaired_probability float64,
-	stats *RFAStats) {
+	stats *RFAStats) { //TODO remove, this isn't used
 	read_copies_in_active_molecule := map[int]int{}     //TODO remove, book keeping
 	read_copies_not_in_active_molecule := map[int]int{} //TODO remove, book keeping
 	unique_molecules_active := map[int]map[int]bool{}
@@ -1165,7 +1167,7 @@ func fastScore(sourceMolecule, sinkMolecule *CandidateMolecule, log_unpaired_pro
 				numMismatch, has := sourceMolecule.mismatchLocs[mismatchLoc]
 				if !has || numMismatch == 0 {
 					//there is a problem
-					panic(fmt.Sprintf("source molecule should have this entry", has, numMismatch, sourceAlignment.contig, sourceAlignment.pos, sourceAlignment.id, sourceAlignment.read_id, mismatchLoc))
+					panic(fmt.Sprint("source molecule should have this entry", has, numMismatch, sourceAlignment.contig, sourceAlignment.pos, sourceAlignment.id, sourceAlignment.read_id, mismatchLoc))
 				}
 				_, has = sourceMismatchRemoveCount[mismatchLoc]
 				sourceMismatchRemoveCount[mismatchLoc]++
@@ -1277,7 +1279,7 @@ func acceptMove(move Move) {
 			num, has := move.source.mismatchLocs[mismatchLoc]
 			if !has || num == 0 {
 				//there is a problem
-				panic(fmt.Sprintf("source molecule should have this entry"))
+				panic("source molecule should have this entry")
 			}
 			if *debugPrintMove {
 				fmt.Println("removing mismatchLoc", mismatchLoc, move.source.mismatchLocs[mismatchLoc])
@@ -1398,7 +1400,9 @@ func markBestAlignmentForReadInMolecule(molecules []*CandidateMolecule) {
 }
 
 // alignments sent back sorted by position
-func tagBestAlignments(alignments [][]*Alignment, improper_pair_penalty float64) [][]*Alignment {
+// func tagBestAlignments(alignments [][]*Alignment, improper_pair_penalty float64) [][]*Alignment {
+func tagBestAlignments(alignments [][]*Alignment) [][]*Alignment {
+	//TODO remove improper_pair_penalty b/c it's unused
 	positions := [][]*Alignment{}
 	contigs := map[string]int{}
 	read_ids_touched := make([]bool, len(alignments))
@@ -1537,7 +1541,7 @@ func GetAlignments(ref *GoBwaReference, settings *GoBwaSettings, barcode_chains 
 							continue
 						}
 						if readOffset+match >= len(readSeq) {
-							panic(fmt.Sprintf("cigar string represents sequence larger than read?", len(readSeq), alignment.Cigar))
+							panic(fmt.Sprint("cigar string represents sequence larger than read?", len(readSeq), alignment.Cigar))
 						}
 						if refSeqOffset+match < len(refSeq) && readOffset+match < len(readSeq) && refSeq[refSeqOffset+match] != readSeq[readOffset+match] {
 							if alignment.Reversed {

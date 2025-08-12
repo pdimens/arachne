@@ -47,7 +47,8 @@ func CreateBAM(ref *gobwa.GoBwaReference, path, read_groups, sample_id string) (
 	bw := &BAMWriter{}
 	bw.Contigs = make(map[string]*bam.Reference)
 
-	references := make([]*bam.Reference, 0, 0)
+	references := make([]*bam.Reference, 0)
+	//references := make([]*bam.Reference, 0, 0)
 
 	gobwa.EnumerateContigs(ref, func(name string, length int) {
 		r, err := bam.NewReference(name, name, "human", length, nil, nil)
