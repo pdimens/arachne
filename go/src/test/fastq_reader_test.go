@@ -2,49 +2,42 @@
 
 package test
 
-import "fastqreader"
-import "testing"
+import (
+	"fastqreader"
+	"testing"
+)
 
 func TestReader(t *testing.T) {
 
-	a, b := fastqreader.OpenFastQ("./inputs/1.fq")
+	a, b := fastqreader.OpenFastQ("./inputs/1.R2.fq.gz", "./inputs/1.R2.fq.gz")
 	Check(t, a != nil, "1")
 	Check(t, b == nil, "2")
 
 	var ff fastqreader.FastQRecord
 
-	a.ReadOneLine(&ff, 2)
-	a.ReadOneLine(&ff, 2)
-	a.ReadOneLine(&ff, 2)
+	a.ReadOneLine(&ff)
+	a.ReadOneLine(&ff)
+	a.ReadOneLine(&ff)
 	Check(t, string(ff.Read1) == "CCGCCCTAGCCAGGAGAGAAGCACTTCTTACCTGGGTTTCTTAGAGGCTTTGGCTGGCAATATTGTCAGCACCAGAGAGGACTTCTCGATGGCTGA", "a")
 	Check(t, string(ff.ReadQual1) == "BFFFFFFFFFFIIIIIFFIIIIIIIIFIIIIIFIFIFFIIFIIIIIIIIIIIIIIIFFFFFFFFFFFFFFFFFFFBFFFFFFFFFFFFFFFFFFFF", "b")
 	Check(t, string(ff.Read2) == "GTGGTAGTCTCCTGTTCAGCCATCGAGAAGTCCTCTCTGGTGCTGACAATATTGCCAGCCAAAGCCTCTAAGAAACCCAGGTAAGAAGTGCTTCTCTC", "c")
 	Check(t, string(ff.ReadQual2) == "BBBFFFFFFFFFFIIFIIFIIIIIIIIIIIIIIIIFIIIFFFIIIIIIIIIIIIIIIIIIIIFIIIIIIIIIIFFFFFFFFBBFFFFFBBFFFFFFFF", "d")
-	Check(t, string(ff.Barcode10X) == "AAACAGAGAAAGAT", "e")
-	Check(t, string(ff.Barcode10XQual) == "BBBFFFFFFFFFFI", "f")
+	Check(t, string(ff.Barcode) == "AAACAGAGAAAGAT", "e")
 	Check(t, string(ff.Barcode) == "CCGAACGC", "g")
-	Check(t, string(ff.BarcodeQual) == "BBBFFFFF", "h")
 	Check(t, ff.ReadInfo == "HWI-D00684:80:HFCKCADXX:2:2113:9410:56703", "i")
 }
 
 func TestReader2(t *testing.T) {
-	a, _ := fastqreader.OpenFastQ("./inputs/1.fq")
+	a, _ := fastqreader.OpenFastQ("./inputs/1.R1.fq.gz", "./inputs/1.R2.fq.gz")
 
-	set1, _, _ := a.ReadBarcodeSet(nil, 2)
+	set1, _, _ := a.ReadBarcodeSet(nil)
 	Check(t, set1[0].ReadInfo == "HWI-D00684:80:HFCKCADXX:2:2113:17628:14813", "a")
 	Check(t, string(set1[1].Read1) == "CTGCTGCTCTCTCCATGTTTTTCCTGCACTCCTTGCAGGGACCTGAATAGCATGAACTGACTTTTCCTTGACGTAGTTGCTTCGTAGGATACTTCT", "b")
 
-	set2, _, _ := a.ReadBarcodeSet(&set1, 2)
+	set2, _, _ := a.ReadBarcodeSet(&set1)
 	Check(t, set2[0].ReadInfo == "HWI-D00684:80:HFCKCADXX:2:2112:14227:100270", "c")
 
 	Check(t, string(set2[1].Read1) == "CGGGCAGCAGCCATGGGATGCAGGACCTGCAGTCCACACATGTCACATGAATCTCCATGGAGAGGCACACAGTTCTCCCCATCTCAGCACTCTCTC", "d")
-}
-
-func TestShortR1(t *testing.T) {
-	a, _ := fastqreader.OpenFastQ("./inputs/zero_length_read_test.fastq.gz")
-
-	set1, _, _ := a.ReadBarcodeSet(nil, 7)
-	Check(t, len(set1) > 0, "got not reads")
 }
 
 func TestZip(t *testing.T) {

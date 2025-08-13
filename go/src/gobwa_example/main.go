@@ -6,12 +6,13 @@ This is a simple example that demonstrates how to use BWA from go.
 
 package main
 
-import "bufio"
-import "os"
-import . "gobwa"
-import "log"
-import "fmt"
-import "strings"
+import (
+	"bufio"
+	"fmt"
+	. "gobwa"
+	"os"
+	"strings"
+)
 
 func main() {
 	print("Waking up\n")
@@ -40,17 +41,17 @@ func main() {
 		// fmt.Println(string(read2))
 		// chains := GoBwaChain(ref, settings, string(line))
 		// alignments := GoBwaAlign(ref, settings, string(line), arena)
-		alignments1, alignments2 := GoBwaMemMateSW(ref , settings , &read1 , &read2 , arena , 25)
+		alignments1, alignments2 := GoBwaMemMateSW(ref, settings, &read1, &read2, arena, 25)
 		// log.Printf("%v",alignments)
 		fmt.Println("Read 1")
 		for i := 0; i < len(alignments1) && i < max_alignments; i++ {
 			// log.Printf("%v",alignments[i])
-			fmt.Println(alignments1[i].Contig, alignments1[i].Offset,alignments1[i].Score, alignments1[i].Reversed)
+			fmt.Println(alignments1[i].Contig, alignments1[i].Offset, alignments1[i].Score, alignments1[i].Reversed)
 		}
 		fmt.Println("Read 2")
 		for i := 0; i < len(alignments2) && i < max_alignments; i++ {
 			// log.Printf("%v",alignments[i])
-			fmt.Println(alignments2[i].Contig, alignments2[i].Offset,alignments2[i].Score, alignments2[i].Reversed)
+			fmt.Println(alignments2[i].Contig, alignments2[i].Offset, alignments2[i].Score, alignments2[i].Reversed)
 		}
 		// log.Printf("%v",alignments)
 		// print("Processing....")

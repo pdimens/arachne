@@ -9,11 +9,11 @@ import (
 	"testing"
 )
 
-func TestLariatZeroLengthRead(t *testing.T) {
+func TestLariat(t *testing.T) {
 	ref := gobwa.GoBwaLoadReference("inputs/phix/PhiX.fa")
 	settings := gobwa.GoBwaAllocSettings()
 	arena := gobwa.NewArena()
-	fastq, _ := fastqreader.OpenFastQ("inputs/zero_length_read_test.fastq.gz")
+	fastq, _ := fastqreader.OpenFastQ("./inputs/1.R1.fq.gz", "./inputs/1.R2.fq.gz")
 	improper := -17.0
 	inference.SetArgsForTests(inference.LariatArgs{Improper_pair_penalty: &improper})
 	bc_reads := make([]fastqreader.FastQRecord, 0, 50000)
