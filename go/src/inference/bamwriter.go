@@ -567,7 +567,8 @@ func (b *BAMWriter) AppendBam(aln *Alignment, primary *Alignment, debugTags bool
 func (b *BAMWriters) Close() {
 	b.channel <- nil
 	b.done.Lock()
-	b.done.Unlock()
+	//TODO MAKE SURE THIS DEFER IS LEGIT
+	defer b.done.Unlock()
 }
 
 var complement = [256]byte{

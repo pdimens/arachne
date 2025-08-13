@@ -373,7 +373,8 @@ func Lariat(args LariatArgs) {
 
 	/* Wait for each worker to finish any final tasks and exit */
 	worker_lock.Lock()
-	worker_lock.Unlock()
+	//TODO MAKE SURE THIS DEFER IS LEGIT
+	defer worker_lock.Unlock()
 
 	/* Close and flush the BAM file */
 	bams.Close()
@@ -459,7 +460,7 @@ func DoRFAForOneBarcode(work *WorkUnit,
 
 	stats.total = 0
 	stats.mapq = 0
-	barcode_num := work.barcodenum
+	//barcode_num := work.barcodenum
 	barcode_reads := work.reads
 	arena := NewArena()
 	worthRunningRFA := worthRunningRFA(barcode_reads, work.unique_barcode)
@@ -479,7 +480,8 @@ func DoRFAForOneBarcode(work *WorkUnit,
 	}
 
 	if !worthRunningRFA {
-		estimateMapQualities(-1, alignments, nil, config.improper_penalty, stats)
+		//estimateMapQualities(-1, alignments, nil, config.improper_penalty, stats)
+		estimateMapQualities(alignments, nil, config.improper_penalty)
 		markDuplicates(alignments)
 		CheckSplitReads(stashed_alignments, centromeres)
 		DumpToBams(&Data{alignments: alignments, reads: reads, attach_bx: work.unique_barcode}, bams)
@@ -503,7 +505,8 @@ func DoRFAForOneBarcode(work *WorkUnit,
 
 	optimized := optimizer.Optimize(optimizer.Optimizable(*optimizer_obj), 1, 2, 4*len(candidate_molecules)).(Optimizer)
 
-	estimateMapQualities(barcode_num, optimized.alignments, optimized.candidate_molecules, optimized.log_unpaired_probability, stats)
+	//estimateMapQualities(barcode_num, optimized.alignments, optimized.candidate_molecules, optimized.log_unpaired_probability, stats)
+	estimateMapQualities(optimized.alignments, optimized.candidate_molecules, optimized.log_unpaired_probability)
 	markDuplicates(alignments)
 	CheckSplitReads(stashed_alignments, centromeres)
 	DumpToBams(&Data{optimized.alignments, reads, true}, bams)
@@ -520,18 +523,20 @@ func DeAlignCrappyReads(reads [][]*Alignment) {
 	}
 }
 
-// TODO FLAG FOR REMOVAL IT'S UNUSED
-func unbarcodeAlignments(alignments [][]*Alignment) {
-	for _, alignmentList := range alignments {
-		for _, alignment := range alignmentList {
-			if alignment.active {
-				barcode := []byte(strings.Split(string(*alignment.barcode), "-")[0])
-				alignment.barcode = &barcode
+/*
+TODO FLAG FOR REMOVAL IT'S UNUSED
+
+	func unbarcodeAlignments(alignments [][]*Alignment) {
+		for _, alignmentList := range alignments {
+			for _, alignment := range alignmentList {
+				if alignment.active {
+					barcode := []byte(strings.Split(string(*alignment.barcode), "-")[0])
+					alignment.barcode = &barcode
+				}
 			}
 		}
 	}
-}
-
+*/
 func setMoleculeDifferences(candidate_molecules []*CandidateMolecule, setBad bool) {
 	for i := range candidate_molecules {
 		differences := 0
@@ -802,11 +807,12 @@ func checkMates(alignments [][]*Alignment) {
 //     which is p_final = 1.0/sum_i(p(move_i)) and then calculate a mapq from that probability = -10*log10(1-p_final)
 //
 // Finally we take the min of the two approaches as the final mapq
-func estimateMapQualities(barcode int, //TODO remove, this isn't used
+func estimateMapQualities( //barcode int, //TODO remove, this isn't used
 	alignments [][]*Alignment,
 	candidate_molecules []*CandidateMolecule,
 	log_unpaired_probability float64,
-	stats *RFAStats) { //TODO remove, this isn't used
+	//stats *RFAStats    //TODO remove, this isn't used
+) {
 	read_copies_in_active_molecule := map[int]int{}     //TODO remove, book keeping
 	read_copies_not_in_active_molecule := map[int]int{} //TODO remove, book keeping
 	unique_molecules_active := map[int]map[int]bool{}
