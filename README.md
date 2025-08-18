@@ -37,7 +37,8 @@ bin/arachne -h  # Show cmd-line flags
 ## Input File Format
 > [!NOTE]
 > **TL;DR:** The only distinction between the 'standard' linked-read FASTQ files and regular FASTQ files
-> is the presence of the `BX:Z` and `VX:i` SAM tags.
+> is the presence of the `BX:Z` and `VX:i` SAM tags. The format also uses `/1` and `/2` (the older format)
+> to denote a forward/reverse read. 
 
 No one wins if everyone is using their own platform-specific file formats. Regardless of the technology used to create
 the linked reads, Arachne accepts what is called the 'standard' format shown below. This format conforms to the FASTQ
