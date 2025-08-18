@@ -36,7 +36,7 @@ bin/arachne -h  # Show cmd-line flags
 
 ## Input File Format
 > [!NOTE]
-> TL;DR: The only real distinction between the 'standard' linked-read FASTQ files and regular FASTQ files
+> **TL;DR:** The only distinction between the 'standard' linked-read FASTQ files and regular FASTQ files
 > is the presence of the `BX:Z` and `VX:i` SAM tags.
 
 No one wins if everyone is using their own platform-specific file formats. Regardless of the technology used to create
