@@ -1,6 +1,6 @@
 ![arachne_logo](misc/arachne.png)
 
-# arachne: linked-read aligner
+# Arachne linked-read aligner
 
 > [!WARNING]
 > This is a work in progress. It's broken. Terribly broken. I don't know **anything**
@@ -8,21 +8,17 @@
 > paired-end reads for all linked-read data types EXCEPT 10X. Wish me luck. Please
 > send help.
 
-arachne is an aligner for barcoded linked reads, produced by the 10X Genomics GemCode™ platform. All the linked reads for a single barcode are aligned simultaneously, with the prior knowledge that the reads arise from a small number of long (10kb - 200kb) molecules. This approach allows reads to be mapped in repetitive regions of the genome.
+Arachne is a successor/extension to the Lariat aligner for barcoded linked reads, originally produced by the 10X Genomics.
+Lariat was written for the 10X Genomics GEMcode platform and modified FASTQ data format and including in the LongRanger software
+suite. Since the 10X linked-read chemistry was discontinued in 2019, Arachne drops support for 10X-style data and instead supports
+modern the linked-read data types **haplotagging**, **stLFR**, and **TELLseq**. Lariat was designed to align all reads sharing the 
+same barcode simultanously, with the prior knowledge that the reads came from a small numberof long (10kb - 200kb) molecules. This 
+approach results in reads mapping better in repetitive regions of the genome.
 
-arachne is based on the original RFA method developed by Alex Bishara, Yuling Liu et al in Serafim Batzoglou’s lab at Stanford: [Genome Res. 2015. 25:1570-1580](http://genome.cshlp.org/content/25/10/1570).  In addition to developing the original model for RFA, Alex Bishara and Yuling Liu both contributed substantially to the Lariant implementation maintained in XXXXXX.
-
-arachne generates candidate alignments by calling the BWA C API, then performs the RFA inference to select the final mapping position and MAPQ.
+Lariat/Arachne is based on the original RFA method developed by Alex Bishara, Yuling Liu et al in Serafim Batzoglou’s lab at Stanford: [Genome Res. 2015. 25:1570-1580](http://genome.cshlp.org/content/25/10/1570). In addition to developing the original model for RFA, Alex Bishara and Yuling Liu both contributed substantially to the [Lariat implementation](https://github.com/10XGenomics/lariat).
 
 ## Usage Notes: 
-
-*NOTE*: If you just want to get arachne-aligned BAM files from Chromium Linked-Read data, you can run the ALIGN pipeline in [Long Ranger 2.2](https://support.10xgenomics.com/genome-exome/software/downloads/latest). It runs the FASTQ processing and alignment steps only.
-
-
-* arachne currently is tested with Go version 1.9.2.
-* arachne currently requires a non standard format for input reads. We recommend using the arachne build bundled with the 10X Genomics Long Ranger software (http://software.10xgenomics.com/)
-
-Please contact us if you're interested in using arachne independently of the Long Ranger pipeline.
+- none b/c it doesn't yet work
 
 ## Build notes:
 In the arachne directory, run `git submodule --init --recursive` to ensure you've checked out the BWA submodule.
@@ -36,24 +32,36 @@ make           # Build arachne
 bin/arachne -h  # Show cmd-line flags
 ```
 
-For experimental purposes you can replace the arachne binary in a Long Ranger build with bin/arachne.
-
 
 ## Input File Format
+Regardless of the technology used to create the linked reads, Arachne accepts what is called the "standard" format shown below. The "standard" format is a FASTQ spec-compliant format
+that uses the "old" `/1` format to denote if a read is forward or reverse, along with providing the `BX:Z` tag to denote the barcode and the `VX:i` tag to denote whether the barcode
+is considered valid for the technology used to create it. For example, in TELLseq data, an `N` in a barcode (e.g. `ATGGAGANAA`) invalidates the barcode.
+For completeness, the 'standard' linked-read FASTQ format follows:
 
-The SORT_FASTQS stage in Long Ranger creates specially formatted, barcode sorted input for arachne.  We recommend using those input files to experiment with changes to arachne.
-arachne requires input data in a non-standard FASTQ-like format. Each read-pair is formatted as a record of 9 consecutive lines containing:
-* read header
-* read1 sequence
-* read1 quals
-* read2 sequence
-* read2 quals
-* 10X barcode string
-* 10X barcode quals
-* sample index sequence
-* sample index quals
+| record line | what's on it |
+|:---:|:---------------------|
+|1| Read ID starting with `@` and ending with `/1` (R1) or `/2` (R2). After the read ID, there is TAB followed by tab-delimited SAM tags, but must include `BX:Z` and `VX:i` |
+|2| Sequence as ATCGN nucleotides |
+|3| `+` sign |
+|4| PHRED quality scores for bases in line 2 |
 
-Read pairs must be sorted by the 10X barcode string. The 10X barcode string is of the form 'ACGTACGTACGTAC-1'. 
+- `BX:Z` is the barcode, which is any combination of non-space characters
+  - e.g. `BX:Z:1_2_3`, `BX:Z:A03C55B49D19`, `BX:Z:ATTTAGGGAGAGAGA`
+- `VX:i` is the validation tag
+  - `VX:i:0` = invalid | `VX:i:1` = valid
+
+```
+@SEQID/1 BX:Z:BARCODE VX:i:0/1
+ATGCGNA.......................
++
+FFFFIII.......................
+```
+
+Using a TELLseq-style barcode `ATGGAGANAA`, where an `N` indicates it's invalid, the first line of a FASTQ record in the forward read would look like (SAM tag order doesn't matter):
+```
+@SEQID/1 BX:Z:ATGGAGANAA VX:i:0
+````
 
 ## License
 arachne is distributed under the MIT license. arachne links to [BWA](https://github.com/lh3/bwa) at the object level. arachne include the BWA source code via git submodule. arachne links to the Apache2 branch of the BWA repo, which is licensed under the Apache2 license.
