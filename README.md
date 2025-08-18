@@ -8,20 +8,22 @@
 > paired-end reads for all linked-read data types EXCEPT 10X. Wish me luck. Please
 > send help.
 
-Arachne is a successor/extension to the Lariat aligner for barcoded linked reads, originally produced by the 10X Genomics.
-Lariat was written for the 10X Genomics GEMcode platform and included in the LongRanger software
-suite to use with a bespoke FASTQ-adjacent data format. Since the 10X linked-read chemistry was discontinued in 2019, Arachne drops
-support for 10X-style data and instead supports modern the linked-read data types **haplotagging**, **stLFR**, and **TELLseq**. In the
-effort of **ridding ourselves of unnecessary platform-specific linked-read data formats**, Arachne's caveat is that it expects the ['standard' data format](#input-file-format). Don't worry, we provide a lossless converter that accepts haplotagging, stLFR, and TELLseq FASTQ data.
+Arachne is the platform-agnostic successor to the [Lariat](https://github.com/10XGenomics/lariat) aligner for
+barcoded linked reads, which was originally written for the 10X Genomics GEMcode platform and included in the
+LongRanger software suite to use with a bespoke FASTQ-adjacent data format. The 10X linked-read chemistry
+was discontinued in 2019 and Arachne drops support for 10X-style data in favor of supporting modern the linked-read
+data types **haplotagging**, **stLFR**, and **TELLseq**.
+In the effort of **ridding ourselves of unnecessary platform-specific linked-read data formats**, Arachne's caveat
+is that it expects the ['standard' data format](#input-file-format). Don't worry, we provide a lossless converter
+that accepts haplotagging, stLFR, and TELLseq FASTQ data.
 
 ### About Lariat
 Lariat was designed to align all reads sharing the same barcode simultaneously, assuming that those reads came from the
 same molecule. This approach results in reads mapping better in repetitive regions of the genome. Lariat is based on the original RFA method developed by Alex Bishara, Yuling Liu et al in Serafim Batzoglou’s lab at Stanford: [Genome Res. 2015. 25:1570-1580](http://genome.cshlp.org/content/25/10/1570). Alex Bishara and Yuling Liu also both contributed substantially to the [Lariat implementation](https://github.com/10XGenomics/lariat) of the algorithm.
 
-## Usage Notes: 
-- none b/c it doesn't yet work
 
-## Build notes:
+<details>
+<summary>Build Notes</summary>
 In the arachne directory, run `git submodule --init --recursive` to ensure you've checked out the BWA submodule.
 
 Make sure you have a working Go installation (version >= 1.9.2). `go version` should return something like "go version go1.9.2 linux/amd64"
@@ -32,6 +34,7 @@ cd go
 make           # Build arachne
 bin/arachne -h  # Show cmd-line flags
 ```
+</details>
 
 
 ## Input File Format
@@ -73,6 +76,3 @@ Using a TELLseq-style barcode `ATGGAGANAA`, where an `N` indicates it's invalid,
 ```
 @SEQID/1 BX:Z:ATGGAGANAA VX:i:0
 ````
-
-## License
-arachne is distributed under the MIT license. arachne links to [BWA](https://github.com/lh3/bwa) at the object level. arachne include the BWA source code via git submodule. arachne links to the Apache2 branch of the BWA repo, which is licensed under the Apache2 license.
