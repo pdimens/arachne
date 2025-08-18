@@ -1,4 +1,4 @@
-![arachne_logo](misc/arachne.png)
+![arachne_logo](misc/logo.png)
 
 # Arachne linked-read aligner
 
