@@ -50,7 +50,7 @@ between barcode formats. This also means it is future-proofed against yet-to-be-
 encodings, etc. The trick is the inclusion of two specific SAM-compliant tags: the `BX:Z` tag to denote the barcode and the
 `VX:i` tag to denote whether the barcode is considered valid for whatever the encoding design is. This means the **location**
 and **meaning** of the barcodes are always consistent across formats. For example, in TELLseq data, an `N` in a barcode
-(e.g. `ATGGAGANAA`) indicating the barcode is invalid, so it would inherit a `VX:i` tag of `0` (e.g. `VX:i:0`).
+(e.g. `ATGGAGANAA`) indicates the barcode is invalid, so it would inherit a `VX:i` tag of `0` (e.g. `VX:i:0`).
 For completeness,the 'standard' linked-read FASTQ format follows:
 
 | record line | what's in it                                                                                                                                                             |
