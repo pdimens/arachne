@@ -49,7 +49,7 @@ and **meaning** of the barcodes are always consistent across formats. For exampl
 (e.g. `ATGGAGANAA`) indicating the barcode is invalid, so it would inherit a `VX:i` tag of `0` (e.g. `VX:i:0`).
 For completeness,the 'standard' linked-read FASTQ format follows:
 
-| record line | what's on it                                                                                                                                                             |
+| record line | what's in it                                                                                                                                                             |
 |:-----------:|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 |      1      | Read ID starting with `@` and ending with `/1` (R1) or `/2` (R2). After the read ID, there is TAB followed by any number of tab-delimited SAM tags, but must include `BX:Z` and `VX:i` tags|
 |      2      | Sequence as ATCGN nucleotides                                                                                                                                            |
