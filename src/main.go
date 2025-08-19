@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/pdimens/arachne/arachne"
+	arachne "github.com/pdimens/arachne/aligner"
 )
 
 /*Command line arguments*/
@@ -17,9 +17,11 @@ var read_groups = flag.String("read_groups", "sample:library:gem_group:flowcell:
 var sample_id = flag.String("sample_id", "default_sample_id", "sample name")
 var threads = flag.Int("threads", 8, "How many threads to use")
 var DEBUG = flag.Bool("debug", false, "debug mode")
-var positionChunkSize = flag.Int("position_chunk_size", 40000000, "bases across which to chunk within a chromosome for the purposes of bucketing by barcode, sorting, merging, so that we can do a fast samtools cat on the final bams")
+var positionChunkSize = flag.Int("position_chunk_size", 40000000, "bases across which to partition a contig for bucketing by barcode, sorting, merging (speeds up final BAM concatenation")
 var debugTags = flag.Bool("debugBamTags", false, "debug bam tags")
 var debugPrintMove = flag.Bool("debugPrintMove", false, "print full debug for moves")
+
+// TODO CHECK THIS CENTROMETE FILE FORMAT
 var centromeres = flag.String("centromeres", "", "tsv with CEN<chrname> <chrname> <start> <stop>, other rows will be ignored")
 
 //var R1 = flag.String("R1 reads", "", "fastq.R1.gz input file containing reads [required]")
