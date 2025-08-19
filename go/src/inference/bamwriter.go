@@ -97,7 +97,7 @@ func CreateBAM(ref *gobwa.GoBwaReference, path, read_groups, sample_id string) (
 		}
 	}
 
-	// Add a program line for lariat
+	// Add a program line for arachne
 	prog := bam.NewProgram(
 		"arachne",                  // ID
 		"arachne",                  // PN
@@ -491,7 +491,7 @@ func (b *BAMWriter) AppendBam(aln *Alignment, primary *Alignment, debugTags bool
 	}
 	if debugTags && aln.mapq_data != nil {
 		// NOTE: these statistics generally refer to the configuration of the active molecules after the
-		// Lariat optimization process has finished.
+		// Arachne optimization process has finished.
 
 		// Total number of alignments returned by BWA
 		cp := auxify_string([]byte("CP"), []byte(strconv.FormatInt(int64(aln.mapq_data.copies), 10)))

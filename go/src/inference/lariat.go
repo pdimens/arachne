@@ -26,7 +26,7 @@ import (
 // build version -- get set statically by a linker flag
 var __VERSION__ string
 
-type LariatArgs struct {
+type ArachneArgs struct {
 	R1                    *string
 	R2                    *string
 	Improper_pair_penalty *float64
@@ -264,10 +264,10 @@ type Region struct {
 
 var centromeres map[string]Region
 
-// this is the actual lariat program
-func Lariat(args LariatArgs) {
+// this is the actual arachne program
+func Arachne(args ArachneArgs) {
 
-	print(fmt.Sprintf("Starting lariat. Version: %s\n", __VERSION__))
+	print(fmt.Sprintf("Starting arachne. Version: %s\n", __VERSION__))
 
 	r1 = args.R1
 	r2 = args.R2
@@ -378,7 +378,7 @@ func Lariat(args LariatArgs) {
 
 	/* Close and flush the BAM file */
 	bams.Close()
-	fmt.Println("Lariat completed successfully")
+	fmt.Println("Arachne completed successfully")
 }
 
 func loadCentromeres(filename *string) map[string]Region {
@@ -593,7 +593,7 @@ func scoreAlignment(aln *Alignment, mate *Alignment, log_molecule_penalty float6
 	return score
 }
 
-func SetArgsForTests(args LariatArgs) {
+func SetArgsForTests(args ArachneArgs) {
 	r1 = args.R1
 	r2 = args.R2
 	improper_pair_penalty = args.Improper_pair_penalty

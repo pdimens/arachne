@@ -36,7 +36,7 @@ func main() {
 	r1 := flag.Arg(1)
 	r2 := flag.Arg(2)
 
-	args := inference.LariatArgs{
+	args := inference.ArachneArgs{
 		R1:                    &r1,
 		R2:                    &r2,
 		Improper_pair_penalty: improper_pair_penalty,
@@ -51,5 +51,5 @@ func main() {
 		Reference:             &ref,
 		Centromeres:           centromeres,
 	}
-	inference.Lariat(args)
+	inference.Arachne(args)
 }
