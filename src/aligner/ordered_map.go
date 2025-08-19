@@ -1,6 +1,6 @@
 // Copyright (c) 2015 10X Genomics, Inc. All rights reserved.
 
-package arachne
+package aligner
 
 type OrderedMap struct {
 	index         map[int]int //index of a key k
