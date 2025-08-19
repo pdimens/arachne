@@ -24,6 +24,7 @@ same molecule. This approach results in reads mapping better in repetitive regio
 
 <details>
 <summary>Build Notes</summary>
+
 In the arachne directory, run `git submodule --init --recursive` to ensure you've checked out the BWA submodule.
 
 Make sure you have a working Go installation (version >= 1.9.2). `go version` should return something like "go version go1.9.2 linux/amd64"
