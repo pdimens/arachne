@@ -32,7 +32,7 @@ func main() {
 	flag.Parse()
 	if flag.NArg() != 3 {
 		fmt.Fprintf(os.Stderr, "Usage: %s [options] reference.fa reads.R1.fq reads.R2.fq\n", os.Args[0])
-		fmt.Fprintf(os.Stderr, "Expected 3 arguments, got %d\n", len(flag.Args()))
+		fmt.Fprintf(os.Stderr, "Expected 3 arguments, got %d\n", flag.NArg())
 		os.Exit(1)
 	}
 	ref := flag.Arg(0)
