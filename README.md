@@ -1,4 +1,6 @@
-# arachne: linked-read aligner
+![arachne_logo](misc/logo.png)
+
+# Arachne linked-read aligner
 
 > [!WARNING]
 > This is a work in progress. It's broken. Terribly broken. I don't know **anything**
@@ -6,18 +8,23 @@
 > paired-end reads for all linked-read data types EXCEPT 10X. Wish me luck. Please
 > send help.
 
-Arachne is an aligner for barcoded linked reads, produced by the 10X Genomics GemCode™ platform. All the linked reads for a single barcode are aligned simultaneously, with the prior knowledge that the reads arise from a small number of long (10kb - 200kb) molecules. This approach allows reads to be mapped in repetitive regions of the genome.
+Arachne is the platform-agnostic successor to the [Lariat](https://github.com/10XGenomics/lariat) aligner for
+barcoded linked reads, which was originally written for the 10X Genomics GEMcode platform and included in the
+LongRanger software suite to use with a bespoke FASTQ-adjacent data format. The 10X linked-read chemistry
+was discontinued in 2019 and Arachne drops support for 10X-style data in favor of supporting modern the linked-read
+data types **haplotagging**, **stLFR**, and **TELLseq**.
+In the effort of **ridding ourselves of unnecessary platform-specific linked-read data formats**, Arachne's caveat
+is that it expects the ['standard' data format](#input-file-format). Don't worry, we provide a lossless converter
+that accepts haplotagging, stLFR, and TELLseq FASTQ data.
 
-Lariat/arachne is based on the original RFA method developed by Alex Bishara, Yuling Liu et al in Serafim Batzoglou’s lab at Stanford: [Genome Res. 2015. 25:1570-1580](http://genome.cshlp.org/content/25/10/1570).  In addition to developing the original model for RFA, Alex Bishara and Yuling Liu both contributed substantially to the Lariant implementation maintained in XXXXXX.
+### About Lariat
+Lariat was designed to align all reads sharing the same barcode simultaneously, assuming that those reads came from the
+same molecule. This approach results in reads mapping better in repetitive regions of the genome. Lariat is based on the original RFA method developed by Alex Bishara, Yuling Liu et al in Serafim Batzoglou’s lab at Stanford: [Genome Res. 2015. 25:1570-1580](http://genome.cshlp.org/content/25/10/1570). Alex Bishara and Yuling Liu also both contributed substantially to the [Lariat implementation](https://github.com/10XGenomics/lariat) of the algorithm.
 
-Lariat/arachne generates candidate alignments by calling the BWA C API, then performs the RFA inference to select the final mapping position and MAPQ.
 
-## Usage Notes: 
+<details>
+<summary>Build Notes</summary>
 
-* arachne currently is tested with Go version 1.9.2.
-* arachne currently requires a non standard format for input reads. BUT NOT FOR LONG
-
-## Build notes:
 In the arachne directory, run `git submodule --init --recursive` to ensure you've checked out the BWA submodule.
 
 Make sure you have a working Go installation (version >= 1.9.2). `go version` should return something like "go version go1.9.2 linux/amd64"
@@ -25,21 +32,40 @@ Make sure you have a working Go installation (version >= 1.9.2). `go version` sh
 From the root of the repo:
 ```
 cd go
-make           # Build naga
+make           # Build arachne
 bin/arachne -h  # Show cmd-line flags
 ```
+</details>
+
 
 ## Input File Format
-Regardless of the technology used to create the linked reads, arachne accepts what is called the "standard" format shown below. The "standard" format is a FASTQ spec-compliant format
-that uses the "old" `/1` format to denote if a read is forward or reverse, along with providing the `BX:Z` tag to denote the barcode and the `VX:i` tag to denote whether the barcode
-is considered valid for the technology used to create it. For example, in TELLseq data, an `N` in a barcode (e.g. `ATGGAGANAA`) invalidates the barcode.
-The only necessary parts are
-- line 1: standard FASTQ read ID starting with `@` and ending with `/1` (R1) or `/2` (R2)
-  - `BX:Z` and `VX:i` SAM tags after the sequence ID
+> [!NOTE]
+> **TL;DR:** The only distinction between the 'standard' linked-read FASTQ files and regular FASTQ files
+> is the presence of the `BX:Z` and `VX:i` SAM tags. The format also uses `/1` and `/2` (the older format)
+> to denote a forward/reverse read. 
+
+No one wins if everyone is using their own platform-specific file formats. Regardless of the technology used to create
+the linked reads, Arachne accepts what is called the 'standard' format shown below. This format conforms to the FASTQ
+file spec, which is an internationally-agreed upon format, meaning the reads can be used anywhere and doesn't distinguish
+between barcode formats. This also means it is future-proofed against yet-to-be-invented linked-read technologies, barcode
+encodings, etc. The trick is the inclusion of two specific SAM-compliant tags: the `BX:Z` tag to denote the barcode and the
+`VX:i` tag to denote whether the barcode is considered valid for whatever the encoding design is. This means the **location**
+and **meaning** of the barcodes are always consistent across formats. For example, in TELLseq data, an `N` in a barcode
+(e.g. `ATGGAGANAA`) indicates the barcode is invalid, so it would inherit a `VX:i` tag of `0` (e.g. `VX:i:0`).
+For completeness,the 'standard' linked-read FASTQ format follows:
+
+| record line | what's in it                                                                                                                                                             |
+|:-----------:|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|      1      | Read ID starting with `@` and ending with `/1` (R1) or `/2` (R2). After the read ID, there is TAB followed by any number of tab-delimited SAM tags, but must include `BX:Z` and `VX:i` tags|
+|      2      | Sequence as ATCGN nucleotides                                                                                                                                            |
+|      3      | `+` sign                                                                                                                                                                 |
+|      4      | PHRED quality scores for nucleotides in line 2                                                                                                                                 |
+
+- `BX:Z` is the barcode, which is any combination of non-space characters
+  - e.g. `BX:Z:1_2_3`, `BX:Z:A03C55B49D19`, `BX:Z:ATTTAGGGAGAGAGA`
+- `VX:i` is the validation tag
   - `VX:i:0` = invalid | `VX:i:1` = valid
-- line 2: ATCGN sequences
-- line 3: `+` sign
-- line 4: PHRED quality scores for bases in line 2
+
 ```
 @SEQID/1 BX:Z:BARCODE VX:i:0/1
 ATGCGNA.......................
@@ -47,12 +73,7 @@ ATGCGNA.......................
 FFFFIII.......................
 ```
 
-Using the example invalid barcode `ATGGAGANAA` from above, the sequence header would look like (SAM tag order doesn't matter):
+Using a TELLseq-style barcode `ATGGAGANAA`, where an `N` indicates it's invalid, the first line of a FASTQ record in the forward read would look like (SAM tag order doesn't matter):
 ```
 @SEQID/1 BX:Z:ATGGAGANAA VX:i:0
 ````
-
-Read pairs must be sorted by the `BX:Z:` barcode string. 
-
-## License
-Arachne is distributed under the MIT license. naga links to [BWA](https://github.com/lh3/bwa) at the object level. Arachne include the BWA source code via git submodule. Arachne links to the Apache2 branch of the BWA repo, which is licensed under the Apache2 license.
