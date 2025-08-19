@@ -1,0 +1,22 @@
+language: go
+
+go:
+ - 1.19.x
+ - 1.18.x
+ - master
+
+env:
+ global:
+  - GO111MODULE=on
+  - GOFLAGS="-mod=readonly"
+
+matrix:
+  fast_finish: true
+  allow_failures:
+    - go: master
+
+# Get deps, build, test, and ensure the code is gofmt'ed.
+script:
+ - go build -v ./...
+ - go test -v ./...
+ - diff <(gofmt -d .) <("")
