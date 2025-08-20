@@ -27,17 +27,17 @@ func main() {
 	flag.StringVar(&centromeres, "centromeres", "", "TSV with CEN<chrname> <chrname> <start> <stop>, other rows will be ignored")
 	flag.StringVar(&centromeres, "c", "", "TSV with CEN<chrname> <chrname> <start> <stop>, other rows will be ignored")
 
-	flag.IntVar(&positionChunkSize, "chunk-size", 40000000, "Contig partition size (in bp) to speed up final BAM concatenation")
-	flag.IntVar(&positionChunkSize, "C", 40000000, "Contig partition size (in bp) to speed up final BAM concatenation")
-
 	flag.Float64Var(&improperPairPenalty, "improper-pair-penalty", -4.0, "Penalty for improper pair")
 	flag.Float64Var(&improperPairPenalty, "i", -4.0, "Penalty for improper pair")
 
+	flag.IntVar(&positionChunkSize, "partitions", 40000000, "Contig partition size (in bp) to speed up final BAM concatenation")
+	flag.IntVar(&positionChunkSize, "p", 40000000, "Contig partition size (in bp) to speed up final BAM concatenation")
+
 	flag.StringVar(&readGroups, "read-group", "sample:library:molecule:flowcell:lane", "Comma-separated list of read group IDs")
-	flag.StringVar(&readGroups, "R", "sample:library:molecule:flowcell:lane", "Comma-separated list of read group IDs")
+	flag.StringVar(&readGroups, "r", "sample:library:molecule:flowcell:lane", "Comma-separated list of read group IDs")
 
 	flag.StringVar(&sampleId, "sample-id", "sample", "Sample name")
-	flag.StringVar(&sampleId, "S", "sample", "Sample name")
+	flag.StringVar(&sampleId, "s", "sample", "Sample name")
 
 	flag.IntVar(&threads, "threads", 8, "Number of threads")
 	flag.IntVar(&threads, "t", 8, "Number of threads")
@@ -55,9 +55,9 @@ func main() {
 		fmt.Fprint(os.Stderr, "\n\033[35;1mOptions:\033[0m")
 		fmt.Fprint(os.Stderr, "\n  \033[35;1m-c\033[0m/\033[35;1m--centromeres\033[0m\n\tTSV with CEN<chrname> <chrname> <start> <stop>, other rows will be ignored")
 		fmt.Fprint(os.Stderr, "\n  \033[35;1m-i\033[0m/\033[35;1m--improper-pair-penalty\033[0m\n\tPenalty for improper pair \033[90;1m(default: -4)\033[0m")
-		fmt.Fprint(os.Stderr, "\n  \033[35;1m-C\033[0m/\033[35;1m--chunk-size\033[0m\n\tContig partition size (in bp) to speed up final BAM concatenation \033[90;1m(default: 40000000)\033[0m")
-		fmt.Fprint(os.Stderr, "\n  \033[35;1m-R\033[0m/\033[35;1m--read-group\033[0m\n\tComma-separated list of read group IDs")
-		fmt.Fprint(os.Stderr, "\n  \033[35;1m-S\033[0m/\033[35;1m--sample-id\033[0m\n\tSample name \033[90;1m(default: sample)\033[0m")
+		fmt.Fprint(os.Stderr, "\n  \033[35;1m-p\033[0m/\033[35;1m--partitions\033[0m\n\tContig partition size (in bp) to speed up final BAM concatenation \033[90;1m(default: 40000000)\033[0m")
+		fmt.Fprint(os.Stderr, "\n  \033[35;1m-r\033[0m/\033[35;1m--read-group\033[0m\n\tComma-separated list of read group IDs")
+		fmt.Fprint(os.Stderr, "\n  \033[35;1m-s\033[0m/\033[35;1m--sample-id\033[0m\n\tSample name \033[90;1m(default: sample)\033[0m")
 		fmt.Fprint(os.Stderr, "\n  \033[35;1m-t\033[0m/\033[35;1m--threads\033[0m\n\tNumber of threads \033[90;1m(default: 8)\033[0m\n")
 	}
 
