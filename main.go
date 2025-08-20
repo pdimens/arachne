@@ -27,8 +27,8 @@ func main() {
 	flag.StringVar(&output, "output", "", "Name of output bam file")
 	flag.StringVar(&output, "o", "", "Name of output bam file")
 
-	flag.StringVar(&readGroups, "read-group", "", "Comma-separated list of read group IDs")
-	flag.StringVar(&readGroups, "R", "", "Comma-separated list of read group IDs")
+	flag.StringVar(&readGroups, "read-group", "sample:library:molecule:flowcell:lane", "Comma-separated list of read group IDs")
+	flag.StringVar(&readGroups, "R", "sample:library:molecule:flowcell:lane", "Comma-separated list of read group IDs")
 
 	flag.StringVar(&sampleId, "sample-id", "sample", "Sample name")
 	flag.StringVar(&sampleId, "S", "sample", "Sample name")
@@ -49,12 +49,12 @@ func main() {
 		fmt.Fprint(os.Stderr, "\033[94;1mUsage:\033[0m arachne <options> reference sample.R1.fq sample.R2.fq.gz\n\n")
 		fmt.Fprint(os.Stderr, "\033[94;1mOptions:\033[0m")
 		fmt.Fprint(os.Stderr, "\n  -c/--centromeres\n\tTSV with CEN<chrname> <chrname> <start> <stop>, other rows will be ignored")
-		fmt.Fprint(os.Stderr, "\n  -i/--improper-pair-penalty\n\tPenalty for improper pair (default: -4)")
-		fmt.Fprint(os.Stderr, "\n  -o/--output [required]\n\tName of output bam file")
-		fmt.Fprint(os.Stderr, "\n  -C/--chunk-size\n\tContig partition size (in bp) to speed up final BAM concatenation (default: 40000000)")
+		fmt.Fprint(os.Stderr, "\n  -i/--improper-pair-penalty\n\tPenalty for improper pair \033[90;1m(default: -4)\033[0m")
+		fmt.Fprint(os.Stderr, "\n  -o/--output \033[94;1m[required]\033[0m\n\tName of output bam file")
+		fmt.Fprint(os.Stderr, "\n  -C/--chunk-size\n\tContig partition size (in bp) to speed up final BAM concatenation \033[90;1m(default: 40000000)\033[0m")
 		fmt.Fprint(os.Stderr, "\n  -R/--read-group\n\tComma-separated list of read group IDs")
-		fmt.Fprint(os.Stderr, "\n  -S/--sample-id\n\tSample name (default: sample)")
-		fmt.Fprint(os.Stderr, "\n  -t/--threads\n\tNumber of threads (default: 8)\n")
+		fmt.Fprint(os.Stderr, "\n  -S/--sample-id\n\tSample name \033[90;1m(default: sample)\033[0m")
+		fmt.Fprint(os.Stderr, "\n  -t/--threads\n\tNumber of threads \033[90;1m(default: 8)\033[0m\n")
 	}
 
 	flag.Parse()
