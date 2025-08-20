@@ -10,49 +10,78 @@ import (
 	aligner "arachne/src/aligner"
 )
 
-/*Command line arguments*/
-var improper_pair_penalty = flag.Float64("improper_pair_penalty", -4.0, "penalty for improper pair")
-var output = flag.String("output", "", "full path at which to output bam file")
-var read_groups = flag.String("read_groups", "sample:library:gem_group:flowcell:lane", "comma-separated list of read group IDs")
-var sample_id = flag.String("sample_id", "default_sample_id", "sample name")
-var threads = flag.Int("threads", 8, "How many threads to use")
-var DEBUG = flag.Bool("debug", false, "debug mode")
-var positionChunkSize = flag.Int("position_chunk_size", 40000000, "bases across which to partition a contig for bucketing by barcode, sorting, merging (speeds up final BAM concatenation")
-var debugTags = flag.Bool("debugBamTags", false, "debug bam tags")
-var debugPrintMove = flag.Bool("debugPrintMove", false, "print full debug for moves")
-
-// TODO CHECK THIS CENTROMETE FILE FORMAT
-var centromeres = flag.String("centromeres", "", "tsv with CEN<chrname> <chrname> <start> <stop>, other rows will be ignored")
-
-//var R1 = flag.String("R1 reads", "", "fastq.R1.gz input file containing reads [required]")
-//var R2 = flag.String("R2 reads", "", "fastq.R1.gz input file containing reads [required]")
-//var trim_length = flag.Int("trim_length", 0, "trim this many bases from the beginning of read1, put in TX and QX for quals in the bam")
+func BoolPointer(b bool) *bool {
+	return &b
+}
 
 func main() {
+	var output string
+	var readGroups string
+	var sampleId string
+	var threads int
+	var positionChunkSize int
+	var centromeres string
+	var improperPairPenalty float64
+
+	/*Command line arguments*/
+	flag.StringVar(&output, "output", "", "Name of output bam file")
+	flag.StringVar(&output, "o", "", "Name of output bam file")
+
+	flag.StringVar(&readGroups, "read-group", "", "Comma-separated list of read group IDs")
+	flag.StringVar(&readGroups, "R", "", "Comma-separated list of read group IDs")
+
+	flag.StringVar(&sampleId, "sample-id", "sample", "Sample name")
+	flag.StringVar(&sampleId, "S", "sample", "Sample name")
+
+	flag.IntVar(&threads, "threads", 8, "Number of threads")
+	flag.IntVar(&threads, "t", 8, "Number of threads")
+
+	flag.IntVar(&positionChunkSize, "chunk-size", 40000000, "Contig partition size (in bp) to speed up final BAM concatenation")
+	flag.IntVar(&positionChunkSize, "C", 40000000, "Contig partition size (in bp) to speed up final BAM concatenation")
+
+	flag.StringVar(&centromeres, "centromeres", "", "TSV with CEN<chrname> <chrname> <start> <stop>, other rows will be ignored")
+	flag.StringVar(&centromeres, "c", "", "TSV with CEN<chrname> <chrname> <start> <stop>, other rows will be ignored")
+
+	flag.Float64Var(&improperPairPenalty, "improper-pair-penalty", -4.0, "Penalty for improper pair")
+	flag.Float64Var(&improperPairPenalty, "i", -4.0, "Penalty for improper pair")
+
+	flag.Usage = func() {
+		fmt.Fprint(os.Stderr, "\033[94;1mUsage:\033[0m arachne <options> reference sample.R1.fq sample.R2.fq.gz\n\n")
+		fmt.Fprint(os.Stderr, "\033[94;1mOptions:\033[0m")
+		fmt.Fprint(os.Stderr, "\n  -c/--centromeres\n\tTSV with CEN<chrname> <chrname> <start> <stop>, other rows will be ignored")
+		fmt.Fprint(os.Stderr, "\n  -i/--improper-pair-penalty\n\tPenalty for improper pair (default: -4)")
+		fmt.Fprint(os.Stderr, "\n  -o/--output [required]\n\tName of output bam file")
+		fmt.Fprint(os.Stderr, "\n  -C/--chunk-size\n\tContig partition size (in bp) to speed up final BAM concatenation (default: 40000000)")
+		fmt.Fprint(os.Stderr, "\n  -R/--read-group\n\tComma-separated list of read group IDs")
+		fmt.Fprint(os.Stderr, "\n  -S/--sample-id\n\tSample name (default: sample)")
+		fmt.Fprint(os.Stderr, "\n  -t/--threads\n\tNumber of threads (default: 8)\n")
+	}
+
 	flag.Parse()
 	if flag.NArg() != 3 {
-		fmt.Fprintf(os.Stderr, "Usage: %s [options] reference.fa reads.R1.fq reads.R2.fq\n", os.Args[0])
-		fmt.Fprintf(os.Stderr, "Expected 3 arguments, got %d\n", flag.NArg())
+		fmt.Fprintf(os.Stderr, "\033[31;1mERROR:\033[0m Expected 3 positional arguments, but was given %d\n", flag.NArg())
+		flag.Usage()
 		os.Exit(1)
 	}
 	ref := flag.Arg(0)
 	r1 := flag.Arg(1)
 	r2 := flag.Arg(2)
+	debug_spoof := BoolPointer(false)
 
 	args := aligner.ArachneArgs{
 		R1:                    &r1,
 		R2:                    &r2,
-		Improper_pair_penalty: improper_pair_penalty,
-		Output:                output,
-		Read_groups:           read_groups,
-		Sample_id:             sample_id,
-		Threads:               threads,
-		DEBUG:                 DEBUG,
-		PositionChunkSize:     positionChunkSize,
-		DebugTags:             debugTags,
-		DebugPrintMove:        debugPrintMove,
+		Improper_pair_penalty: &improperPairPenalty,
+		Output:                &output,
+		Read_groups:           &readGroups,
+		Sample_id:             &sampleId,
+		Threads:               &threads,
+		DEBUG:                 debug_spoof,
+		PositionChunkSize:     &positionChunkSize,
+		DebugTags:             debug_spoof,
+		DebugPrintMove:        debug_spoof,
 		Reference:             &ref,
-		Centromeres:           centromeres,
+		Centromeres:           &centromeres,
 	}
 	aligner.Arachne(args)
 }

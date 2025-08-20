@@ -7,7 +7,7 @@ VERSION=$(shell git describe --tags --always --dirty)
 GO_VERSION=$(strip $(shell go version | sed 's/.*go\([0-9]*\.[0-9]*\).*/\1/'))
 
 $(GOBINS): src/gobwa/bwa/libbwa.a
-	go install -ldflags "-X inference.__VERSION__='$(VERSION)'" $@
+	go install -ldflags "-X aligner.__VERSION__='$(VERSION)'" $@
 
 src/gobwa/bwa/libbwa.a:
 	make -C src/gobwa/bwa libbwa.a

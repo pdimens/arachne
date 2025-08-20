@@ -9,5 +9,5 @@
 
 
 
-char * bwa_pg = "10X Genomics";
+//char * bwa_pg = "10X Genomics";
 

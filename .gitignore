@@ -1,3 +1,4 @@
 *.bam*
-go/bin
-go/pkg
+bin/
+pkg/
+go/
