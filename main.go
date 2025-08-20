@@ -15,17 +15,23 @@ func BoolPointer(b bool) *bool {
 }
 
 func main() {
-	var output string
+	var centromeres string
+	var positionChunkSize int
+	var improperPairPenalty float64
 	var readGroups string
 	var sampleId string
 	var threads int
-	var positionChunkSize int
-	var centromeres string
-	var improperPairPenalty float64
 
 	/*Command line arguments*/
-	flag.StringVar(&output, "output", "", "Name of output bam file")
-	flag.StringVar(&output, "o", "", "Name of output bam file")
+
+	flag.StringVar(&centromeres, "centromeres", "", "TSV with CEN<chrname> <chrname> <start> <stop>, other rows will be ignored")
+	flag.StringVar(&centromeres, "c", "", "TSV with CEN<chrname> <chrname> <start> <stop>, other rows will be ignored")
+
+	flag.IntVar(&positionChunkSize, "chunk-size", 40000000, "Contig partition size (in bp) to speed up final BAM concatenation")
+	flag.IntVar(&positionChunkSize, "C", 40000000, "Contig partition size (in bp) to speed up final BAM concatenation")
+
+	flag.Float64Var(&improperPairPenalty, "improper-pair-penalty", -4.0, "Penalty for improper pair")
+	flag.Float64Var(&improperPairPenalty, "i", -4.0, "Penalty for improper pair")
 
 	flag.StringVar(&readGroups, "read-group", "sample:library:molecule:flowcell:lane", "Comma-separated list of read group IDs")
 	flag.StringVar(&readGroups, "R", "sample:library:molecule:flowcell:lane", "Comma-separated list of read group IDs")
@@ -36,36 +42,34 @@ func main() {
 	flag.IntVar(&threads, "threads", 8, "Number of threads")
 	flag.IntVar(&threads, "t", 8, "Number of threads")
 
-	flag.IntVar(&positionChunkSize, "chunk-size", 40000000, "Contig partition size (in bp) to speed up final BAM concatenation")
-	flag.IntVar(&positionChunkSize, "C", 40000000, "Contig partition size (in bp) to speed up final BAM concatenation")
-
-	flag.StringVar(&centromeres, "centromeres", "", "TSV with CEN<chrname> <chrname> <start> <stop>, other rows will be ignored")
-	flag.StringVar(&centromeres, "c", "", "TSV with CEN<chrname> <chrname> <start> <stop>, other rows will be ignored")
-
-	flag.Float64Var(&improperPairPenalty, "improper-pair-penalty", -4.0, "Penalty for improper pair")
-	flag.Float64Var(&improperPairPenalty, "i", -4.0, "Penalty for improper pair")
-
 	flag.Usage = func() {
-		fmt.Fprint(os.Stderr, "\033[94;1mUsage:\033[0m arachne <options> reference sample.R1.fq sample.R2.fq.gz\n\n")
-		fmt.Fprint(os.Stderr, "\033[94;1mOptions:\033[0m")
-		fmt.Fprint(os.Stderr, "\n  -c/--centromeres\n\tTSV with CEN<chrname> <chrname> <start> <stop>, other rows will be ignored")
-		fmt.Fprint(os.Stderr, "\n  -i/--improper-pair-penalty\n\tPenalty for improper pair \033[90;1m(default: -4)\033[0m")
-		fmt.Fprint(os.Stderr, "\n  -o/--output \033[94;1m[required]\033[0m\n\tName of output bam file")
-		fmt.Fprint(os.Stderr, "\n  -C/--chunk-size\n\tContig partition size (in bp) to speed up final BAM concatenation \033[90;1m(default: 40000000)\033[0m")
-		fmt.Fprint(os.Stderr, "\n  -R/--read-group\n\tComma-separated list of read group IDs")
-		fmt.Fprint(os.Stderr, "\n  -S/--sample-id\n\tSample name \033[90;1m(default: sample)\033[0m")
-		fmt.Fprint(os.Stderr, "\n  -t/--threads\n\tNumber of threads \033[90;1m(default: 8)\033[0m\n")
+		fmt.Fprint(os.Stderr, "\n\033[94;1mUsage:\033[0m arachne <options> output.bam reference.fa sample.R1.fq sample.R2.fq\n")
+
+		fmt.Fprint(os.Stderr, "\nArachne is an aligner for (short-read) linked-read data. Input FASTQs can be gzipped and come from any linked-read technology, provided they:")
+		fmt.Fprint(os.Stderr, "\n  - are a set of paired-end reads")
+		fmt.Fprint(os.Stderr, "\n  - have barcodes in a \033[92;1mBX:Z\033[0m SAM tag (e.g. \033[92;1mBX:Z:ATGGACTAGA\033[0m)")
+		fmt.Fprint(os.Stderr, "\n  - have barcode validations (\033[92;1m0\033[0m|\033[92;1m1\033[0m) in a \033[92;1mVX:i\033[0m SAM tag (e.g. \033[92;1mVX:i:1\033[0m if valid)")
+		fmt.Fprint(os.Stderr, "\n  - are sorted by barcode\n")
+
+		fmt.Fprint(os.Stderr, "\n\033[35;1mOptions:\033[0m")
+		fmt.Fprint(os.Stderr, "\n  \033[35;1m-c\033[0m/\033[35;1m--centromeres\033[0m\n\tTSV with CEN<chrname> <chrname> <start> <stop>, other rows will be ignored")
+		fmt.Fprint(os.Stderr, "\n  \033[35;1m-i\033[0m/\033[35;1m--improper-pair-penalty\033[0m\n\tPenalty for improper pair \033[90;1m(default: -4)\033[0m")
+		fmt.Fprint(os.Stderr, "\n  \033[35;1m-C\033[0m/\033[35;1m--chunk-size\033[0m\n\tContig partition size (in bp) to speed up final BAM concatenation \033[90;1m(default: 40000000)\033[0m")
+		fmt.Fprint(os.Stderr, "\n  \033[35;1m-R\033[0m/\033[35;1m--read-group\033[0m\n\tComma-separated list of read group IDs")
+		fmt.Fprint(os.Stderr, "\n  \033[35;1m-S\033[0m/\033[35;1m--sample-id\033[0m\n\tSample name \033[90;1m(default: sample)\033[0m")
+		fmt.Fprint(os.Stderr, "\n  \033[35;1m-t\033[0m/\033[35;1m--threads\033[0m\n\tNumber of threads \033[90;1m(default: 8)\033[0m\n")
 	}
 
 	flag.Parse()
-	if flag.NArg() != 3 {
-		fmt.Fprintf(os.Stderr, "\033[31;1mERROR:\033[0m Expected 3 positional arguments, but was given %d\n", flag.NArg())
+	if flag.NArg() != 4 {
+		fmt.Fprintf(os.Stderr, "\033[31;1mError:\033[0m 4 positional arguments are required, but %d were given\n", flag.NArg())
 		flag.Usage()
 		os.Exit(1)
 	}
-	ref := flag.Arg(0)
-	r1 := flag.Arg(1)
-	r2 := flag.Arg(2)
+	output := flag.Arg(0)
+	ref := flag.Arg(1)
+	r1 := flag.Arg(2)
+	r2 := flag.Arg(3)
 	debug_spoof := BoolPointer(false)
 
 	args := aligner.ArachneArgs{
