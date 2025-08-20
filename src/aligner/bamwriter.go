@@ -12,9 +12,10 @@ import (
 	"sync"
 	"time"
 
+	"arachne/src/gobwa"
+
 	bam "github.com/biogo/hts/bam"
 	sam "github.com/biogo/hts/sam"
-	"github.com/pdimens/arachne/gobwa"
 )
 
 const (
