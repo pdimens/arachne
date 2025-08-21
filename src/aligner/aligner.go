@@ -291,16 +291,6 @@ func Arachne(args ArachneArgs) {
 		*threads = numCPU
 	}
 	runtime.GOMAXPROCS(*threads + 2)
-
-	if _, err := os.Stat(*r1); os.IsNotExist(err) {
-		panic(fmt.Sprintf("File does not exist %s", *r1))
-	}
-	if _, err := os.Stat(*r2); os.IsNotExist(err) {
-		panic(fmt.Sprintf("File does not exist %s", *r2))
-	}
-	if _, err := os.Stat(*reference); os.IsNotExist(err) {
-		panic(fmt.Sprintf("Fasta file not found %s", *reference))
-	}
 	if syscall.Access(*output, 2) != nil { //is output writable
 		panic(fmt.Sprintf("Output directory not writable by this process %s", *output))
 	}
@@ -383,11 +373,7 @@ func Arachne(args ArachneArgs) {
 }
 
 func loadCentromeres(filename *string) map[string]Region {
-	file, err := os.Open(*filename)
-	if err != nil {
-		return map[string]Region{}
-	}
-	defer file.Close()
+	file, _ := os.Open(*filename)
 	scanner := bufio.NewScanner(file)
 	toRet := map[string]Region{}
 	for scanner.Scan() {

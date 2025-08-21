@@ -14,6 +14,16 @@ func BoolPointer(b bool) *bool {
 	return &b
 }
 
+func fileExists(path *string, filetype string) bool {
+	file, err := os.Open(*path)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "\033[31;1mError:\033[0m %s file \033[33;1m%s\033[0m does not exist or does not have read persmissions.\n", filetype, *path)
+		os.Exit(1)
+	}
+	defer file.Close()
+	return true
+}
+
 func main() {
 	var centromeres string
 	var positionChunkSize int
@@ -68,9 +78,20 @@ func main() {
 		os.Exit(1)
 	}
 	output := flag.Arg(0)
+
 	ref := flag.Arg(1)
+	fileExists(&ref, "FASTA")
+
 	r1 := flag.Arg(2)
+	fileExists(&r1, "FASTQ")
+
 	r2 := flag.Arg(3)
+	fileExists(&r2, "FASTQ")
+
+	if centromeres != "" {
+		fileExists(&centromeres, "Centromere")
+	}
+
 	debug_spoof := BoolPointer(false)
 
 	args := aligner.ArachneArgs{
