@@ -95,7 +95,7 @@ func main() {
 	}
 
 	debug_spoof := BoolPointer(false)
-
+	//TODO ADD PREPROCESS AND STANDARDIZE SUBCOMMANDS TO ARACHNE
 	args := aligner.ArachneArgs{
 		R1:                    &r1,
 		R2:                    &r2,
