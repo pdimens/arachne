@@ -73,7 +73,9 @@ func main() {
 
 	flag.Parse()
 	if flag.NArg() != 4 {
-		fmt.Fprintf(os.Stderr, "\033[31;1mError:\033[0m 4 positional arguments are required, but %d were given\n", flag.NArg())
+		if flag.NArg() != 0 {
+			fmt.Fprintf(os.Stderr, "\033[31;1mError:\033[0m 4 positional arguments are required, but %d were given\n", flag.NArg())
+		}
 		flag.Usage()
 		os.Exit(1)
 	}
