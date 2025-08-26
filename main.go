@@ -8,21 +8,8 @@ import (
 	"os"
 
 	aligner "arachne/src/aligner"
+	preprocess "arachne/src/preprocess"
 )
-
-func BoolPointer(b bool) *bool {
-	return &b
-}
-
-func fileExists(path *string, filetype string) bool {
-	file, err := os.Open(*path)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "\033[31;1mError:\033[0m %s file \033[33;1m%s\033[0m does not exist or does not have read persmissions.\n", filetype, *path)
-		os.Exit(1)
-	}
-	defer file.Close()
-	return true
-}
 
 func main() {
 	var centromeres string
@@ -31,6 +18,7 @@ func main() {
 	var readGroups string
 	var sampleId string
 	var threads int
+	var debug_spoof bool = false
 
 	/*Command line arguments*/
 
@@ -82,19 +70,18 @@ func main() {
 	output := flag.Arg(0)
 
 	ref := flag.Arg(1)
-	fileExists(&ref, "FASTA")
+	preprocess.FileExists(ref, "FASTA")
 
 	r1 := flag.Arg(2)
-	fileExists(&r1, "FASTQ")
+	preprocess.FileExists(r1, "FASTQ")
 
 	r2 := flag.Arg(3)
-	fileExists(&r2, "FASTQ")
+	preprocess.FileExists(r2, "FASTQ")
 
 	if centromeres != "" {
-		fileExists(&centromeres, "Centromere")
+		preprocess.FileExists(centromeres, "Centromere")
 	}
 
-	debug_spoof := BoolPointer(false)
 	//TODO ADD PREPROCESS AND STANDARDIZE SUBCOMMANDS TO ARACHNE
 	args := aligner.ArachneArgs{
 		R1:                    &r1,
@@ -104,10 +91,10 @@ func main() {
 		Read_groups:           &readGroups,
 		Sample_id:             &sampleId,
 		Threads:               &threads,
-		DEBUG:                 debug_spoof,
+		DEBUG:                 &debug_spoof,
 		PositionChunkSize:     &positionChunkSize,
-		DebugTags:             debug_spoof,
-		DebugPrintMove:        debug_spoof,
+		DebugTags:             &debug_spoof,
+		DebugPrintMove:        &debug_spoof,
 		Reference:             &ref,
 		Centromeres:           &centromeres,
 	}

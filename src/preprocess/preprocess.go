@@ -1,4 +1,4 @@
-package main
+package preprocess
 
 import (
 	"flag"
@@ -9,6 +9,36 @@ import (
 	"path/filepath"
 	"strconv"
 )
+
+func validateSamtools() error {
+	_, err := exec.LookPath("samtools")
+	if err != nil {
+		return fmt.Errorf("samtools not found in PATH: %v", err)
+	}
+
+	// check if samtools is working by running version command
+	cmd := exec.Command("samtools", "--version")
+	_, err = cmd.Output()
+	if err != nil {
+		return fmt.Errorf("samtools appears to be installed but not working properly: %v", err)
+	}
+	return nil
+}
+
+func FileExists(path string, filetype string) bool {
+	absfile, err := filepath.Abs(path)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "\033[31;1mError:\033[0m %s file \033[33;1m%s\033[0m does not exist or does not have read persmissions.\n", filetype, path)
+		os.Exit(1)
+	}
+	file, err := os.Open(absfile)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "\033[31;1mError:\033[0m %s file \033[33;1m%s\033[0m does not exist or does not have read persmissions.\n", filetype, path)
+		os.Exit(1)
+	}
+	defer file.Close()
+	return true
+}
 
 func runSamtoolsPipelineWithPipes(inputR1, inputR2, barcode_tag, threads string) error {
 	outputR1 := barcode_tag + "_sort." + filepath.Base(inputR1)
@@ -84,37 +114,7 @@ func runSamtoolsPipelineWithPipes(inputR1, inputR2, barcode_tag, threads string)
 	return nil
 }
 
-func validateSamtools() error {
-	_, err := exec.LookPath("samtools")
-	if err != nil {
-		return fmt.Errorf("samtools not found in PATH: %v", err)
-	}
-
-	// check if samtools is working by running version command
-	cmd := exec.Command("samtools", "--version")
-	_, err = cmd.Output()
-	if err != nil {
-		return fmt.Errorf("samtools appears to be installed but not working properly: %v", err)
-	}
-	return nil
-}
-
-func fileExists(path string, filetype string) bool {
-	absfile, err := filepath.Abs(path)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "\033[31;1mError:\033[0m %s file \033[33;1m%s\033[0m does not exist or does not have read persmissions.\n", filetype, path)
-		os.Exit(1)
-	}
-	file, err := os.Open(absfile)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "\033[31;1mError:\033[0m %s file \033[33;1m%s\033[0m does not exist or does not have read persmissions.\n", filetype, path)
-		os.Exit(1)
-	}
-	defer file.Close()
-	return true
-}
-
-func main() {
+func preprocess() {
 	var input_r1 string
 	var input_r2 string
 	var barcode_tag string
@@ -142,9 +142,9 @@ func main() {
 	}
 
 	input_r1 = flag.Arg(0)
-	fileExists(input_r1, "FASTQ")
+	FileExists(input_r1, "FASTQ")
 	input_r2 = flag.Arg(1)
-	fileExists(input_r2, "FASTQ")
+	FileExists(input_r2, "FASTQ")
 
 	// Validate samtools is available
 	if err := validateSamtools(); err != nil {

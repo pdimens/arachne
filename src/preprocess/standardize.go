@@ -1,28 +1,23 @@
-package main
+package preprocess
 
 import (
 	"flag"
 	"fmt"
 	"os"
-	"path/filepath"
 )
 
-func fileExists(path string, filetype string) bool {
-	absfile, err := filepath.Abs(path)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "\033[31;1mError:\033[0m %s file \033[33;1m%s\033[0m does not exist or does not have read persmissions.\n", filetype, path)
-		os.Exit(1)
-	}
-	file, err := os.Open(absfile)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "\033[31;1mError:\033[0m %s file \033[33;1m%s\033[0m does not exist or does not have read persmissions.\n", filetype, path)
-		os.Exit(1)
-	}
-	defer file.Close()
-	return true
+// first, a sentinal function that reads the first 200 records of R1 and looks to assess:
+// 1. if it's already standardized
+// 2. if not, what the fastq format type is (haplotagging, stlfr, tellseq)
+
+func isStandardized() {
+
 }
 
-func main() {
+// then needs to take the input files and iterate both fastqs at the same time
+// can this be borrowed from the main alignment logic?
+
+func standardize() {
 	var input_r1 string
 	var input_r2 string
 
@@ -41,8 +36,8 @@ func main() {
 	}
 
 	input_r1 = flag.Arg(0)
-	fileExists(input_r1, "FASTQ")
+	FileExists(input_r1, "FASTQ")
 	input_r2 = flag.Arg(1)
-	fileExists(input_r2, "FASTQ")
+	FileExists(input_r2, "FASTQ")
 
 }
