@@ -710,7 +710,7 @@ func moleculeMapqProbabilitySums(candidate_molecules []*CandidateMolecule, log_u
 			sourceSinkChange, _ := fastScore(sourceMolecule, sinkMolecule, log_unpaired_probability)
 			moleculeMoveProbability := math.Pow(10, sourceSinkChange)
 			for _, alignment := range sourceAlignments {
-				if alignment.active != true {
+				if !alignment.active {
 					panic("setting molecule mapq for non active alignment")
 				}
 				alignment.sum_move_probability_change += moleculeMoveProbability
@@ -1485,7 +1485,7 @@ func GetAlignments(ref *gobwa.GoBwaReference, settings *gobwa.GoBwaSettings, bar
 
 	toReturn := make([][]*Alignment, len(barcode_chains))
 	full := make([][]*Alignment, len(barcode_chains))
-	for i := 0; i < len(barcode_chains); i++ {
+	for i := range barcode_chains {
 		bestScore := 0
 		for _, chain := range barcode_chains[i] {
 			if chain.score > bestScore {
@@ -1493,7 +1493,7 @@ func GetAlignments(ref *gobwa.GoBwaReference, settings *gobwa.GoBwaSettings, bar
 			}
 		}
 
-		for j := 0; j < len(barcode_chains[i]); j++ {
+		for j := range barcode_chains[i] {
 			chain := barcode_chains[i][j]
 			var alignment gobwa.SingleReadAlignment
 			if chain.chain != nil {
@@ -1634,12 +1634,12 @@ func GetChains(ref *gobwa.GoBwaReference, settings *gobwa.GoBwaSettings, reads_f
 	toReturn := [][]ChainedHit{}
 	hit_num := 0
 	var barcode string
-	for i := 0; i < len(reads_for_barcode); i++ {
+	for i := range reads_for_barcode {
 		read1_chains, read2_chains := gobwa.GoBwaMemMateSW(ref, settings, &reads_for_barcode[i].Read1, &reads_for_barcode[i].Read2, arena, score_delta)
 		barcode = string(reads_for_barcode[i].Barcode)
 		read1_num := 0
 		toReturn = append(toReturn, []ChainedHit{})
-		for j := 0; j < len(read1_chains); j++ {
+		for j := range read1_chains {
 			read1_chain_n := ChainedHit{
 				contig:    read1_chains[j].Contig,
 				pos:       read1_chains[j].Offset,
@@ -1677,7 +1677,7 @@ func GetChains(ref *gobwa.GoBwaReference, settings *gobwa.GoBwaSettings, reads_f
 		}
 		toReturn = append(toReturn, []ChainedHit{})
 		read2_num := 0
-		for j := 0; j < len(read2_chains); j++ {
+		for j := range read2_chains {
 			read2_chain_n := ChainedHit{
 				contig:    read2_chains[j].Contig,
 				pos:       read2_chains[j].Offset,

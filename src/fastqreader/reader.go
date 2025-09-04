@@ -31,7 +31,7 @@ func SliceCompare(a []byte, b []byte) bool {
 	if len(a) != len(b) {
 		return false
 	}
-	for i := 0; i < len(a); i++ {
+	for i := range a {
 		if a[i] != b[i] {
 			return false
 		}
@@ -91,7 +91,7 @@ func OpenFastQ(R1 string, R2 string) (*FastQReader, error) {
 //	return b[:idx]
 //}
 
-/* Parase a read header and find the barcode. Return the sanitized header, barcode, and 1/0 whether it's valid or not */
+/* Parse a read header and find the barcode. Return the sanitized header, barcode, and 1/0 whether it's valid or not */
 func ParseHeader(seq_id string) (string, []byte, bool) {
 	var _barcode []byte
 	var _valid bool
