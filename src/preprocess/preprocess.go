@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -28,13 +29,11 @@ func validateSamtools() error {
 func FileExists(path string, filetype string) bool {
 	absfile, err := filepath.Abs(path)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "\033[31;1mError:\033[0m %s file \033[33;1m%s\033[0m does not exist or does not have read persmissions.\n", filetype, path)
-		os.Exit(1)
+		log.Fatalf("\033[31;1mError:\033[0m %s file \033[33;1m%s\033[0m does not exist or does not have read persmissions.\n", filetype, path)
 	}
 	file, err := os.Open(absfile)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "\033[31;1mError:\033[0m %s file \033[33;1m%s\033[0m does not exist or does not have read persmissions.\n", filetype, path)
-		os.Exit(1)
+		log.Fatalf("\033[31;1mError:\033[0m %s file \033[33;1m%s\033[0m does not exist or does not have read persmissions.\n", filetype, path)
 	}
 	defer file.Close()
 	return true
@@ -148,7 +147,7 @@ func preprocess() {
 
 	// Validate samtools is available
 	if err := validateSamtools(); err != nil {
-		fmt.Printf("Error: %v\n", err)
+		log.Printf("Error: %v\n", err)
 		return
 	}
 	err := runSamtoolsPipelineWithPipes(
@@ -158,6 +157,6 @@ func preprocess() {
 		strconv.Itoa((threads)),
 	)
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
+		log.Printf("Error: %v\n", err)
 	}
 }
