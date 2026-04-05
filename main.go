@@ -18,7 +18,7 @@ func main() {
 	var readGroups string
 	var sampleId string
 	var threads int
-	var debug_spoof bool = false
+	var debug_spoof bool
 
 	/*Command line arguments*/
 
@@ -30,7 +30,8 @@ func main() {
 
 	flag.IntVar(&positionChunkSize, "partitions", 40000000, "Contig partition size (in bp) to speed up final BAM concatenation")
 	flag.IntVar(&positionChunkSize, "p", 40000000, "Contig partition size (in bp) to speed up final BAM concatenation")
-
+	//TODO MAKE READ GROUP FOLLOW THE BWA SPEC BETTER
+	//TODO MERGE READGROUPS WITH SAMPLEID
 	flag.StringVar(&readGroups, "read-group", "sample:library:molecule:flowcell:lane", "Comma-separated list of read group IDs")
 	flag.StringVar(&readGroups, "r", "sample:library:molecule:flowcell:lane", "Comma-separated list of read group IDs")
 

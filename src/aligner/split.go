@@ -2,9 +2,7 @@
 
 package aligner
 
-import (
-	"sort"
-)
+import "sort"
 
 type SplitScoring struct {
 	alignment *Alignment

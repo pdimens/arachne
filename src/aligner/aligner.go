@@ -114,8 +114,19 @@ type Alignment struct {
 }
 
 func (aln *Alignment) Print() {
-	fmt.Println("read ", *aln.read_name, "read1", aln.read1, "chrom", aln.contig, "pos", aln.pos, "reverse", aln.reversed, "mismatches", aln.mismatches, "indels", aln.indels, "soft clipped sides", aln.soft_clipped, "soft clipping length", aln.soft_clipped_length, "active_molecule", aln.active_molecule, "molecule id", aln.molecule_id)
-
+	fmt.Println(
+		"read ", *aln.read_name,
+		"read1", aln.read1,
+		"chrom", aln.contig,
+		"pos", aln.pos,
+		"reverse", aln.reversed,
+		"mismatches", aln.mismatches,
+		"indels", aln.indels,
+		"soft clipped sides", aln.soft_clipped,
+		"soft clipping length", aln.soft_clipped_length,
+		"active_molecule", aln.active_molecule,
+		"molecule id", aln.molecule_id,
+	)
 }
 
 func FindRead(alignments [][]*Alignment, molecules []*CandidateMolecule, qname string) {
@@ -202,18 +213,14 @@ type Optimizer struct {
 	barcode                   string
 }
 
-/*
- * Holds a single unit of "work" to be processed by an RFA thread
- */
+// Holds a single unit of "work" to be processed by an RFA thread
 type WorkUnit struct {
 	reads          []fastqreader.FastQRecord
 	barcodenum     int
 	unique_barcode bool
 }
 
-/*
- * Holds statistics and coordination points for RFA
- */
+// Holds statistics and coordination points for RFA
 type RFAStats struct {
 	total                 int64
 	correct               int64
@@ -244,19 +251,21 @@ type Data struct {
 }
 
 /*Command line arguments*/
-var r1 *string
-var r2 *string
+//var r1 *string
+//var r2 *string
 var improper_pair_penalty *float64
-var output *string
-var read_groups *string
-var sample_id *string
-var threads *int
 
+// var output *string
+// var read_groups *string
+// var sample_id *string
+// var threads *int
 var DEBUG *bool
-var positionChunkSize *int
-var debugTags *bool
+
+// var positionChunkSize *int
+// var debugTags *bool
 var debugPrintMove *bool
-var reference *string
+
+//var reference *string
 
 type Region struct {
 	start int
@@ -268,21 +277,22 @@ var centromeres map[string]Region
 // this is the actual arachne program
 func Arachne(args ArachneArgs) {
 
-	print(fmt.Sprintf("Starting arachne. Version: %s\n", __VERSION__))
+	fmt.Fprintf(os.Stderr, "Starting arachne. Version: %s\n", __VERSION__)
 
-	r1 = args.R1
-	r2 = args.R2
-	improper_pair_penalty = args.Improper_pair_penalty
-	output = args.Output
-	read_groups = args.Read_groups
-	sample_id = args.Sample_id
-	threads = args.Threads
-	DEBUG = args.DEBUG
-	positionChunkSize = args.PositionChunkSize
-	debugTags = args.DebugTags
-	debugPrintMove = args.DebugPrintMove
-	reference = args.Reference
-	centromeres = loadCentromeres(args.Centromeres)
+	r1 := args.R1
+	r2 := args.R2
+	improper_pair_penalty := args.Improper_pair_penalty
+	output := args.Output
+	read_groups := args.Read_groups
+	sample_id := args.Sample_id
+	threads := args.Threads
+	positionChunkSize := args.PositionChunkSize
+	debugTags := args.DebugTags
+	reference := args.Reference
+	// unused...
+	//DEBUG := args.DEBUG
+	//debugPrintMove := args.DebugPrintMove
+	//centromeres := loadCentromeres(args.Centromeres)
 
 	// Use worker thread count request on cmdline, or
 	// all CPUs if -threads wasn't specified
@@ -296,18 +306,18 @@ func Arachne(args ArachneArgs) {
 	}
 
 	fastq, err := fastqreader.OpenFastQ(*r1, *r2)
-
 	if err != nil {
 		panic(err)
 	}
-	print(fmt.Sprintf("Loading reference: %s\n", *reference))
+
+	fmt.Fprintf(os.Stderr, "Loading reference: %s\n", *reference)
 
 	ref := gobwa.GoBwaLoadReference(*reference)
-	print("Reference loaded\n")
+	fmt.Fprint(os.Stderr, "Reference loaded\n")
 	settings := gobwa.GoBwaAllocSettings()
-	config := &RFAConfig{}
+	config := &RFAConfig{*improper_pair_penalty}
 
-	config.improper_penalty = float64(*improper_pair_penalty)
+	//config.improper_penalty = float64(*improper_pair_penalty)
 
 	var w *bufio.Writer
 
@@ -316,6 +326,7 @@ func Arachne(args ArachneArgs) {
 	if err != nil {
 		panic(err)
 	}
+
 	work_to_do := make(chan *WorkUnit, 2)
 	//finished := make (chan bool);
 
@@ -369,7 +380,7 @@ func Arachne(args ArachneArgs) {
 
 	/* Close and flush the BAM file */
 	bams.Close()
-	fmt.Println("Arachne completed successfully")
+	fmt.Fprint(os.Stderr, "Arachne completed successfully")
 }
 
 func loadCentromeres(filename *string) map[string]Region {
@@ -580,20 +591,20 @@ func scoreAlignment(aln *Alignment, mate *Alignment, log_molecule_penalty float6
 	return score
 }
 
-func SetArgsForTests(args ArachneArgs) {
-	r1 = args.R1
-	r2 = args.R2
-	improper_pair_penalty = args.Improper_pair_penalty
-	output = args.Output
-	read_groups = args.Read_groups
-	sample_id = args.Sample_id
-	threads = args.Threads
-	DEBUG = args.DEBUG
-	positionChunkSize = args.PositionChunkSize
-	debugTags = args.DebugTags
-	debugPrintMove = args.DebugPrintMove
-	reference = args.Reference
-}
+//func SetArgsForTests(args ArachneArgs) {
+//	r1 = args.R1
+//	r2 = args.R2
+//	improper_pair_penalty = args.Improper_pair_penalty
+//	output = args.Output
+//	read_groups = args.Read_groups
+//	sample_id = args.Sample_id
+//	threads = args.Threads
+//	DEBUG = args.DEBUG
+//	positionChunkSize = args.PositionChunkSize
+//	debugTags = args.DebugTags
+//	debugPrintMove = args.DebugPrintMove
+//	reference = args.Reference
+//}
 
 // If two reads have the same value, then they are duplicates
 type readDupTuple struct {

@@ -10,9 +10,7 @@ import (
 	"strings"
 )
 
-/*
- * This structure represents a single read from a fastq file
- */
+// This structure represents a single read from a fastq file pair
 type FastQRecord struct {
 	Read1       []byte
 	ReadQual1   []byte
@@ -24,9 +22,7 @@ type FastQRecord struct {
 	ReadGroupId string
 }
 
-/*
-* A utility function to compare two slices
- */
+// A utility function to compare two slices
 func SliceCompare(a []byte, b []byte) bool {
 	if len(a) != len(b) {
 		return false
@@ -39,7 +35,6 @@ func SliceCompare(a []byte, b []byte) bool {
 	return true
 
 }
-
 func Min(x, y int) int {
 	if x < y {
 		return x
@@ -47,10 +42,8 @@ func Min(x, y int) int {
 	return y
 }
 
-/*
- * This struture reprensets a "fastQ" reader that can pull single records
- * as well as sets of records (on the same barcode) from a fastq file
- */
+// This struture reprensets a "fastQ" reader that can pull single records
+// as well as sets of records (on the same barcode) from a fastq file
 type FastQReader struct {
 	Line          int
 	LastBarcode   []byte
@@ -62,9 +55,8 @@ type FastQReader struct {
 	R2Buffer      *bufio.Reader
 }
 
-/* Open a new fastQ file */
+// Open a new fastQ file
 func OpenFastQ(R1 string, R2 string) (*FastQReader, error) {
-
 	var res = new(FastQReader)
 	var err error
 
@@ -112,12 +104,8 @@ func ParseHeader(seq_id string) (string, []byte, bool) {
 	// regex match VX:i:[01]
 	vxRe := regexp.MustCompile(`VX:i:([01])\s`)
 	vxMatches := vxRe.FindStringSubmatch(seq_id)
-	if len(vxMatches) > 1 {
-		if vxMatches[1] == "0" {
-			_valid = false
-		} else {
-			_valid = true
-		}
+	if len(vxMatches) > 1 && vxMatches[1] == "1" {
+		_valid = true
 	}
 	return _header, _barcode, _valid
 }
