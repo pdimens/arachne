@@ -222,7 +222,7 @@ func main() {
 	flag.IntVar(&threads, "t", 4, "Number of compression threads")
 
 	flag.Usage = func() {
-		fmt.Fprint(os.Stderr, "\n\033[94;1mUsage:\033[0m arachne preprocess <--threads> prefix sample.R1.fq sample.R2.fq\n")
+		fmt.Fprint(os.Stderr, "\n\033[94;1mUsage:\033[0m arachne-preprocess <--threads> prefix sample.R1.fq sample.R2.fq\n")
 		fmt.Fprint(os.Stderr, "\nPreprocess a set of paired-end FASTQ files to sort them by barcode. Requires samtools to be present in the PATH.\n")
 
 		fmt.Fprint(os.Stderr, "\n\033[35;1mOptions:\033[0m")
