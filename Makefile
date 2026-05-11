@@ -5,20 +5,18 @@ VERSION=$(shell git describe --tags --always --dirty)
 
 GO_VERSION=$(strip $(shell go version | sed 's/.*go\([0-9]*\.[0-9]*\).*/\1/'))
 
-all: arachne arachne-preprocess
-
-arachne-preprocess:
-	@echo "Building arachne-preprocess"
-	go install ./src/preprocess
+all: arachne
 
 arachne: src/gobwa/bwa/libbwa.a
 	@echo "Building arachne"
 	go install -ldflags "-X aligner.__VERSION__='$(VERSION)'" $@
 
 src/gobwa/bwa/libbwa.a:
+	@echo "Building BWA"
 	make -C src/gobwa/bwa libbwa.a
 
 clean:
+	@echo "Cleaning Build"
 	rm -Rf bin/ pkg
 	$(MAKE) -C src/gobwa/bwa clean
 
