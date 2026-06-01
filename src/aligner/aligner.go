@@ -295,10 +295,9 @@ func Arachne(args ArachneArgs) {
 	//centromeres := loadCentromeres(args.Centromeres)
 
 	// Use worker thread count request on cmdline, or
-	// all CPUs if -threads wasn't specified
-	numCPU := runtime.NumCPU()
+	// 1 CPU if -threads wasn't specified
 	if *threads < 0 {
-		*threads = numCPU
+		*threads = 1
 	}
 	runtime.GOMAXPROCS(*threads + 2)
 	if syscall.Access(*output, 2) != nil { //is output writable
