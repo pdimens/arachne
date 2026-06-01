@@ -374,7 +374,6 @@ func Arachne(args ArachneArgs) {
 
 	/* Wait for each worker to finish any final tasks and exit */
 	worker_lock.Lock()
-	//TODO MAKE SURE THIS DEFER IS LEGIT
 	defer worker_lock.Unlock()
 
 	/* Close and flush the BAM file */
@@ -986,7 +985,7 @@ func debugStrings(alignment *Alignment, alignments [][]*Alignment, candidate_mol
 }
 
 func setMoleculeConfidences(molecules []*CandidateMolecule) {
-	for i := 0; i < len(molecules); i++ {
+	for i := range molecules {
 		molecules[i].molecule_confidence = moleculeConfidence(molecules[i], molecules[i].active_alignments.Len())
 		for _, alignment := range molecules[i].active_alignments.Iter() {
 
@@ -1001,7 +1000,7 @@ func setMoleculeConfidences(molecules []*CandidateMolecule) {
 func scrapMolecules(candidate_molecules []*CandidateMolecule) []*CandidateMolecule {
 	toReturn := []*CandidateMolecule{}
 	count := 0
-	for i := 0; i < len(candidate_molecules); i++ {
+	for i := range candidate_molecules {
 		if candidate_molecules[i].active_alignments.Len() > 0 {
 			toReturn = append(toReturn, candidate_molecules[i])
 			for _, read_id := range candidate_molecules[i].alignments.IterKeys() {
@@ -1274,7 +1273,7 @@ func acceptMove(move Move) {
 	if *debugPrintMove {
 		fmt.Println("Accepting move from ", move.source.start, " to ", move.sink.start)
 	}
-	for i := 0; i < len(toDelete); i++ {
+	for i := range toDelete {
 		read_id := toDelete[i]
 		sinkAlignment := toSet[i]
 		sourceAlignment := move.source.active_alignments.Get(read_id)
@@ -1312,32 +1311,33 @@ func inferMolecules(positions [][]*Alignment) []*CandidateMolecule {
 	molecule_num := 0
 	var currentMolecule *CandidateMolecule
 	for _, position_list := range positions {
-		for i := 0; i < len(position_list); i++ {
-			if i == 0 || (i > 0 && position_list[i].pos-position_list[i-1].pos > 50000) {
+		//TODO make sure replacing position_list[i] with pos doesn't cause issues
+		for i, pos := range position_list {
+			if i == 0 || (i > 0 && pos.pos-position_list[i-1].pos > 50000) {
 				if i > 0 {
 					currentMolecule.stop = position_list[i-1].pos
 				}
 				currentMolecule = &CandidateMolecule{
-					chrom:               position_list[i].contig,
-					start:               position_list[i].pos,
+					chrom:               pos.contig,
+					start:               pos.pos,
 					id:                  molecule_num,
 					alignments:          NewOrderedMap(),
 					molecule_confidence: 1.0,
 					mismatchLocs:        map[int]int{},
 				}
 				aln_map := NewOrderedMap()
-				aln_map.Set(position_list[i].id, position_list[i])
-				currentMolecule.alignments.Set(position_list[i].read_id, aln_map)
+				aln_map.Set(pos.id, pos)
+				currentMolecule.alignments.Set(pos.read_id, aln_map)
 				toReturn = append(toReturn, currentMolecule)
 				molecule_num++
 			}
-			alignment_map := FixGetForTypeOrderedMap(currentMolecule.alignments.Get(position_list[i].read_id))
+			alignment_map := FixGetForTypeOrderedMap(currentMolecule.alignments.Get(pos.read_id))
 			if alignment_map != nil {
-				alignment_map.Set(position_list[i].id, position_list[i])
+				alignment_map.Set(pos.id, pos)
 			} else {
 				aln_map := NewOrderedMap()
-				aln_map.Set(position_list[i].id, position_list[i])
-				currentMolecule.alignments.Set(position_list[i].read_id, aln_map)
+				aln_map.Set(pos.id, pos)
+				currentMolecule.alignments.Set(pos.read_id, aln_map)
 			}
 		}
 		if len(position_list) > 0 {
@@ -1349,8 +1349,7 @@ func inferMolecules(positions [][]*Alignment) []*CandidateMolecule {
 
 func markBestAlignmentForReadInMolecule(molecules []*CandidateMolecule) {
 	active_alignment_num := 0
-	for i := 0; i < len(molecules); i++ {
-		molecule := molecules[i]
+	for _, molecule := range molecules {
 		active_alignments := NewOrderedAlignmentMap()
 		best_alignment_for_read := NewOrderedAlignmentMap()
 		for _, read_id := range molecule.alignments.IterKeys() {
@@ -1502,12 +1501,11 @@ func GetAlignments(ref *gobwa.GoBwaReference, settings *gobwa.GoBwaSettings, bar
 				bestScore = chain.score
 			}
 		}
-
-		for j := range barcode_chains[i] {
-			chain := barcode_chains[i][j]
+		// replace barcode_chains[i][j] by calling it as `chain` at the for loop
+		for _, chain := range barcode_chains[i] {
 			var alignment gobwa.SingleReadAlignment
 			if chain.chain != nil {
-				alignment = gobwa.GoBwaSmithWaterman(ref, settings, string(*(barcode_chains[i][j].read)), chain.chain, arena)
+				alignment = gobwa.GoBwaSmithWaterman(ref, settings, string(*(chain.read)), chain.chain, arena)
 			} else {
 				alignment = gobwa.SingleReadAlignment{}
 			}
@@ -1537,9 +1535,13 @@ func GetAlignments(ref *gobwa.GoBwaReference, settings *gobwa.GoBwaSettings, bar
 				cigarIncrement = -2
 			}
 			for k := cigarStart; k < len(alignment.Cigar) && k >= 0; k += cigarIncrement {
-				if alignment.Cigar[k] == 0 {
-					matches += int(alignment.Cigar[k+1])
-					for match := 0; match < int(alignment.Cigar[k+1]); match++ {
+				op := alignment.Cigar[k]
+				opLen := int(alignment.Cigar[k+1])
+
+				switch op {
+				case 0:
+					matches += opLen
+					for match := range opLen {
 						if refSeqOffset+match >= len(refSeq) {
 							continue
 						}
@@ -1555,21 +1557,21 @@ func GetAlignments(ref *gobwa.GoBwaReference, settings *gobwa.GoBwaSettings, bar
 							mismatchReadLocs = append(mismatchReadLocs, readOffset+match)
 						}
 					}
-					refSeqOffset += int(alignment.Cigar[k+1])
-					readOffset += int(alignment.Cigar[k+1])
-				} else if alignment.Cigar[k] == 1 {
+					refSeqOffset += opLen
+					readOffset += opLen
+				case 1:
 					indels += 1
-					indel_length += int(alignment.Cigar[k+1])
-					readOffset += int(alignment.Cigar[k+1])
-				} else if alignment.Cigar[k] == 2 {
+					indel_length += opLen
+					readOffset += opLen
+				case 2:
 					indels += 1
-					indel_length += int(alignment.Cigar[k+1])
-					refSeqOffset += int(alignment.Cigar[k+1])
-				} else if alignment.Cigar[k] == 3 {
+					indel_length += opLen
+					refSeqOffset += opLen
+				case 3:
 					soft_clipping += 1
 					soft_clipping_num += 1
-					soft_clipping_length += int(alignment.Cigar[k+1])
-					readOffset += int(alignment.Cigar[k+1])
+					soft_clipping_length += opLen
+					readOffset += opLen
 				}
 			}
 			mismatches := alignment.EditDistance - indel_length
@@ -1631,9 +1633,9 @@ func GetAlignments(ref *gobwa.GoBwaReference, settings *gobwa.GoBwaSettings, bar
 				full_alignment.readmap_s = chain.aln.ReadS
 				full_alignment.readmap_e = chain.aln.ReadE
 			}
-			full[barcode_chains[i][j].read_id] = append(full[barcode_chains[i][j].read_id], &full_alignment)
+			full[chain.read_id] = append(full[chain.read_id], &full_alignment)
 			if full_alignment.score >= bestScore-delta {
-				toReturn[barcode_chains[i][j].read_id] = append(toReturn[barcode_chains[i][j].read_id], &full_alignment)
+				toReturn[chain.read_id] = append(toReturn[chain.read_id], &full_alignment)
 			}
 		}
 	}
