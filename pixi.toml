@@ -1,0 +1,25 @@
+[workspace]
+authors = ["pdimens <pdimens@gmail.com>"]
+channels = ["conda-forge", "bioconda"]
+name = "arachne"
+platforms = ["linux-64"]
+version = "1.0-dev"
+
+[dependencies]
+djinn = ">=2.5,<3"
+
+[tasks]
+
+[feature.test.dependencies]
+mimick = "*"
+djinn = ">=2.5,<3"
+
+[feature.test.tasks]
+fasta = {cmd = "./test/data.py", outputs = ["test/hap1.fa", "test/hap2.fa"]}
+reads = {cmd = "mimick --quiet -g 10 -o test/simulated test/hap1.fa test/hap2.fa", inputs = ["test/hap1.fa", "test/hap2.fa"], outputs = ["test/simulated.R1.fq.gz", "test/simulated.R2.fq.gz"], depends-on = ["fasta"]}
+prep = {cmd = "arachne-prep test/test test/simulated.R1.fq.gz test/simulated.R2.fq.gz", inputs = ["test/simulated.R1.fq.gz", "test/simulated.R2.fq.gz"], depends-on = ["reads"]}
+test-data = {cmd = "rm -f test/test.filtered*.gz test/hap*.fa test/simulated*fq.gz", depends-on = ["prep"]}
+test = "bin/arachne"
+
+[environments]
+test = ["test"]
