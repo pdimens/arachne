@@ -46,10 +46,12 @@ func main() {
 
 		fmt.Fprint(os.Stderr, "\nArachne is an aligner for (short-read) linked-read data. Input FASTQs can be gzipped and come from any linked-read technology, provided they:")
 		fmt.Fprint(os.Stderr, "\n  - are a set of paired-end reads")
-		fmt.Fprint(os.Stderr, "\n  - have barcodes in a \033[92;1mBX:Z\033[0m SAM tag (e.g. \033[92;1mBX:Z:ATGGACTAGA\033[0m)")
-		fmt.Fprint(os.Stderr, "\n  - have barcode validations (\033[92;1m0\033[0m|\033[92;1m1\033[0m) in a \033[92;1mVX:i\033[0m SAM tag (e.g. \033[92;1mVX:i:1\033[0m if valid)")
-		fmt.Fprint(os.Stderr, "\n  - are sorted by barcode\n")
-		fmt.Fprint(os.Stderr, "\nWhich can be accomplished with \033[94;1mdjinn arachne-pre\033[0m\n")
+		fmt.Fprint(os.Stderr, "\n  - are sorted by barcode")
+		fmt.Fprint(os.Stderr, "\n  - have barcodes in a \033[92;1mBX:Z\033[0m SAM tag")
+		fmt.Fprint(os.Stderr, "\n    - e.g. \033[92;1mBX:Z:ATGGACTAGA\033[0m")
+		fmt.Fprint(os.Stderr, "\n  - have barcode validations (\033[92;1m0\033[0m|\033[92;1m1\033[0m) in a \033[92;1mVX:i\033[0m SAM tag")
+		fmt.Fprint(os.Stderr, "\n    - e.g. \033[92;1mVX:i:1\033[0m if valid")
+		fmt.Fprint(os.Stderr, "\nUse \033[94;1marachne-pre\033[0m from djinn (included) to get inputs into meetings these requirements.\n")
 		fmt.Fprint(os.Stderr, "\nSee the documentation for more information: https://pdimens.github.io/arachne\n")
 
 		fmt.Fprint(os.Stderr, "\n\033[35;1mOptions:\033[0m")
