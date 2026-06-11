@@ -11,6 +11,7 @@ arachne: src/gobwa/bwa/libbwa.a
 	@echo "Building arachne"
 	mkdir -p bin/
 	go build -ldflags "-X aligner.__VERSION__='$(VERSION)'" -o bin/arachne $@
+	chmod +x bin/arachne
 
 src/gobwa/bwa/libbwa.a:
 	@echo "Building BWA"

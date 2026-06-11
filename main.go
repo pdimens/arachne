@@ -51,7 +51,7 @@ func main() {
 		fmt.Fprint(os.Stderr, "\n    - e.g. \033[92;1mBX:Z:ATGGACTAGA\033[0m")
 		fmt.Fprint(os.Stderr, "\n  - have barcode validations (\033[92;1m0\033[0m|\033[92;1m1\033[0m) in a \033[92;1mVX:i\033[0m SAM tag")
 		fmt.Fprint(os.Stderr, "\n    - e.g. \033[92;1mVX:i:1\033[0m if valid")
-		fmt.Fprint(os.Stderr, "\nUse \033[94;1marachne-pre\033[0m from djinn (included) to get inputs into meetings these requirements.\n")
+		fmt.Fprint(os.Stderr, "\nUse \033[94;1marachne-pre\033[0m from djinn (included) to get inputs into this format.\n")
 		fmt.Fprint(os.Stderr, "\nSee the documentation for more information: https://pdimens.github.io/arachne\n")
 
 		fmt.Fprint(os.Stderr, "\n\033[35;1mOptions:\033[0m")
@@ -86,7 +86,6 @@ func main() {
 		preprocess.FileExists(centromeres, "Centromere")
 	}
 
-	//TODO ADD PREPROCESS AND STANDARDIZE SUBCOMMANDS TO ARACHNE
 	args := aligner.ArachneArgs{
 		R1:                    &r1,
 		R2:                    &r2,
