@@ -1,5 +1,3 @@
-// Copyright (c) 2015 10X Genomics, Inc. All rights reserved.
-
 package aligner
 
 type OrderedMap struct {

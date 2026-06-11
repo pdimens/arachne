@@ -13,7 +13,6 @@ import (
 
 func main() {
 	var centromeres string
-	var positionChunkSize int
 	var improperPairPenalty float64
 	var readGroups string
 	var sampleId string
@@ -27,9 +26,6 @@ func main() {
 
 	flag.Float64Var(&improperPairPenalty, "improper-pair-penalty", -4.0, "Penalty for improper pair")
 	flag.Float64Var(&improperPairPenalty, "i", -4.0, "Penalty for improper pair")
-
-	flag.IntVar(&positionChunkSize, "partitions", 40000000, "Contig partition size (in bp) to speed up final BAM concatenation")
-	flag.IntVar(&positionChunkSize, "p", 40000000, "Contig partition size (in bp) to speed up final BAM concatenation")
 	//TODO MAKE READ GROUP FOLLOW THE BWA SPEC BETTER
 	//TODO MERGE READGROUPS WITH SAMPLEID
 	flag.StringVar(&readGroups, "read-group", "sample:library:molecule:flowcell:lane", "Comma-separated list of read group IDs")
@@ -95,7 +91,6 @@ func main() {
 		Sample_id:             &sampleId,
 		Threads:               &threads,
 		DEBUG:                 &debug_spoof,
-		PositionChunkSize:     &positionChunkSize,
 		DebugTags:             &debug_spoof,
 		DebugPrintMove:        &debug_spoof,
 		Reference:             &ref,

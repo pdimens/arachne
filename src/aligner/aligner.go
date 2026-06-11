@@ -23,6 +23,11 @@ import (
 	"arachne/src/gobwa"
 	"arachne/src/optimizer"
 )
+import (
+	"log"
+
+	"github.com/biogo/hts/sam"
+)
 
 // build version -- get set statically by a linker flag
 var __VERSION__ string
@@ -61,74 +66,6 @@ type ChainedHit struct {
 	// trim_qual *[]byte
 }
 
-// #TODO ALIGNMENT NEEDS tO GET RID OF 10X STUFF
-type Alignment struct {
-	//	trim_seq                          *[]byte
-	//	trim_qual                         *[]byte
-	//	raw_barcode                       *[]byte
-	//  barcode_qual                      *[]byte
-	//  sample_index                      *[]byte
-	//  sample_index_qual                 *[]byte
-	id                                int
-	read1                             bool
-	is_proper                         bool
-	soft_clipped                      int
-	soft_clipped_length               int
-	barcode                           *[]byte
-	read_name                         *string
-	read_seq                          *[]byte
-	read_qual                         *[]byte
-	mapq                              int
-	molecule_difference               float64
-	contig                            string
-	pos                               int64
-	aend                              int64
-	score                             int
-	mismatches                        int
-	matches                           int
-	mismatchLocs                      []int
-	mismatchReadLocs                  []int
-	indels                            int
-	read_id                           int
-	bad_molecule                      bool
-	correctly_placed                  bool
-	mate_id                           int
-	mate_alignment                    *Alignment
-	reversed                          bool
-	molecule_id                       int
-	cigar                             []uint32
-	read_group                        *string
-	active                            bool    // the selected alignment for this read
-	log_alignment_probability         float64 // does not include penalty for improperly paired
-	updated_log_alignment_probability float64
-	bwa_pick                          bool
-	mapq_data                         *MapQData
-	sum_move_probability_change       float64
-	molecule_confidence               float64
-	active_molecule                   bool
-	readmap_s                         int
-	readmap_e                         int
-	secondary                         *Alignment
-	primary                           *Alignment
-	duplicate                         bool
-}
-
-func (aln *Alignment) Print() {
-	fmt.Println(
-		"read ", *aln.read_name,
-		"read1", aln.read1,
-		"chrom", aln.contig,
-		"pos", aln.pos,
-		"reverse", aln.reversed,
-		"mismatches", aln.mismatches,
-		"indels", aln.indels,
-		"soft clipped sides", aln.soft_clipped,
-		"soft clipping length", aln.soft_clipped_length,
-		"active_molecule", aln.active_molecule,
-		"molecule id", aln.molecule_id,
-	)
-}
-
 func FindRead(alignments [][]*Alignment, molecules []*CandidateMolecule, qname string) {
 	for _, alignmentArray := range alignments {
 		for _, alignment := range alignmentArray {
@@ -146,28 +83,6 @@ func FindRead(alignments [][]*Alignment, molecules []*CandidateMolecule, qname s
 			}
 		}
 	}
-}
-
-func (aln *Alignment) IsUnmapped() bool {
-	if !aln.is_proper && aln.score-17 < 19 {
-		return true
-	}
-	return false
-}
-
-type MapQData struct {
-	copies                          int
-	copies_in_active_molecules      int
-	unique_molecules_active         int
-	copies_outside_active_molecules int
-	reads_in_molecule               int
-	active_alignments_in_molecules  string
-	second_best                     *Alignment
-	second_best_score               float64
-	score                           float64
-	second_best_proper_pair         bool
-	second_best_molecule_reads      int
-	second_best_molecule_confidence float64
 }
 
 /*
@@ -244,28 +159,10 @@ func ReturnBuffer(reads []fastqreader.FastQRecord) {
 	barcode_reads_lock.Unlock()
 }
 
-type Data struct {
-	alignments [][]*Alignment
-	reads      []fastqreader.FastQRecord
-	attach_bx  bool
-}
-
 /*Command line arguments*/
-//var r1 *string
-//var r2 *string
 var improper_pair_penalty *float64
-
-// var output *string
-// var read_groups *string
-// var sample_id *string
-// var threads *int
 var DEBUG *bool
-
-// var positionChunkSize *int
-// var debugTags *bool
 var debugPrintMove *bool
-
-//var reference *string
 
 type Region struct {
 	start int
@@ -286,7 +183,6 @@ func Arachne(args ArachneArgs) {
 	read_groups := args.Read_groups
 	sample_id := args.Sample_id
 	threads := args.Threads
-	positionChunkSize := args.PositionChunkSize
 	debugTags := args.DebugTags
 	reference := args.Reference
 	// unused...
@@ -321,10 +217,6 @@ func Arachne(args ArachneArgs) {
 	var w *bufio.Writer
 
 	barcode_num := 0
-	bams, err := CreateBAMs(ref, *output, *read_groups, *sample_id, *positionChunkSize, *debugTags)
-	if err != nil {
-		panic(err)
-	}
 
 	work_to_do := make(chan *WorkUnit, 2)
 	//finished := make (chan bool);
@@ -332,18 +224,21 @@ func Arachne(args ArachneArgs) {
 	stats := &RFAStats{}
 	stats.file = w
 
-	/* This RW lock gets Rlocked by each worker thread. Worker threads
-	 * unlock it when they are finished and have copied their data to the
-	 * BAM writer
-	 */
-	var worker_lock sync.RWMutex
-
 	// IS THIS A CONTAINER OF FASTQ RECORDS THAT ALL HAVE THE SAME BARCODE?
 	barcode_reads = [][]fastqreader.FastQRecord{}
 
-	/* Start some workers */
+	// ------- SAM output writer -------------------------
+	header, contigs := buildHeader(ref, *read_groups, *sample_id, __VERSION__)
+	// chanCap sized to absorb worker bursts
+	writeChannel, doneChan := NewSamWriterChannel(header, *threads*500, 2<<20, *threads)
+
+	var wg sync.WaitGroup
 	for i := 0; i < *threads; i++ {
-		go WorkerThread(work_to_do, bams, ref, settings, config, stats, &worker_lock)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			WorkerThread(work_to_do, writeChannel, ref, settings, config, stats, contigs, debugTags)
+		}()
 	}
 
 	/* Iterate over source file, giving work to the workers */
@@ -365,19 +260,13 @@ func Arachne(args ArachneArgs) {
 		}
 
 		work_to_do <- &WorkUnit{bc_reads, barcode_num, full_barcode}
+		close(work_to_do)
+
+		wg.Wait()
+		close(writeChannel)
+		<-doneChan
 	}
 
-	/* Tell each worker to exit */
-	for i := 0; i < *threads; i++ {
-		work_to_do <- nil
-	}
-
-	/* Wait for each worker to finish any final tasks and exit */
-	worker_lock.Lock()
-	defer worker_lock.Unlock()
-
-	/* Close and flush the BAM file */
-	bams.Close()
 	fmt.Fprint(os.Stderr, "Arachne completed successfully")
 }
 
@@ -404,6 +293,9 @@ func loadCentromeres(filename *string) map[string]Region {
 			toRet[chrom] = Region{start: start, end: end}
 		}
 	}
+	if err := scanner.Err(); err != nil {
+		log.Fatalf("%v", err)
+	}
 	return toRet
 }
 
@@ -411,47 +303,42 @@ func loadCentromeres(filename *string) map[string]Region {
  * This is a single "worker" thread. It tries to grab work units until it gets
  * nil, then it shuts down.
  */
-func WorkerThread(input chan *WorkUnit,
-	bams *BAMWriters,
+func WorkerThread(
+	input chan *WorkUnit,
+	out chan *sam.Record,
 	ref *gobwa.GoBwaReference,
 	settings *gobwa.GoBwaSettings,
 	config *RFAConfig,
 	stats *RFAStats,
-	worker_lock *sync.RWMutex) {
-
-	worker_lock.RLock()
-
-	for work := <-input; work != nil; work = <-input {
-		DoRFAForOneBarcode(work, bams, ref, settings, config, stats, work.reads)
+	contigs map[string]*sam.Reference,
+	debugtags *bool) {
+	for work := range input {
+		DoRFAForOneBarcode(work, out, ref, settings, config, stats, contigs, debugtags, work.reads)
 	}
-	worker_lock.RUnlock()
 }
 
 func StashAlignments(a *OrderedMap) *OrderedMap {
-
 	res := NewOrderedMap()
-
 	for id, read := range a.Iter() {
-
 		a_for_read := NewOrderedMap()
 		res.Set(id, a_for_read)
-
 		alignments := FixGetForTypeOrderedMap(read)
 		for id2, a_ptr := range alignments.Iter() {
 			aln := FixGetForTypeAlignment(a_ptr)
 			a_for_read.Set(id2, aln)
 		}
 	}
-
 	return res
 }
 
 func DoRFAForOneBarcode(work *WorkUnit,
-	bams *BAMWriters,
+	out chan *sam.Record,
 	ref *gobwa.GoBwaReference,
 	settings *gobwa.GoBwaSettings,
 	config *RFAConfig,
 	stats *RFAStats,
+	contigs map[string]*sam.Reference,
+	debugtags *bool,
 	reads []fastqreader.FastQRecord) {
 
 	stats.total = 0
@@ -480,7 +367,8 @@ func DoRFAForOneBarcode(work *WorkUnit,
 		estimateMapQualities(alignments, nil, config.improper_penalty)
 		markDuplicates(alignments)
 		CheckSplitReads(stashed_alignments, centromeres)
-		DumpToBams(&Data{alignments: alignments, reads: reads, attach_bx: work.unique_barcode}, bams)
+		flushToChannel(alignments, out, contigs, debugtags)
+		ReturnBuffer(reads) // was inside BamThread after DoDumpToBam, move here
 		arena.Free()
 		return
 	}
@@ -505,7 +393,8 @@ func DoRFAForOneBarcode(work *WorkUnit,
 	estimateMapQualities(optimized.alignments, optimized.candidate_molecules, optimized.log_unpaired_probability)
 	markDuplicates(alignments)
 	CheckSplitReads(stashed_alignments, centromeres)
-	DumpToBams(&Data{optimized.alignments, reads, true}, bams)
+	flushToChannel(alignments, out, contigs, debugtags)
+	ReturnBuffer(reads) // was inside BamThread after DoDumpToBam, move here
 	arena.Free()
 }
 
@@ -1036,39 +925,6 @@ func worthRunningRFA(barcode_reads []fastqreader.FastQRecord, uniqueBarcode bool
 		return false
 	}
 	return true
-}
-
-func isPair(read1, read2 *Alignment) bool {
-	if read1.reversed == read2.reversed || read1.contig != read2.contig {
-		return false
-	}
-	var forward, reverse *Alignment
-	if read1.reversed {
-		forward = read2
-		reverse = read1
-	} else {
-		forward = read1
-		reverse = read2
-	}
-	dist := reverse.pos - forward.pos
-	//TODO dont delete, trimming code to be turned on at later date // this is for if you have a reverse read exend further left than the forward read starts due to soft clipping and random bases matching the reference by chance.
-	// if dist < 0 && dist >= -35 {
-	// 	if reverse.cigar[0] == uint32(3) && len(reverse.cigar) > 2 && reverse.cigar[2] == 0 && int64(reverse.cigar[3]) > -dist {
-	// 		reverse.cigar[1] += uint32(-dist)
-	// 		reverse.cigar[3] -= uint32(-dist)
-	// 		reverse.pos += -dist
-	// 	}
-	// }
-	// 	cigar_end := len(forward.cigar)
-	// 	overhang := reverse.aend - forward.aend
-	// 	if overhang < 0 {
-	// 		if forward.cigar[cigar_end-2] == uint32(3) && cigar_end > 2 && int64(forward.cigar[cigar_end-3]) > -overhang {
-	// 			forward.cigar[cigar_end-1] += uint32(-overhang)
-	// 			forward.cigar[cigar_end-3] -= uint32(-overhang)
-	// 			forward.aend -= -overhang
-	// 		}
-	// 	}
-	return dist >= int64(-35) && dist < int64(750)
 }
 
 func (o Optimizer) GenerateMove(accept_move func(p_curr float64, p_next float64) bool) optimizer.Optimizable {
