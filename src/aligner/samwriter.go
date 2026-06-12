@@ -148,27 +148,34 @@ func buildRecord(aln, primary *Alignment, debugTags *bool, contigs map[string]*s
 		xs := auxify_int("XS", int(aln.mapq_data.second_best_score))
 		aux = append(aux, sam.Aux(xs))
 		as = auxify_int("AS", int(aln.mapq_data.score))
-		xc_string := ""
+		var xc_string strings.Builder
 		if aln.mapq_data.second_best != nil {
 			mismatchReadLocs := aln.mapq_data.second_best.mismatchReadLocs
 			mismatchLocs := aln.mapq_data.second_best.mismatchLocs
-			for i := 0; i < len(mismatchReadLocs); i++ {
+			for i := range mismatchReadLocs {
 				readLoc := mismatchReadLocs[i]
 				refLoc := mismatchLocs[i]
-				xc_string += strconv.FormatInt(int64(refLoc), 10) + "," + strconv.FormatInt(int64(readLoc), 10) + ",1;"
+				xc_string.WriteString(strconv.FormatInt(int64(refLoc), 10))
+				xc_string.WriteString(",")
+				xc_string.WriteString(strconv.FormatInt(int64(readLoc), 10))
+				xc_string.WriteString(",1;")
 			}
 		}
-		xc := auxify_string([]byte("XC"), []byte(xc_string))
+		xc := auxify_string([]byte("XC"), []byte(xc_string.String()))
 		aux = append(aux, sam.Aux(xc))
-		ac_string := ""
+		var ac_string strings.Builder
+		//ac_string := ""
 		mismatchReadLocs := aln.mismatchReadLocs
 		mismatchLocs := aln.mismatchLocs
-		for i := 0; i < len(mismatchReadLocs); i++ {
+		for i := range mismatchReadLocs {
 			readLoc := mismatchReadLocs[i]
 			refLoc := mismatchLocs[i]
-			ac_string += strconv.FormatInt(int64(refLoc), 10) + "," + strconv.FormatInt(int64(readLoc), 10) + ",1;"
+			ac_string.WriteString(strconv.FormatInt(int64(refLoc), 10))
+			ac_string.WriteString(",")
+			ac_string.WriteString(strconv.FormatInt(int64(readLoc), 10))
+			ac_string.WriteString(",1;")
 		}
-		ac := auxify_string([]byte("AC"), []byte(ac_string))
+		ac := auxify_string([]byte("AC"), []byte(ac_string.String()))
 		aux = append(aux, sam.Aux(ac))
 	}
 	aux = append(aux, sam.Aux(as))
@@ -206,7 +213,7 @@ func buildRecord(aln, primary *Alignment, debugTags *bool, contigs map[string]*s
 		} else {
 			strand = "+"
 		}
-		cigar := ""
+		var cigar strings.Builder
 		indelLength := 0
 		for cig := 0; cig < len(cigarBytes); cig += 2 {
 			cigChar := ""
@@ -218,10 +225,25 @@ func buildRecord(aln, primary *Alignment, debugTags *bool, contigs map[string]*s
 			if cigarBytes[cig] == 1 || cigarBytes[cig] == 2 {
 				indelLength += int(cigarBytes[cig+1])
 			}
-			cigar += strconv.FormatInt(int64(cigarBytes[cig+1]), 10) + cigChar
+			cigar.WriteString(strconv.FormatInt(int64(cigarBytes[cig+1]), 10))
+			cigar.WriteString(cigChar)
+			//cigar += strconv.FormatInt(int64(cigarBytes[cig+1]), 10) + cigChar
 		}
-		secondaryAlignmentString := []byte(secondaryAlignment.contig + "," + strconv.FormatInt(int64(secondaryAlignment.pos), 10) + "," + strand + "," + cigar + "," + strconv.FormatInt(int64(secondaryAlignment.mapq), 10) + "," + strconv.FormatInt(int64(len(secondaryAlignment.mismatchLocs)+indelLength), 10) + ";")
-		sa := auxify_string([]byte("SA"), secondaryAlignmentString)
+		var snd strings.Builder
+		snd.WriteString(secondaryAlignment.contig)
+		snd.WriteString(",")
+		snd.WriteString(strconv.FormatInt(int64(secondaryAlignment.pos), 10))
+		snd.WriteString(",")
+		snd.WriteString(strand)
+		snd.WriteString(",")
+		snd.WriteString(cigar.String())
+		snd.WriteString(",")
+		snd.WriteString(strconv.FormatInt(int64(secondaryAlignment.mapq), 10))
+		snd.WriteString(",")
+		snd.WriteString(strconv.FormatInt(int64(len(secondaryAlignment.mismatchLocs)+indelLength), 10))
+		snd.WriteString(";")
+		//secondaryAlignmentString := []byte(secondaryAlignment.contig + "," + strconv.FormatInt(int64(secondaryAlignment.pos), 10) + "," + strand + "," + cigar + "," + strconv.FormatInt(int64(secondaryAlignment.mapq), 10) + "," + strconv.FormatInt(int64(len(secondaryAlignment.mismatchLocs)+indelLength), 10) + ";")
+		sa := auxify_string([]byte("SA"), []byte(snd.String()))
 		aux = append(aux, sam.Aux(sa))
 	}
 	if *debugTags && aln.mapq_data != nil {

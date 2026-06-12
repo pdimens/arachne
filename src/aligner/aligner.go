@@ -16,7 +16,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"syscall"
 	"unsafe"
 
 	"arachne/src/fastqreader"
@@ -29,14 +28,10 @@ import (
 	"github.com/biogo/hts/sam"
 )
 
-// build version -- get set statically by a linker flag
-var __VERSION__ string
-
 type ArachneArgs struct {
 	R1                    *string
 	R2                    *string
 	Improper_pair_penalty *float64
-	Output                *string
 	Read_groups           *string
 	Sample_id             *string
 	Threads               *int
@@ -131,8 +126,9 @@ type Optimizer struct {
 // Holds a single unit of "work" to be processed by an RFA thread
 type WorkUnit struct {
 	reads          []fastqreader.FastQRecord
-	barcodenum     int
+	barcode_num    int
 	unique_barcode bool
+	poolBuf        *[]fastqreader.FastQRecord
 }
 
 // Holds statistics and coordination points for RFA
@@ -172,14 +168,10 @@ type Region struct {
 var centromeres map[string]Region
 
 // this is the actual arachne program
-func Arachne(args ArachneArgs) {
-
-	fmt.Fprintf(os.Stderr, "Starting arachne. Version: %s\n", __VERSION__)
-
+func Arachne(args ArachneArgs, version string) {
 	r1 := args.R1
 	r2 := args.R2
 	improper_pair_penalty := args.Improper_pair_penalty
-	output := args.Output
 	read_groups := args.Read_groups
 	sample_id := args.Sample_id
 	threads := args.Threads
@@ -192,82 +184,87 @@ func Arachne(args ArachneArgs) {
 
 	// Use worker thread count request on cmdline, or
 	// 1 CPU if -threads wasn't specified
-	if *threads < 0 {
-		*threads = 1
-	}
-	runtime.GOMAXPROCS(*threads + 2)
-	if syscall.Access(*output, 2) != nil { //is output writable
-		panic(fmt.Sprintf("Output directory not writable by this process %s", *output))
-	}
+	*threads = max(1, *threads)
 
-	fastq, err := fastqreader.OpenFastQ(*r1, *r2)
+	runtime.GOMAXPROCS(*threads + 2)
+	fastq, err := fastqreader.OpenFastQPair(*r1, *r2)
 	if err != nil {
 		panic(err)
 	}
-
+	defer fastq.Close()
+	// ── process reference ─────────────────────────────────────────────────────────
+	// if reference index files don't exist, run bwa index on reference
+	exts := []string{".amb", ".ann", ".bwt", ".pac", ".sa"}
+	for _, i := range exts {
+		if _, err := os.Stat(*reference + i); err != nil {
+			bwaindex(*reference)
+			break
+		}
+	}
 	fmt.Fprintf(os.Stderr, "Loading reference: %s\n", *reference)
-
 	ref := gobwa.GoBwaLoadReference(*reference)
 	fmt.Fprint(os.Stderr, "Reference loaded\n")
 	settings := gobwa.GoBwaAllocSettings()
 	config := &RFAConfig{*improper_pair_penalty}
-
 	//config.improper_penalty = float64(*improper_pair_penalty)
 
+	// ------- SAM output writer -------------------------
+	// chanCap sized to absorb worker bursts
+	header, contigs := buildHeader(ref, *read_groups, *sample_id, version)
+	writeChannel, doneChan := NewSamWriterChannel(header, *threads*500, 2<<20, *threads)
+
+	// ── buffer pool ─────────────────────────────────────────────────────────
+	// One extra buffer beyond *threads so the main loop always has something
+	// to fill while all workers are busy with their own buffers.
+	bufChan := make(chan *[]fastqreader.FastQRecord, *threads+1)
+	for i := 0; i < *threads+1; i++ {
+		s := make([]fastqreader.FastQRecord, 0, 50000)
+		bufChan <- &s
+	}
+
 	var w *bufio.Writer
-
-	barcode_num := 0
-
-	work_to_do := make(chan *WorkUnit, 2)
-	//finished := make (chan bool);
-
 	stats := &RFAStats{}
 	stats.file = w
 
-	// IS THIS A CONTAINER OF FASTQ RECORDS THAT ALL HAVE THE SAME BARCODE?
-	barcode_reads = [][]fastqreader.FastQRecord{}
-
-	// ------- SAM output writer -------------------------
-	header, contigs := buildHeader(ref, *read_groups, *sample_id, __VERSION__)
-	// chanCap sized to absorb worker bursts
-	writeChannel, doneChan := NewSamWriterChannel(header, *threads*500, 2<<20, *threads)
-
+	// ── workers ─────────────────────────────────────────────────────────────
+	work_to_do := make(chan *WorkUnit, 2)
 	var wg sync.WaitGroup
 	for i := 0; i < *threads; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			WorkerThread(work_to_do, writeChannel, ref, settings, config, stats, contigs, debugTags)
+			WorkerThread(work_to_do, writeChannel, bufChan, ref, settings, config, stats, contigs, debugTags)
 		}()
 	}
+	//finished := make (chan bool);
+	return
+	barcode_reads = [][]fastqreader.FastQRecord{}
 
-	/* Iterate over source file, giving work to the workers */
+	// ── feed loop ───────────────────────────────────────────────────────────
+	barcode_num := 0
 	for {
 		barcode_num++
-		if len(barcode_reads) == 0 {
-			barcode_reads_lock.Lock()
-			barcode_reads = append(barcode_reads, make([]fastqreader.FastQRecord, 0, 50000))
-			barcode_reads_lock.Unlock()
-		}
-		barcode_reads_lock.Lock()
-		bc_reads := barcode_reads[len(barcode_reads)-1]
-		//fmt.Println(len(barcode_reads))
-		barcode_reads = barcode_reads[0 : len(barcode_reads)-1]
-		barcode_reads_lock.Unlock()
-		bc_reads, err, full_barcode := fastq.ReadBarcodeSet(&bc_reads)
+		buf := <-bufChan
+		*buf = (*buf)[:0] // reset length, keep capacity
+
+		//records, err, full_barcode := fastq.ReadBarcodeSet(buf)
+		records, err, _ := fastq.ReadBarcodeSet(buf)
 		if err != nil {
+			bufChan <- buf // return unused buffer
 			break
 		}
-
-		work_to_do <- &WorkUnit{bc_reads, barcode_num, full_barcode}
-		close(work_to_do)
-
-		wg.Wait()
-		close(writeChannel)
-		<-doneChan
+		for _, j := range records {
+			j.Print()
+		}
+		//work_to_do <- &WorkUnit{records, barcode_num, full_barcode, buf}
 	}
 
-	fmt.Fprint(os.Stderr, "Arachne completed successfully")
+	// ── teardown ────────────────────────────────────────────────────────────
+	close(work_to_do)
+	wg.Wait()
+	close(writeChannel)
+	<-doneChan
+
 }
 
 func loadCentromeres(filename *string) map[string]Region {
@@ -306,6 +303,7 @@ func loadCentromeres(filename *string) map[string]Region {
 func WorkerThread(
 	input chan *WorkUnit,
 	out chan *sam.Record,
+	bufChan chan *[]fastqreader.FastQRecord,
 	ref *gobwa.GoBwaReference,
 	settings *gobwa.GoBwaSettings,
 	config *RFAConfig,
@@ -314,6 +312,7 @@ func WorkerThread(
 	debugtags *bool) {
 	for work := range input {
 		DoRFAForOneBarcode(work, out, ref, settings, config, stats, contigs, debugtags, work.reads)
+		bufChan <- work.poolBuf // return buffer for reuse
 	}
 }
 

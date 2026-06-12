@@ -12,14 +12,14 @@ package gobwa
 // #include <stdlib.h>
 import "C"
 import (
+	"bytes"
 	"fmt"
 	"log"
+	"os/exec"
 	"unsafe"
 )
 
-/*
- * Holds a loaded BWA reference object.
- */
+// Holds a loaded BWA reference object.
 type GoBwaReference struct {
 	BWTData    unsafe.Pointer // Secret pointer to a *btw_t type
 	contigTids map[string]int32
@@ -41,9 +41,20 @@ func (r GoBwaReference) GetReferenceContigsInfo() ([]string, []int64) {
 	return names, lengths
 }
 
-/*
- * Sets a set of BWA settings
- */
+// wrapper for bwa index
+func GoBwaIndex(fastaPath string) error {
+	cmd := exec.Command("src/gobwa/bwa/bwa", "index", fastaPath)
+
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("bwa index failed: %w\n%s", err, stderr.String())
+	}
+	return nil
+}
+
+// Sets a set of BWA settings
 type GoBwaSettings struct {
 	Settings unsafe.Pointer // Secret pointer to a *mem_opt_t type
 }

@@ -8,8 +8,10 @@ import (
 	"os"
 
 	aligner "arachne/src/aligner"
-	preprocess "arachne/src/preprocess"
+	"arachne/src/fastqreader"
 )
+
+var __VERSION__ string = "1.0.0-dev"
 
 func main() {
 	var centromeres string
@@ -38,9 +40,17 @@ func main() {
 	flag.IntVar(&threads, "t", 8, "Number of threads")
 
 	flag.Usage = func() {
-		fmt.Fprint(os.Stderr, "\n\033[94;1mUsage:\033[0m arachne <options> output.bam reference.fa sample.R1.fq sample.R2.fq\n")
+		fmt.Fprint(os.Stderr, "Arachne linked-read sequence aligner ("+__VERSION__+")\n")
+		fmt.Fprint(os.Stderr, "\n\033[94;1mUsage:\033[0m arachne <options> reference.fa sample.R1.fq sample.R2.fq > out.sam\n")
 
-		fmt.Fprint(os.Stderr, "\nArachne is an aligner for (short-read) linked-read data. Input FASTQs can be gzipped and come from any linked-read technology, provided they:")
+		fmt.Fprint(os.Stderr, "\n\033[35;1mOptions:\033[0m")
+		fmt.Fprint(os.Stderr, "\n  \033[35;1m-c\033[0m/\033[35;1m--centromeres\033[0m\n\tTSV with CEN<chrname> <chrname> <start> <stop>, other rows will be ignored")
+		fmt.Fprint(os.Stderr, "\n  \033[35;1m-i\033[0m/\033[35;1m--improper-pair-penalty\033[0m\n\tPenalty for improper pair \033[90;1m(default: -4)\033[0m")
+		fmt.Fprint(os.Stderr, "\n  \033[35;1m-r\033[0m/\033[35;1m--read-group\033[0m\n\tComma-separated list of read group IDs")
+		fmt.Fprint(os.Stderr, "\n  \033[35;1m-s\033[0m/\033[35;1m--sample-id\033[0m\n\tSample name \033[90;1m(default: sample)\033[0m")
+		fmt.Fprint(os.Stderr, "\n  \033[35;1m-t\033[0m/\033[35;1m--threads\033[0m\n\tNumber of threads \033[90;1m(default: 8)\033[0m\n")
+
+		fmt.Fprint(os.Stderr, "\nInput FASTQs can be gzipped and come from any linked-read technology, provided they:")
 		fmt.Fprint(os.Stderr, "\n  - are a set of paired-end reads")
 		fmt.Fprint(os.Stderr, "\n  - are sorted by barcode")
 		fmt.Fprint(os.Stderr, "\n  - have barcodes in a \033[92;1mBX:Z\033[0m SAM tag")
@@ -49,44 +59,34 @@ func main() {
 		fmt.Fprint(os.Stderr, "\n    - e.g. \033[92;1mVX:i:1\033[0m if valid")
 		fmt.Fprint(os.Stderr, "\nUse \033[94;1marachne-pre\033[0m from djinn (included) to get inputs into this format.\n")
 		fmt.Fprint(os.Stderr, "\nSee the documentation for more information: https://pdimens.github.io/arachne\n")
-
-		fmt.Fprint(os.Stderr, "\n\033[35;1mOptions:\033[0m")
-		fmt.Fprint(os.Stderr, "\n  \033[35;1m-c\033[0m/\033[35;1m--centromeres\033[0m\n\tTSV with CEN<chrname> <chrname> <start> <stop>, other rows will be ignored")
-		fmt.Fprint(os.Stderr, "\n  \033[35;1m-i\033[0m/\033[35;1m--improper-pair-penalty\033[0m\n\tPenalty for improper pair \033[90;1m(default: -4)\033[0m")
-		fmt.Fprint(os.Stderr, "\n  \033[35;1m-p\033[0m/\033[35;1m--partitions\033[0m\n\tContig partition size (in bp) to speed up final BAM concatenation \033[90;1m(default: 40000000)\033[0m")
-		fmt.Fprint(os.Stderr, "\n  \033[35;1m-r\033[0m/\033[35;1m--read-group\033[0m\n\tComma-separated list of read group IDs")
-		fmt.Fprint(os.Stderr, "\n  \033[35;1m-s\033[0m/\033[35;1m--sample-id\033[0m\n\tSample name \033[90;1m(default: sample)\033[0m")
-		fmt.Fprint(os.Stderr, "\n  \033[35;1m-t\033[0m/\033[35;1m--threads\033[0m\n\tNumber of threads \033[90;1m(default: 8)\033[0m\n")
 	}
 
 	flag.Parse()
-	if flag.NArg() != 4 {
+	if flag.NArg() != 3 {
 		if flag.NArg() != 0 {
 			fmt.Fprintf(os.Stderr, "\033[31;1mError:\033[0m 4 positional arguments are required, but %d were given\n", flag.NArg())
 		}
 		flag.Usage()
 		os.Exit(1)
 	}
-	output := flag.Arg(0)
 
-	ref := flag.Arg(1)
-	preprocess.FileExists(ref, "FASTA")
+	ref := flag.Arg(0)
+	fastqreader.FileExists(ref, "FASTA")
 
-	r1 := flag.Arg(2)
-	preprocess.FileExists(r1, "FASTQ")
+	r1 := flag.Arg(1)
+	fastqreader.FileExists(r1, "FASTQ")
 
-	r2 := flag.Arg(3)
-	preprocess.FileExists(r2, "FASTQ")
+	r2 := flag.Arg(2)
+	fastqreader.FileExists(r2, "FASTQ")
 
 	if centromeres != "" {
-		preprocess.FileExists(centromeres, "Centromere")
+		fastqreader.FileExists(centromeres, "Centromere")
 	}
 
 	args := aligner.ArachneArgs{
 		R1:                    &r1,
 		R2:                    &r2,
 		Improper_pair_penalty: &improperPairPenalty,
-		Output:                &output,
 		Read_groups:           &readGroups,
 		Sample_id:             &sampleId,
 		Threads:               &threads,
@@ -96,5 +96,7 @@ func main() {
 		Reference:             &ref,
 		Centromeres:           &centromeres,
 	}
-	aligner.Arachne(args)
+	fmt.Fprintf(os.Stderr, "Starting arachne. Version: %s\n", __VERSION__)
+	aligner.Arachne(args, __VERSION__)
+	fmt.Fprint(os.Stderr, "Arachne completed successfully\n")
 }
