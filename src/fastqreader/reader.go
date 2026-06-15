@@ -85,7 +85,6 @@ func (fqr *FastQReader) ReadOneRecord(result *FastQRecord) error {
 	result.ReadQual1 = slices.Clone(rec1.Seq.Qual)
 	result.Read2 = slices.Clone(rec2.Seq.Seq)
 	result.ReadQual2 = slices.Clone(rec2.Seq.Qual)
-	result.ReadGroupId = "" // handled at CLI level now
 
 	return nil
 }
@@ -197,7 +196,6 @@ func (fqr *FastQRecord) Print() {
 	println("ReadQual2", string(fqr.ReadQual2[:]))
 	println("Valid", fqr.Valid)
 	println("ReadInfo", fqr.ReadInfo)
-	println("ReadGroupId", fqr.ReadGroupId)
 	println("")
 }
 
