@@ -156,10 +156,6 @@ func Arachne(args ArachneArgs) {
 	debugPrintMove = args.DebugPrintMove
 
 	fmt.Fprintf(os.Stderr, "🕷️  Starting arachne. Version: %s\n", VERSION)
-	// Use worker thread count request on cmdline, or
-	// 1 CPU if -threads wasn't specified
-	*threads = max(1, *threads)
-
 	runtime.GOMAXPROCS(*threads + 2)
 	fastq, err := fastqreader.OpenFastQPair(*r1, *r2)
 	if err != nil {
@@ -370,51 +366,6 @@ func scoreAlignment(aln *Alignment, mate *Alignment, log_molecule_penalty float6
 //	debugPrintMove = args.DebugPrintMove
 //	reference = args.Reference
 //}
-
-// If two reads have the same value, then they are duplicates
-type readDupTuple struct {
-	read1      bool
-	reversed   bool
-	contig     string
-	pos        int64
-	mateContig string
-	matePos    int64
-}
-
-// For each read, make a tuple of (bc_sequence, read.is_read1, read.is_reverse, read.tid, read.pos, read.mrnm, read.mpos)
-// reads with an equal value of this tuple are defined as duplicates or one another.
-// mark all but 1 read in each group as a duplicate
-func markDuplicates(alignments [][]*Alignment) {
-
-	dupSeen := make(map[readDupTuple]bool)
-
-	//now go through every read_id and normalize all alternate alignment probabilities
-	for _, alignmentArray := range alignments {
-		for _, alignment := range alignmentArray {
-			if alignment.active {
-
-				mateAlignment := alignment.mate_alignment
-
-				readTuple := readDupTuple{
-					read1:      alignment.read1,
-					reversed:   alignment.reversed,
-					contig:     alignment.contig,
-					pos:        alignment.pos,
-					mateContig: mateAlignment.contig,
-					matePos:    mateAlignment.pos}
-
-				// If we have seen this tuple before, mark it as duplicate
-				// Otherwise note tuple
-				_, haveSeen := dupSeen[readTuple]
-				if haveSeen {
-					alignment.duplicate = true
-				} else {
-					dupSeen[readTuple] = true
-				}
-			}
-		}
-	}
-}
 
 func updateAlignmentsMoleculeStatus(alignments [][]*Alignment, candidate_molecules []*CandidateMolecule, read_copies_in_active_molecule, read_copies_not_in_active_molecule map[int]int, unique_molecules_active map[int]map[int]bool) {
 	if candidate_molecules != nil {

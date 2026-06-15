@@ -98,18 +98,21 @@ func main() {
 	}
 
 	if inferDistance < 0 {
-		fmt.Fprintln(os.Stderr, "Inferred molecule distance cannot be <1. If you are trying to disable it, set the value to greater than your longest chromosome.")
+		fmt.Fprintln(os.Stderr, "\033[31;1mError:\033[0m inferred molecule distance cannot be <1. If you are trying to disable it, set the value to greater than your longest chromosome.")
 		os.Exit(1)
 	}
 
 	if sampleId == "" {
-		fmt.Fprintln(os.Stderr, "A sample-id must be provided.")
+		fmt.Fprintln(os.Stderr, "\033[31;1mError:\033[0m a sample-id must be provided.")
 		os.Exit(1)
 	}
 	// make sure improper pair penalty is negative
 	if improperPairPenalty < 0.0 {
 		improperPairPenalty *= -1.0
 	}
+	// Use worker thread count request on cmdline, or
+	// 1 CPU if -threads wasn't specified
+	threads = max(1, threads)
 
 	args := aligner.ArachneArgs{
 		R1:                    &r1,
