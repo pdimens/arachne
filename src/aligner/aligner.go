@@ -156,7 +156,14 @@ func ReturnBuffer(reads []fastqreader.FastQRecord) {
 }
 
 /*Command line arguments*/
+var r1 *string
+var r2 *string
 var improper_pair_penalty *float64
+var read_groups *string
+var sample_id *string
+var threads *int
+var debugTags *bool
+var reference *string
 var DEBUG *bool
 var debugPrintMove *bool
 
@@ -169,18 +176,18 @@ var centromeres map[string]Region
 
 // this is the actual arachne program
 func Arachne(args ArachneArgs, version string) {
-	r1 := args.R1
-	r2 := args.R2
-	improper_pair_penalty := args.Improper_pair_penalty
-	read_groups := args.Read_groups
-	sample_id := args.Sample_id
-	threads := args.Threads
-	debugTags := args.DebugTags
-	reference := args.Reference
+	r1 = args.R1
+	r2 = args.R2
+	improper_pair_penalty = args.Improper_pair_penalty
+	read_groups = args.Read_groups
+	sample_id = args.Sample_id
+	threads = args.Threads
+	debugTags = args.DebugTags
+	reference = args.Reference
 	// unused...
-	//DEBUG := args.DEBUG
-	//debugPrintMove := args.DebugPrintMove
-	//centromeres := loadCentromeres(args.Centromeres)
+	DEBUG = args.DEBUG
+	debugPrintMove = args.DebugPrintMove
+	centromeres = loadCentromeres(args.Centromeres)
 
 	// Use worker thread count request on cmdline, or
 	// 1 CPU if -threads wasn't specified
@@ -206,7 +213,7 @@ func Arachne(args ArachneArgs, version string) {
 	fmt.Fprint(os.Stderr, "Reference loaded\n")
 	settings := gobwa.GoBwaAllocSettings()
 	config := &RFAConfig{*improper_pair_penalty}
-	//config.improper_penalty = float64(*improper_pair_penalty)
+	config.improper_penalty = float64(*improper_pair_penalty)
 
 	// ------- SAM output writer -------------------------
 	// chanCap sized to absorb worker bursts
@@ -237,7 +244,6 @@ func Arachne(args ArachneArgs, version string) {
 		}()
 	}
 	//finished := make (chan bool);
-	return
 	barcode_reads = [][]fastqreader.FastQRecord{}
 
 	// ── feed loop ───────────────────────────────────────────────────────────
@@ -247,16 +253,16 @@ func Arachne(args ArachneArgs, version string) {
 		buf := <-bufChan
 		*buf = (*buf)[:0] // reset length, keep capacity
 
-		//records, err, full_barcode := fastq.ReadBarcodeSet(buf)
-		records, err, _ := fastq.ReadBarcodeSet(buf)
+		records, err, full_barcode := fastq.ReadBarcodeSet(buf)
+		//records, err, _ := fastq.ReadBarcodeSet(buf)
 		if err != nil {
 			bufChan <- buf // return unused buffer
 			break
 		}
-		for _, j := range records {
-			j.Print()
-		}
-		//work_to_do <- &WorkUnit{records, barcode_num, full_barcode, buf}
+		//for _, j := range records {
+		//	j.Print()
+		//}
+		work_to_do <- &WorkUnit{records, barcode_num, full_barcode, buf}
 	}
 
 	// ── teardown ────────────────────────────────────────────────────────────
@@ -296,10 +302,7 @@ func loadCentromeres(filename *string) map[string]Region {
 	return toRet
 }
 
-/*
- * This is a single "worker" thread. It tries to grab work units until it gets
- * nil, then it shuts down.
- */
+// A single "worker" thread. It tries to grab work units until it gets nil, then it shuts down.
 func WorkerThread(
 	input chan *WorkUnit,
 	out chan *sam.Record,
@@ -648,7 +651,6 @@ func calculateLogMoleculePenalty(candidate_molecules []*CandidateMolecule, refer
 	singletonProb := 0.05
 	moleculePenalty := math.Log10(dnaLength / referenceLength * singletonProb)
 	return moleculePenalty
-
 }
 
 func checkMates(alignments [][]*Alignment) {
