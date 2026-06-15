@@ -98,12 +98,12 @@ func main() {
 	}
 
 	if inferDistance < 0 {
-		fmt.Println("Inferred molecule distance cannot be <1. If you are trying to disable it, set the value to greater than your longest chromosome.")
+		fmt.Fprintln(os.Stderr, "Inferred molecule distance cannot be <1. If you are trying to disable it, set the value to greater than your longest chromosome.")
 		os.Exit(1)
 	}
 
 	if sampleId == "" {
-		fmt.Println("A sample-id must be provided.")
+		fmt.Fprintln(os.Stderr, "A sample-id must be provided.")
 		os.Exit(1)
 	}
 	// make sure improper pair penalty is negative
