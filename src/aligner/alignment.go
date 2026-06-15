@@ -66,6 +66,7 @@ func (aln *Alignment) Print() {
 		"soft clipped sides", aln.soft_clipped,
 		"soft clipping length", aln.soft_clipped_length,
 		"active_molecule", aln.active_molecule,
+		"barcode", aln.barcode,
 		"molecule id", aln.molecule_id,
 	)
 }

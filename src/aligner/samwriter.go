@@ -249,7 +249,7 @@ func buildRecord(aln, primary *Alignment, debugTags *bool, contigs map[string]*s
 	if *debugTags && aln.mapq_data != nil {
 		addAuxDebug(aln, primary, aux)
 	}
-	if len(barcode) > 1 {
+	if len(barcode[0]) > 1 {
 		bx := auxify_string([]byte("BX"), *aln.barcode)
 		aux = append(aux, sam.Aux(bx))
 		vx := auxify_int("VX", 1)

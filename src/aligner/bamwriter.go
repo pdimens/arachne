@@ -4,6 +4,7 @@ package aligner
 
 import (
 	"log"
+	"unsafe"
 
 	sam "github.com/biogo/hts/sam"
 )
@@ -40,19 +41,18 @@ func auxify_int(name string, data int) []byte {
 	return vec
 }
 
-//func auxify_float(name string, data float32) []byte {
-//	vec := make([]byte, 7)
-//	vec[0] = name[0]
-//	vec[1] = name[1]
-//	vec[2] = byte('f')
-//
-//	for i := range 4 {
-//
-//		vec[3+i] = *(*byte)(unsafe.Pointer(uintptr(unsafe.Pointer(&data)) + uintptr(i)))
-//	}
-//
-//	return vec
-//}
+func auxify_float(name string, data float32) []byte {
+	vec := make([]byte, 7)
+	vec[0] = name[0]
+	vec[1] = name[1]
+	vec[2] = byte('f')
+
+	for i := range 4 {
+		vec[3+i] = *(*byte)(unsafe.Pointer(uintptr(unsafe.Pointer(&data)) + uintptr(i)))
+	}
+
+	return vec
+}
 
 func FixCigar(in []uint32) sam.Cigar {
 	count := (len(in) / 2)
@@ -65,7 +65,7 @@ func FixCigar(in []uint32) sam.Cigar {
 
 func fixQual(in []byte) []byte {
 	output := make([]byte, len(in))
-	for i := 0; i < len(in); i++ {
+	for i := range in {
 		output[i] = in[i] - 33
 	}
 	return output

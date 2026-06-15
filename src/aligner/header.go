@@ -1,17 +1,17 @@
 package aligner
 
 import (
-	"arachne/src/gobwa"
-	"log"
 	"os"
 	"strings"
 	"time"
 
+	"arachne/src/gobwa"
+
 	"github.com/biogo/hts/sam"
 )
 
-// Return a SAM header built from the reference, RG, sample ID, and arachne version
-func buildHeader(ref *gobwa.GoBwaReference, read_groups, sample_id, version string) (*sam.Header, map[string]*sam.Reference) {
+// Return a SAM header built from the reference, sample ID, and arachne version
+func buildHeader(ref *gobwa.GoBwaReference, sampleid, version string) (*sam.Header, map[string]*sam.Reference) {
 	contigs := make(map[string]*sam.Reference)
 	references := make([]*sam.Reference, 0)
 
@@ -29,34 +29,23 @@ func buildHeader(ref *gobwa.GoBwaReference, read_groups, sample_id, version stri
 		panic(err)
 	}
 
-	for _, rg_id := range strings.Split(read_groups, ",") {
-		// currently, the ID is composed of:
-		// sample:library:gem_group:flowcell:lane
-		rg_fields := strings.Split(rg_id, ":")
-		if len(rg_fields) == 0 {
-			log.Printf("Empty RG was specified, skipping")
-		} else if len(rg_fields) < 5 {
-			log.Printf("RG is not fully specified, skipping: %s", rg_id)
-		} else {
-			rg, err := sam.NewReadGroup(
-				rg_id,                         //ID
-				"",                            //CN
-				"",                            //DS
-				rg_fields[1]+"."+rg_fields[2], //LB = (input library).(gem group)
-				"",                            //PG
-				"ILLUMINA",                    //PL
-				rg_id,                         //PU: just make same as ID?
-				rg_fields[0],                  //SM
-				"",
-				"",
-				time.Now(),
-				0)
-			if err != nil {
-				panic(err)
-			}
-			h.AddReadGroup(rg)
-		}
+	rg, err := sam.NewReadGroup(
+		sampleid,   //ID
+		"",         //CN
+		"",         //DS
+		"",         //LB
+		"",         //PG
+		"ILLUMINA", //PL
+		"",         //PU: just make same as ID?
+		sampleid,   //SM
+		"",
+		"",
+		time.Now(),
+		0)
+	if err != nil {
+		panic(err)
 	}
+	h.AddReadGroup(rg)
 
 	// Add a program line for arachne
 	prog := sam.NewProgram(

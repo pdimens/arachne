@@ -32,7 +32,7 @@ func (r GoBwaReference) GetReferenceContigsInfo() ([]string, []int64) {
 	numContigs := int(contigs.n_seqs)
 	names := make([]string, numContigs)
 	lengths := make([]int64, numContigs)
-	for i := 0; i < numContigs; i++ {
+	for i := range numContigs {
 		contig_ptr := (uintptr(unsafe.Pointer(contigs.anns)) + uintptr(i)*unsafe.Sizeof(*contigs.anns))
 		contig := (*C.bntann1_t)(unsafe.Pointer(contig_ptr))
 		names[i] = C.GoString(contig.name)

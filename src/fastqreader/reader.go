@@ -121,9 +121,7 @@ func (fqr *FastQReader) ReadBarcodeSet(space *[]FastQRecord) ([]FastQRecord, err
 	}
 	var record_array []FastQRecord
 	if space == nil {
-		/* Allocate some space, guessing at most 500k reads per
-		 * barcode. GO will transparently extend this array if needed
-		 */
+		// Allocate some space, guessing at most 500k reads per barcode
 		record_array = make([]FastQRecord, 0, 500000)
 	} else {
 		/* Re-use (but truncate) space */
@@ -143,7 +141,6 @@ func (fqr *FastQReader) ReadBarcodeSet(space *[]FastQRecord) ([]FastQRecord, err
 	for ; index < 30000; index++ {
 		record_array = append(record_array, FastQRecord{})
 		err := fqr.ReadOneRecord(&record_array[index])
-
 		if err != nil {
 			/* Something went wrong. If we have data, return it and
 			 * defer the error to the next invocation. Otherwise,
@@ -204,6 +201,7 @@ func (fqr *FastQRecord) Print() {
 	println("")
 }
 
+// Check the existence of a file, return a fatal error if it doesnt
 func FileExists(path string, filetype string) bool {
 	absfile, err := filepath.Abs(path)
 	if err != nil {
