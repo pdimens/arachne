@@ -40,8 +40,8 @@ func main() {
 	//flag.StringVar(&readGroups, "read-group", "sample:library:molecule:flowcell:lane", "Comma-separated list of read group IDs")
 	//flag.StringVar(&readGroups, "r", "sample:library:molecule:flowcell:lane", "Comma-separated list of read group IDs")
 
-	flag.StringVar(&sampleId, "sample-id", "sample", "Sample name")
-	flag.StringVar(&sampleId, "s", "sample", "Sample name")
+	flag.StringVar(&sampleId, "sample-id", "", "Sample name")
+	flag.StringVar(&sampleId, "s", "", "Sample name")
 
 	flag.Int64Var(&inferDistance, "infer-distance", 50000, "Distance at which to consider reads with the same barcode to originate from different molecules.")
 	flag.Int64Var(&inferDistance, "d", 8, "Distance at which to consider reads with the same barcode to originate from different molecules.")
@@ -102,6 +102,10 @@ func main() {
 		os.Exit(1)
 	}
 
+	if sampleId == "" {
+		fmt.Println("A sample-id must be provided.")
+		os.Exit(1)
+	}
 	// make sure improper pair penalty is negative
 	if improperPairPenalty < 0.0 {
 		improperPairPenalty *= -1.0
