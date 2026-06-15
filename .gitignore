@@ -2,6 +2,7 @@
 bin/
 pkg/
 go/
+test/hap1.fa.*
 # pixi environments
 .pixi/*
 !.pixi/config.toml

@@ -3,6 +3,7 @@ package aligner
 import (
 	"bufio"
 	"fmt"
+	"os"
 	"sync"
 
 	"arachne/src/fastqreader"
@@ -67,7 +68,7 @@ func DoRFAForOneBarcode(work *WorkUnit,
 
 	if len(barcode_reads) > 2 {
 		if *verbose {
-			fmt.Printf("working on barcode %s  num reads: %d  doing RFA: %v  unique_barcode %v \n",
+			fmt.Fprintf(os.Stderr, "working on barcode %s  num reads: %d  doing RFA: %v  unique_barcode %v\n",
 				string(barcode_reads[0].Barcode),
 				len(barcode_reads),
 				worthRunningRFA,
