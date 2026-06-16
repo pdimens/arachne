@@ -6,9 +6,9 @@ import (
 	"os"
 	"sync"
 
-	"arachne/src/fastqreader"
-	"arachne/src/gobwa"
-	"arachne/src/optimizer"
+	"arachne/fastqreader"
+	"arachne/gobwa"
+	"arachne/optimizer"
 
 	"github.com/biogo/hts/sam"
 )

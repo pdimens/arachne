@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"arachne/src/gobwa"
+	"arachne/gobwa"
 
 	"github.com/biogo/hts/sam"
 )

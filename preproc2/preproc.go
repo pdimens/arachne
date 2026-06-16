@@ -1,7 +1,7 @@
 package preprocess
 
 import (
-	"arachne/src/fastqreader"
+	"arachne/fastqreader"
 	"flag"
 	"fmt"
 	"io"
@@ -13,7 +13,6 @@ import (
 func main() {
 	var threads int
 	var activeRecord fastqreader.FastQRecord
-	// time elapsed
 
 	//----Command line arguments-----------------------
 	flag.IntVar(&threads, "threads", 8, "Number of threads")

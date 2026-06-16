@@ -5,7 +5,6 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -201,15 +200,15 @@ func validateSamtools() error {
 	return nil
 }
 
-func FileExists(path string, filetype string) bool {
+func FileExists(path string) (bool, error) {
 	absfile, err := filepath.Abs(path)
 	if err != nil {
-		log.Fatalf("\033[31;1mError:\033[0m %s file \033[33;1m%s\033[0m does not exist or does not have read persmissions.\n", filetype, path)
+		return false, fmt.Errorf("\033[33;1m%s\033[0m does not exist or does not have read persmissions.", path)
 	}
 	file, err := os.Open(absfile)
 	if err != nil {
-		log.Fatalf("\033[31;1mError:\033[0m %s file \033[33;1m%s\033[0m does not exist or does not have read persmissions.\n", filetype, path)
+		return false, fmt.Errorf("\033[33;1m%s\033[0m does not exist or does not have read persmissions.", path)
 	}
 	defer file.Close()
-	return true
+	return true, nil
 }

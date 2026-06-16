@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"arachne/src/gobwa"
+	"arachne/gobwa"
 )
 
 // Thin shim/wrapper to index a reference with bwa index. Stderr only prints
