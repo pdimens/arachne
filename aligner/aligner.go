@@ -23,6 +23,7 @@ import (
 
 	"github.com/biogo/hts/sam"
 )
+import "time"
 
 var VERSION string = "1.0.0-dev"
 
@@ -140,6 +141,7 @@ var inferDisance *int64
 
 // this is the actual arachne program
 func Arachne(args ArachneArgs) {
+	start := time.Now()
 	r1 = args.R1
 	r2 = args.R2
 	improper_pair_penalty = args.Improper_pair_penalty
@@ -154,7 +156,6 @@ func Arachne(args ArachneArgs) {
 	// unused
 	DEBUG = args.DEBUG
 	debugPrintMove = args.DebugPrintMove
-
 	fmt.Fprintf(os.Stderr, "🕷️  Starting arachne. Version: %s\n", VERSION)
 	runtime.GOMAXPROCS(*threads + 2)
 	fastq, err := fastqreader.OpenFastQPair(*r1, *r2)
@@ -238,7 +239,8 @@ func Arachne(args ArachneArgs) {
 	wg.Wait()
 	close(writeChannel)
 	<-doneChan
-
+	elapsed := time.Since(start).Round(time.Second).String()
+	fmt.Fprintf(os.Stderr, "🕸️  Arachne finished successfully! Elapsed: %s\n\n", elapsed)
 }
 
 // A single "worker" thread. It tries to grab work units until it gets nil, then it shuts down.
