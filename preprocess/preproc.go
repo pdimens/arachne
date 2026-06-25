@@ -212,8 +212,4 @@ func Preprocess(threads int, prefix, r1Path, r2Path string) error {
 	}
 
 	return nil
-	//if err := <-errCh; err != nil {
-	//	return err
-	//}
-	//return nil
 }
