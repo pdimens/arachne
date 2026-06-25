@@ -25,6 +25,7 @@ that accepts haplotagging, stLFR, and TELLseq FASTQ data.
 - [x] Output SAM to `stdout` instead of to many files
 - [x] Create test data
 - [x] Get everything to compile and run
+- [ ] Add build and run tests
 - [ ] Restore BWA as a submodule to get latest upstream fixes
 - [ ] validate output
 
