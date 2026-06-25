@@ -43,7 +43,7 @@ make           # Build arachne
 bin/arachne    # Show help
 ```
 
-## Input File Format
+## "Standard" Input File Format
 > [!NOTE]
 > **TL;DR:** The only distinction between the 'standard' linked-read FASTQ files and regular FASTQ files
 > is the presence of the `BX:Z` and `VX:i` SAM tags. The format also uses `/1` and `/2` (the older CASAVA format)
@@ -71,7 +71,7 @@ For completeness, the 'standard' linked-read FASTQ format follows:
 - `VX:i` is the validation tag
   - `VX:i:0` = invalid | `VX:i:1` = valid
 
-#### Record Example
+### Record Example
 ```
 @SEQID/1 BX:Z:BARCODE VX:i:0/1
 ATGCGNA.......................
