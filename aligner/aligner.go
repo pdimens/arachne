@@ -224,6 +224,7 @@ func Arachne(args ArachneArgs) {
 			bufChan <- buf // return unused buffer
 			break
 		}
+		//TODO don't skip invalid, just don't do RFA
 		if !records[0].Valid {
 			if *verbose {
 				fmt.Printf("Detected invalid barcode (%v), skipping.\n", records[0].Barcode)

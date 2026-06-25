@@ -2,8 +2,9 @@
 package cmd
 
 import (
-	"arachne/preprocess"
 	"fmt"
+
+	"arachne/preprocess"
 
 	"github.com/spf13/cobra"
 )
@@ -17,33 +18,33 @@ var preprocessCmd = &cobra.Command{
 		"For arachne to work correctly, input FASTQ files need to be in \"standard\" format and sorted by barcode (at minimum). " +
 		"Reads with invalid and singleton barcodes will be preserved separately so they can be aligned using another tool like BWA.",
 	DisableFlagsInUseLine: true,
+	SilenceUsage:          true,
 	Args: func(cmd *cobra.Command, args []string) error {
-		// Optionally run one of the validators provided by cobra
 		if err := cobra.ExactArgs(3)(cmd, args); err != nil {
 			return err
 		}
-		_, err := preprocess.FileExists(args[1])
-		if err != nil {
-			return err
+		err := fileExists(args[1])
+		if !err {
+			return fmt.Errorf("file does not exist: %s", args[1])
 		}
-		_, err = preprocess.FileExists(args[2])
-		if err != nil {
-			return err
+		err = fileExists(args[2])
+		if !err {
+			return fmt.Errorf("file does not exist: %s", args[2])
 		}
 		return nil
 	},
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		threads, err := cmd.Flags().GetInt("threads")
 		if err != nil {
-			panic(err)
+			return err
 		}
 		threads = max(threads, 1)
-
-		fmt.Println("preprocess called with", threads, args[0], args[1], args[2])
+		preprocess.Preprocess(threads, args[0], args[1], args[2])
+		return nil
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(preprocessCmd)
-	preprocessCmd.Flags().IntP("threads", "t", 4, "Threads to use")
+	preprocessCmd.Flags().IntP("threads", "t", 2, fmt.Sprintf("Number of threads to use (min: %d)", 2))
 }

@@ -5,6 +5,8 @@ go 1.25.5
 require (
 	github.com/biogo/hts v1.4.5
 	github.com/shenwei356/bio v0.14.0
+	github.com/shenwei356/xopen v0.4.0
+	github.com/spf13/cobra v1.10.2
 )
 
 require (
@@ -15,8 +17,6 @@ require (
 	github.com/klauspost/pgzip v1.2.6 // indirect
 	github.com/pierrec/lz4/v4 v4.1.27 // indirect
 	github.com/shenwei356/util v0.5.6 // indirect
-	github.com/shenwei356/xopen v0.4.0 // indirect
-	github.com/spf13/cobra v1.10.2 // indirect
-	github.com/spf13/pflag v1.0.9 // indirect
+	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/ulikunitz/xz v0.5.15 // indirect
 )

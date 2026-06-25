@@ -52,13 +52,16 @@ func DoRFAForOneBarcode(work *WorkUnit,
 	contigs map[string]*sam.Reference,
 	debugtags *bool,
 	reads []fastqreader.FastQRecord) {
-
+	var worthRFA bool
+	//TODO STATS ARENT USED ANYWHERE?
 	stats.total = 0
 	stats.mapq = 0
 	//barcode_num := work.barcodenum
 	barcode_reads := work.reads
 	arena := gobwa.NewArena()
-	worthRunningRFA := worthRunningRFA(barcode_reads, work.unique_barcode)
+	if !work.reads[0].Valid {
+		worthRFA = worthRunningRFA(barcode_reads, work.unique_barcode)
+	}
 	barcode_chains, barcode := GetChains(ref, settings, barcode_reads, arena, 25)
 	alignments, stashed_alignments := GetAlignments(ref, settings, barcode_chains, 17, arena)
 	//stashed_alignments = StashAlignments(alignments);
@@ -71,12 +74,12 @@ func DoRFAForOneBarcode(work *WorkUnit,
 			fmt.Fprintf(os.Stderr, "working on barcode %s  num reads: %d  doing RFA: %v  unique_barcode %v\n",
 				string(barcode_reads[0].Barcode),
 				len(barcode_reads),
-				worthRunningRFA,
+				worthRFA,
 				work.unique_barcode)
 		}
 	}
 
-	if !worthRunningRFA {
+	if !worthRFA {
 		//estimateMapQualities(-1, alignments, nil, config.improper_penalty, stats)
 		estimateMapQualities(alignments, nil, config.improper_penalty)
 		markDuplicates(alignments)

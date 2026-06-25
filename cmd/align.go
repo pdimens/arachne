@@ -3,7 +3,7 @@ package cmd
 
 import (
 	"arachne/aligner"
-	"arachne/preprocess"
+	"fmt"
 
 	"github.com/spf13/cobra"
 )
@@ -21,9 +21,9 @@ var alignCmd = &cobra.Command{
 			return err
 		}
 		for _, j := range args {
-			_, err := preprocess.FileExists(j)
-			if err != nil {
-				return err
+			err := fileExists(j)
+			if !err {
+				return fmt.Errorf("file does not exist: %s", j)
 			}
 		}
 		return nil
@@ -65,9 +65,9 @@ func arachneAlign(cmd *cobra.Command, args []string) {
 		panic(err)
 	}
 	if centromeres != "" {
-		_, err := preprocess.FileExists(centromeres)
-		if err != nil {
-			panic(err)
+		err := fileExists(centromeres)
+		if !err {
+			panic(fmt.Errorf("file does not exist: %s", centromeres))
 		}
 	}
 
