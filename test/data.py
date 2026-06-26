@@ -10,3 +10,7 @@ nuc = "ATCG"
 with open("test/hap1.fa", "w") as fa:
     for i in [1,2]:
         _ = fa.write(f">Contig{i}\n" + "".join(random.choices(nuc, k = 200000)) + "\n")
+
+with open("test/hap2.fa", "w") as fa:
+    for i in [1,2]:
+        _ = fa.write(f">Contig{i}\n" + "".join(random.choices(nuc, k = 200000)) + "\n")
