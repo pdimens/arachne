@@ -21,9 +21,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v7
         with:
           fetch-depth: 1
+          submodules: true
       - name: Build and Test Arachne
         uses: prefix-dev/setup-pixi@v0.9.6
         with:
