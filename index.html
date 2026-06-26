@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark">
     <meta name="turbo-root" content="/arachne">
-    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="4.6.0.835822911104">
+    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="4.6.0.835823561940">
 
     <!-- See retype.com -->
     <meta name="generator" content="Retype 4.6.0">
@@ -45,11 +45,11 @@
     <script data-cfasync="false">(function(){var cl=document.documentElement.classList,ls=localStorage.getItem("retype_scheme"),hd=cl.contains("dark"),hl=cl.contains("light"),wm=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches;if(ls==="dark"||(!ls&&wm&&!hd&&!hl)){cl.remove("light");cl.add("dark")}else if(ls==="light"||(!ls&&!wm&&!hd&&!hl)){cl.remove("dark");cl.add("light")}})();</script>
 
     <link id="retype-favicon" rel="icon" href="static/favicon.png" />
-    <link href="resources/css/retype.css?v=4.6.0.835822911104" rel="stylesheet">
+    <link href="resources/css/retype.css?v=4.6.0.835823561940" rel="stylesheet">
 
-    <script data-cfasync="false" src="resources/js/config.js?v=4.6.0.835822911104" data-turbo-eval="false" defer></script>
+    <script data-cfasync="false" src="resources/js/config.js?v=4.6.0.835823561940" data-turbo-eval="false" defer></script>
     <script data-cfasync="false" src="resources/js/retype.js?v=4.6.0" data-turbo-eval="false" defer></script>
-    <script id="lunr-js" data-cfasync="false" src="resources/js/lunr.js?v=4.6.0.835822911104" data-turbo-eval="false" defer></script>
+    <script id="lunr-js" data-cfasync="false" src="resources/js/lunr.js?v=4.6.0.835823561940" data-turbo-eval="false" defer></script>
 </head>
 <body>
     <div id="retype-app" class="relative text-base antialiased text-base-text bg-base-bg font-body">
@@ -224,19 +224,21 @@
 <h1 id="arachne-linked-read-aligner">Arachne linked-read aligner</h1>
 <p>Arachne is a fork intended to be a revival and [hopefully] continuation of <a href="https://github.com/10XGenomics/lariat" class="outbound" target="_blank"><span>Lariat</span><svg xmlns="http://www.w3.org/2000/svg" class="retype-outbound-trigger docs-icon ml-1" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g fill="currentColor"><path d="M15.5 2.25a.75.75 0 0 1 .75-.75h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V4.06l-6.22 6.22a.75.75 0 1 1-1.06-1.06L19.94 3h-3.69a.75.75 0 0 1-.75-.75Z"/><path d="M2.5 4.25c0-.966.784-1.75 1.75-1.75h8.5a.75.75 0 0 1 0 1.5h-8.5a.25.25 0 0 0-.25.25v15.5c0 .138.112.25.25.25h15.5a.25.25 0 0 0 .25-.25v-8.5a.75.75 0 0 1 1.5 0v8.5a1.75 1.75 0 0 1-1.75 1.75H4.25a1.75 1.75 0 0 1-1.75-1.75V4.25Z"/></g></svg></a>, the linked-read aware
 aligner created by 10X Genomics and bundled in their LongRanger pipeline.</p>
-<h2 id="why-does-arachne-exist">Why does arachne exist?</h2>
+<doc-panel id="why-does-arachne-exist" collapsed>
+    <template #title>Why does arachne exist?</template>
 <p>The lariat developers made the case that linked-read data improved alignment, especially over highly repetitive regions.
 This was shown to work quite well in <em>Aedes aegypti</em> <a href="https://link.springer.com/article/10.1186/s12915-020-0757-y" class="outbound" target="_blank"><span>link</span><svg xmlns="http://www.w3.org/2000/svg" class="retype-outbound-trigger docs-icon ml-1" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g fill="currentColor"><path d="M15.5 2.25a.75.75 0 0 1 .75-.75h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V4.06l-6.22 6.22a.75.75 0 1 1-1.06-1.06L19.94 3h-3.69a.75.75 0 0 1-.75-.75Z"/><path d="M2.5 4.25c0-.966.784-1.75 1.75-1.75h8.5a.75.75 0 0 1 0 1.5h-8.5a.25.25 0 0 0-.25.25v15.5c0 .138.112.25.25.25h15.5a.25.25 0 0 0 .25-.25v-8.5a.75.75 0 0 1 1.5 0v8.5a1.75 1.75 0 0 1-1.75 1.75H4.25a1.75 1.75 0 0 1-1.75-1.75V4.25Z"/></g></svg></a>
 and other works. Lariat relied on input FASTQ files with a rather peculiar variant: interleaved with 9 lines per record pair.
 Additionally, the Chromium 10X design did not preprocess the linked-read barcodes out of the sequence, hence the use of barcode
 &quot;whitelists&quot;.</p>
-<p>Well, 10X Genomics discontinued their linked-read technology in 2019 and since then, new linked-read methods emerged,
+<p>Well, 10X Genomics discontinued their linked-read technology in 2019 and Lariat was abandoned then as well. Since then, new linked-read methods emerged,
 namely haplotagging, stLFR, and TELLseq. These new techniques use different chemistries, but most importantly, all of them
 remove the linked-read barcode from the sequence and use conventional FASTQ formats. Lariat still has tons of value, so
 the goal was to update it for current technologies. Arachne drops support for 10X-style data in favor of supporting haplotagging,
 stLFR, and TELLseq. In the effort of <strong>ridding ourselves of unnecessary platform-specific linked-read data formats</strong>, Arachne&#x27;s caveat
 is that it expects the <a href="https://pdimens.github.io/harpy/getting_started/linked_read_data/#linked-read-data-types">&#x27;standard&#x27; linked-read data format</a>, which is a future-proofed consistent format following the widely-used
 FASTQ and SAM specifications. Don&#x27;t worry, arachne provides a lossless converter that accepts haplotagging, stLFR, and TELLseq FASTQ data.</p>
+</doc-panel>
 <h2 id="10-release-checklist">1.0 release checklist:</h2>
 <ul class="contains-task-list">
 <li class="task-list-item"><input disabled="disabled" type="checkbox" checked="checked" /> Awesome new logo</li>

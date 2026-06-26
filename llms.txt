@@ -1,3 +1,4 @@
 ﻿#  | Arachne
 
 - [Install arachne](https://pdimens.github.io/arachne/install.md): Make sure you have a working Go installation (version >= 1.9.2). go version should return something like go version go1.9.2 linux/amd64.
+- [Using arachne](https://pdimens.github.io/arachne/usage.md): Use --help or -h or call arachne without arguments to call up the docstring.
