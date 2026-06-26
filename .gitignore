@@ -7,4 +7,3 @@ test/hap1.fa.*
 .pixi/*
 !.pixi/config.toml
 test/*.fa*
-test/*.gz

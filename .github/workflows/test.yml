@@ -30,6 +30,6 @@ jobs:
           cache: true
           activate-environment: false
       - run: pixi run build
-      - run: pixi run -e test prep && ls test
+      - run: test/data.py
       - run: bin/arachne index test/hap1.fa
       - run: bin/arachne align -t 4 -s TestSample test/hap1.fa test/test.R{1,2}.fq.gz
