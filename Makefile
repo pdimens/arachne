@@ -26,6 +26,3 @@ clean:
 	@echo "Cleaning Build"
 	rm -Rf bin/
 	$(MAKE) -C gobwa/bwa clean
-
-test:
-	cd test; go test -v

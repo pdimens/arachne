@@ -165,14 +165,6 @@ func Arachne(args ArachneArgs) {
 	defer fastq.Close()
 
 	// ── process reference ─────────────────────────────────────────────────────────
-	// if reference index files don't exist, run bwa index on reference
-	exts := []string{".amb", ".ann", ".bwt", ".pac", ".sa"}
-	for _, i := range exts {
-		if _, err := os.Stat(*reference + i); err != nil {
-			bwaindex(*reference)
-			break
-		}
-	}
 	if *verbose {
 		fmt.Fprintf(os.Stderr, "Loading reference: %s\n", *reference)
 	}

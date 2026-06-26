@@ -15,7 +15,9 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"unsafe"
 )
 
@@ -41,9 +43,22 @@ func (r GoBwaReference) GetReferenceContigsInfo() ([]string, []int64) {
 	return names, lengths
 }
 
+// Find the bwa path alongside arachne executable
+func bwaPath() (string, error) {
+	exe, err := os.Executable()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(filepath.Dir(exe), "bwa"), nil
+}
+
 // wrapper for bwa index
 func GoBwaIndex(fastaPath string) error {
-	cmd := exec.Command("src/gobwa/bwa/bwa", "index", fastaPath)
+	bwa, err := bwaPath()
+	if err != nil {
+		return err
+	}
+	cmd := exec.Command(bwa, "index", fastaPath)
 
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
@@ -133,7 +148,7 @@ func (a *Arena) Free() {
 
 func NewArena() *Arena {
 	a := new(Arena)
-	a.Pointers = make([]uintptr, 0, 0)
+	a.Pointers = make([]uintptr, 0)
 	return a
 }
 
