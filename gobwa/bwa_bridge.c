@@ -6,8 +6,3 @@
 #include <string.h>
 
 #include "bwa_bridge.h"
-
-
-
-//char * bwa_pg = "10X Genomics";
-
