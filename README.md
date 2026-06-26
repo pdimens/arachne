@@ -26,7 +26,7 @@ that accepts haplotagging, stLFR, and TELLseq FASTQ data.
 - [x] Create test data
 - [x] Get everything to compile and run
 - [x] Add build and run tests
-- [ ] Restore BWA as a submodule to get latest upstream fixes
+- [x] Restore BWA as a submodule to get latest upstream fixes
 - [ ] validate output
 
 ## About Lariat
