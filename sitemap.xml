@@ -2,6 +2,14 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://pdimens.github.io/arachne/</loc>
-    <lastmod>2026-06-26T11:47:36Z</lastmod>
+    <lastmod>2026-06-26T16:58:32Z</lastmod>
+  </url>
+  <url>
+    <loc>https://pdimens.github.io/arachne/standardfmt/</loc>
+    <lastmod>2026-06-26T16:58:32Z</lastmod>
+  </url>
+  <url>
+    <loc>https://pdimens.github.io/arachne/install/</loc>
+    <lastmod>2026-06-26T16:58:32Z</lastmod>
   </url>
 </urlset>

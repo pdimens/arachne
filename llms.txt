@@ -1,5 +1,4 @@
 ﻿#  | Arachne
 
-> arachne_logo
-
-- [Arachne linked-read aligner](https://pdimens.github.io/arachne/index.md): Arachne linked-read aligner
+- [Install arachne](https://pdimens.github.io/arachne/install.md): Make sure you have a working Go installation (version >= 1.9.2). go version should return something like go version go1.9.2 linux/amd64.
+- [Standardfmt](https://pdimens.github.io/arachne/standardfmt.md): TL;DR: The only distinction between the 'standard' linked-read FASTQ files and regular FASTQ files is the presence of the BX:Z and VX:i SAM tags. The format also uses /1 and /2 (the older CASAVA format) to denote a forward/reverse read.
