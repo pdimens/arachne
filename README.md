@@ -12,7 +12,7 @@ LongRanger software suite to use with a bespoke FASTQ-adjacent data format. The 
 was discontinued in 2019 and Arachne drops support for 10X-style data in favor of supporting modern the linked-read
 data types **haplotagging**, **stLFR**, and **TELLseq**.
 In the effort of **ridding ourselves of unnecessary platform-specific linked-read data formats**, Arachne's caveat
-is that it expects the ['standard' data format](#input-file-format). Don't worry, we provide a lossless converter
+is that it expects the ['standard' data format](#standard-input-file-format). Don't worry, we provide a lossless converter
 that accepts haplotagging, stLFR, and TELLseq FASTQ data.
 
 ## Status
@@ -39,8 +39,9 @@ same molecule. This approach results in reads mapping better in repetitive regio
 
 From the root of the repo:
 ```
-make           # Build arachne
-bin/arachne    # Show help
+> git clone --recursive https://github.com/pdimens/arachne.git
+> make           # Build arachne
+> bin/arachne    # Show help
 ```
 
 ## "Standard" Input File Format
@@ -76,7 +77,7 @@ For completeness, the 'standard' linked-read FASTQ format follows:
 #### format
 ```
 @SEQID/1 BX:Z:BARCODE VX:i:0/1
-ATGCGNA.......................
+ATGCGTA.......................
 +
 FFFFIII.......................
 ```
@@ -84,7 +85,7 @@ FFFFIII.......................
 Using a TELLseq-style barcode `ATGGAGANAA`, where an `N` indicates it's invalid, the first line of a FASTQ record in the forward read would look like (SAM tag order doesn't matter):
 ```
 @SEQID/1 BX:Z:ATGGAGANAA VX:i:0
-ATGCGNA.......................
+ATGCGTA.......................
 +
 FFFFIII.......................
 ````
