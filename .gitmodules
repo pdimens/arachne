@@ -1,3 +1,0 @@
-[submodule "gobwa/bwa"]
-	path = gobwa/bwa
-	url = https://github.com/lh3/bwa.git
