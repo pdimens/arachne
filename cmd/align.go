@@ -4,6 +4,8 @@ package cmd
 import (
 	"arachne/aligner"
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 )
@@ -16,7 +18,12 @@ var alignCmd = &cobra.Command{
 	Long: "Align (short-read) linked-read sequences to a reference. Use \033[4;34marachne preprocess\033[0m to properly format input FASTQ files for the aligner. " +
 		"Inputs can be Gzipped. See the documentation for more information: https://pdimens.github.io/arachne",
 	DisableFlagsInUseLine: true,
+	SilenceUsage:          true,
 	Args: func(cmd *cobra.Command, args []string) error {
+		if len(args) == 0 {
+			fmt.Printf("%s", cmd.UsageString())
+			return fmt.Errorf("please provide inputs")
+		}
 		if err := cobra.ExactArgs(3)(cmd, args); err != nil {
 			return err
 		}
@@ -24,6 +31,13 @@ var alignCmd = &cobra.Command{
 			err := fileExists(j)
 			if !err {
 				return fmt.Errorf("file does not exist: %s", j)
+			}
+		}
+		// if reference index files don't exist, run bwa index on reference
+		exts := []string{".amb", ".ann", ".bwt", ".pac", ".sa"}
+		for _, i := range exts {
+			if _, err := os.Stat(args[0] + i); err != nil {
+				return fmt.Errorf("Missing critical reference index file: %s (and possibly others). Please index reference with \033[94;1mbwa index\033[0m or (\033[94;1marachne index\033[0m", filepath.Base(args[0])+i)
 			}
 		}
 		return nil
@@ -89,7 +103,6 @@ func arachneAlign(cmd *cobra.Command, args []string) {
 	if err != nil {
 		panic(err)
 	}
-
 	//--- Setup config and run --------------------
 	config := aligner.ArachneArgs{
 		Reference:             &args[0],

@@ -6,20 +6,22 @@ platforms = ["linux-64"]
 version = "1.0-dev"
 
 [dependencies]
-djinn = ">=2.5,<3"
+c-compiler = "*"
+go = "1.25.*"
+sysroot_linux-64 = "2.17.*"
+zlib = "*"
 
 [tasks]
+build = "make clean; make"
 
 [feature.test.dependencies]
-mimick = "*"
-djinn = ">=2.5,<3"
+mimick = "3.*"
 
 [feature.test.tasks]
-fasta = {cmd = "./test/data.py", outputs = ["test/hap1.fa", "test/hap2.fa"]}
-reads = {cmd = "mimick --quiet -g 10 -o test/simulated test/hap1.fa test/hap2.fa", inputs = ["test/hap1.fa", "test/hap2.fa"], outputs = ["test/simulated.R1.fq.gz", "test/simulated.R2.fq.gz"], depends-on = ["fasta"]}
-prep = {cmd = "arachne-prep test/test test/simulated.R1.fq.gz test/simulated.R2.fq.gz", inputs = ["test/simulated.R1.fq.gz", "test/simulated.R2.fq.gz"], depends-on = ["reads"]}
-test-data = {cmd = "rm -f test/test.filtered*.gz test/hap*.fa test/simulated*fq.gz", depends-on = ["prep"]}
-test = "bin/arachne"
+fasta = {cmd = "test/data.py", outputs = ["test/hap1.fa", "test/hap2.fa"]}
+reads = {cmd = "mimick --quiet -g 10 -s 6969 -o test/simulated test/hap1.fa test/hap2.fa", inputs = ["test/hap1.fa", "test/hap2.fa"], outputs = ["test/simulated.R1.fq.gz", "test/simulated.R2.fq.gz"], depends-on = ["fasta"]}
+prep = {cmd = "bin/arachne preprocess test/test test/simulated.R1.fq.gz test/simulated.R2.fq.gz", inputs = ["test/simulated.R1.fq.gz", "test/simulated.R2.fq.gz"], outputs = ["test/test.R1.fq.gz", "test/test.R2.fq.gz"], depends-on = ["reads"]}
+test = {cmd = "bin/arachne align -t 4 -s TESTSAMP test/hap1.fa test/test.R1.fq.gz test/test.R2.fq.gz", depends-on = ["prep"]}
 
 [environments]
 test = ["test"]
