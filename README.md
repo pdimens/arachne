@@ -25,7 +25,7 @@ that accepts haplotagging, stLFR, and TELLseq FASTQ data.
 - [x] Output SAM to `stdout` instead of to many files
 - [x] Create test data
 - [x] Get everything to compile and run
-- [ ] Add build and run tests
+- [x] Add build and run tests
 - [ ] Restore BWA as a submodule to get latest upstream fixes
 - [ ] validate output
 
@@ -45,11 +45,11 @@ bin/arachne    # Show help
 ```
 
 ## "Standard" Input File Format
-> [!NOTE]
-> **TL;DR:** The only distinction between the 'standard' linked-read FASTQ files and regular FASTQ files
-> is the presence of the `BX:Z` and `VX:i` SAM tags. The format also uses `/1` and `/2` (the older CASAVA format)
-> to denote a forward/reverse read. 
+**TL;DR:** The only distinction between the 'standard' linked-read FASTQ files and regular FASTQ files
+is the presence of the `BX:Z` and `VX:i` SAM tags. The format also uses `/1` and `/2` (the older CASAVA format)
+to denote a forward/reverse read. We are playing around with calling these _LASTQ_, mostly as a joke.
 
+<details><summary>Detailed Explanation</summary>
 No one wins if everyone is using their own platform-specific file formats. Regardless of the technology used to create
 the linked reads, Arachne accepts what is called the 'standard' format shown below. This format conforms to the FASTQ and SAM
 file specs, which are internationally-agreed upon formats, meaning the reads can be used anywhere and doesn't distinguish
@@ -71,16 +71,21 @@ For completeness, the 'standard' linked-read FASTQ format follows:
   - e.g. `BX:Z:1_2_3`, `BX:Z:A03C55B49D19`, `BX:Z:ATTTAGGGAGAGAGA`
 - `VX:i` is the validation tag
   - `VX:i:0` = invalid | `VX:i:1` = valid
+</details>
 
-### Record Example
+### Standard Records
+#### format
 ```
 @SEQID/1 BX:Z:BARCODE VX:i:0/1
 ATGCGNA.......................
 +
 FFFFIII.......................
 ```
-
+#### example
 Using a TELLseq-style barcode `ATGGAGANAA`, where an `N` indicates it's invalid, the first line of a FASTQ record in the forward read would look like (SAM tag order doesn't matter):
 ```
 @SEQID/1 BX:Z:ATGGAGANAA VX:i:0
+ATGCGNA.......................
++
+FFFFIII.......................
 ````
