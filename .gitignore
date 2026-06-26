@@ -2,8 +2,8 @@
 bin/
 pkg/
 go/
-test/hap1.fa.*
+test/*.fa*
+
 # pixi environments
 .pixi/*
 !.pixi/config.toml
-test/*.fa*

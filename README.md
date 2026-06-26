@@ -31,8 +31,7 @@ that accepts haplotagging, stLFR, and TELLseq FASTQ data.
 
 ## About Lariat
 Lariat was designed to align all reads sharing the same barcode simultaneously, assuming that those reads came from the
-same molecule. This approach results in reads mapping better in repetitive regions of the genome. Lariat is based on the original RFA method developed by Alex Bishara, Yuling Liu et al in Serafim Batzoglou’s lab at Stanford: [Genome Res. 2015. 25:1570-1580](http://genome.cshlp.org/content/25/10/1570). Alex Bishara and Yuling Liu also both contributed substantially to the [Lariat implementation](https://github.com/10XGenomics/lariat) of the algorithm.
-
+same molecule. This approach results in reads mapping better in repetitive regions of the genome. Lariat is based on the original RFA method developed by Batzoglou’s lab at Stanford: [Genome Res. 2015. 25:1570-1580](http://genome.cshlp.org/content/25/10/1570).
 
 ## Build/install
 > [!NOTE]
