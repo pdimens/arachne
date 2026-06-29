@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark">
     <meta name="turbo-root" content="/arachne">
-    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="4.6.0.836062118649">
+    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="4.6.0.836064960914">
 
     <!-- See retype.com -->
     <meta name="generator" content="Retype 4.6.0">
@@ -13,7 +13,7 @@
     <!-- Primary Meta Tags -->
     <title>Using arachne | Arachne</title>
     <meta name="title" content="Using arachne | Arachne">
-    <meta name="description" content="Use --help or -h or call arachne without arguments to call up the docstring.">
+    <meta name="description" content="Use --help or -h, or call arachne (or its subcommands) without arguments to call up the docstring.">
 
     <!-- Canonical -->
     <link rel="canonical" href="https://pdimens.github.io/arachne/usage/">
@@ -23,7 +23,7 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://pdimens.github.io/arachne/usage/">
     <meta property="og:title" content="Using arachne | Arachne">
-    <meta property="og:description" content="Use --help or -h or call arachne without arguments to call up the docstring.">
+    <meta property="og:description" content="Use --help or -h, or call arachne (or its subcommands) without arguments to call up the docstring.">
     <meta property="og:site_name" content="">
     <meta property="og:locale" content="en_US">
 
@@ -31,7 +31,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:url" content="https://pdimens.github.io/arachne/usage/">
     <meta name="twitter:title" content="Using arachne | Arachne">
-    <meta name="twitter:description" content="Use --help or -h or call arachne without arguments to call up the docstring.">
+    <meta name="twitter:description" content="Use --help or -h, or call arachne (or its subcommands) without arguments to call up the docstring.">
 
     <!-- Alternate Markdown -->
     <link rel="alternate" type="text/markdown" href="https://pdimens.github.io/arachne/usage.md">
@@ -39,12 +39,12 @@
     <script data-cfasync="false">(function(){var cl=document.documentElement.classList,ls=localStorage.getItem("retype_scheme"),hd=cl.contains("dark"),hl=cl.contains("light"),wm=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches;if(ls==="dark"||(!ls&&wm&&!hd&&!hl)){cl.remove("light");cl.add("dark")}else if(ls==="light"||(!ls&&!wm&&!hd&&!hl)){cl.remove("dark");cl.add("light")}})();</script>
 
     <link id="retype-favicon" rel="icon" href="../static/favicon.png" />
-    <link href="../resources/css/retype.css?v=4.6.0.836062118649" rel="stylesheet">
+    <link href="../resources/css/retype.css?v=4.6.0.836064960914" rel="stylesheet">
 
-    <script data-cfasync="false" src="../resources/js/config.js?v=4.6.0.836062118649" data-turbo-eval="false" defer></script>
+    <script data-cfasync="false" src="../resources/js/config.js?v=4.6.0.836064960914" data-turbo-eval="false" defer></script>
     <script data-cfasync="false" src="../resources/js/retype.js?v=4.6.0" data-turbo-eval="false" defer></script>
-    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=4.6.0.836062118649" data-turbo-eval="false" defer></script>
-    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=4.6.0.836062118649" defer></script>
+    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=4.6.0.836064960914" data-turbo-eval="false" defer></script>
+    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=4.6.0.836064960914" defer></script>
 </head>
 <body>
     <div id="retype-app" class="relative text-base antialiased text-base-text bg-base-bg font-body">
@@ -235,24 +235,24 @@
 <div class="codeblock-title">usage</div>
 <pre translate="no" class="language-bash"><code v-pre class="language-bash">arachne command options... inputs...</code></pre>
 </doc-codeblock></div>
-<p>Use <code translate="no" v-pre>--help</code> or <code translate="no" v-pre>-h</code> or call <code translate="no" v-pre>arachne</code> without arguments to call up the docstring.</p>
+<p>Use <code translate="no" v-pre>--help</code> or <code translate="no" v-pre>-h</code>, or call <code translate="no" v-pre>arachne</code> (or its subcommands) without arguments to call up the docstring.</p>
 <p>Arachne comes with three commands, generally intended to be used in this order:</p>
 <doc-steps>
-   <doc-step id="prep" step-number="1">
+   <doc-step id="prep-1" step-number="1">
       <template #title><code translate="no" v-pre>prep</code></template>
 <p>convert FASTQ files to Standard format and sort by BX:Z barcode (requires <code translate="no" v-pre>samtools</code> to be available on your PATH)</p>
 <div class="codeblock-wrapper"><doc-codeblock>
 <pre translate="no" class="language-bash"><code v-pre class="language-bash">arachne prep [-t] PREFIX r1.fq r2.fq</code></pre>
 </doc-codeblock></div>
    </doc-step>
-   <doc-step id="index" step-number="2">
+   <doc-step id="index-1" step-number="2">
       <template #title><code translate="no" v-pre>index</code></template>
-<p>index the reference FASTA to be used for alignment (bwa index wrapper)</p>
+<p>index the reference FASTA to be used for alignment (<code translate="no" v-pre>bwa index</code> wrapper)</p>
 <div class="codeblock-wrapper"><doc-codeblock>
 <pre translate="no" class="language-bash"><code v-pre class="language-bash">arachne index ref.fa</code></pre>
 </doc-codeblock></div>
    </doc-step>
-   <doc-step id="align" step-number="3">
+   <doc-step id="align-1" step-number="3">
       <template #title><code translate="no" v-pre>align</code></template>
 <p>align FASTQ files to reference FASTA</p>
 <div class="codeblock-wrapper"><doc-codeblock>
@@ -260,7 +260,134 @@
 </doc-codeblock></div>
    </doc-step>
 </doc-steps>
-<p>[Under construction]</p>
+<h2 id="prep">prep</h2>
+<p>The <code translate="no" v-pre>arachne prep</code> command will convert your input FASTQ files into the format necessary for <code translate="no" v-pre>arachne align</code>.
+That format requires data to be 1) sorted by barcode and 2) in &quot;standard&quot; linked read format.
+Because they are unrelaible, records with invalid barcodes will be filtered out into separate FASTQ files so you can align them using another tool like <code translate="no" v-pre>bwa</code>. This process will standardize the barcodes and temporarily convert FASTQ records with valid barcodes into unaligned SAM records for <code translate="no" v-pre>samtools sort</code> to efficiently sort them by barcode. This conversion is lossless.</p>
+<div id="prep-usage" class="codeblock-wrapper"><doc-codeblock>
+<div class="codeblock-title">usage</div>
+<pre translate="no" class="language-bash"><code v-pre class="language-bash">arachne prep [-t/--threads] PREFIX FORWARD_FASTQ REVERSE_FASTQ</code></pre>
+</doc-codeblock></div>
+<div id="prep-example" class="codeblock-wrapper"><doc-codeblock>
+<div class="codeblock-title">example</div>
+<pre translate="no" class="language-bash"><code v-pre class="language-bash">arachne prep -t 6 sample1 sample1.R1.fq.gz sample1.R2.fq.gz</code></pre>
+</doc-codeblock></div>
+<p>This will create <code translate="no" v-pre>PREFIX.arachne.R1.fq.gz</code>, <code translate="no" v-pre>PREFIX.arachne.R2.fq.gz</code>, <code translate="no" v-pre>PREFIX.invalid.R1.fq.gz</code>, <code translate="no" v-pre>PREFIX.invalid.R1.fq.gz</code>.</p>
+<h3 id="standard-format">Standard format</h3>
+<ol>
+<li>&quot;old&quot; CASAVA forward/reverse identifier (i.e. <code translate="no" v-pre>/1</code> and <code translate="no" v-pre>/2</code>)</li>
+<li>barcodes encoded in <code translate="no" v-pre>BX:Z</code> SAM tag (e.g. <code translate="no" v-pre>BX:Z:32_11_58</code>)</li>
+<li>barcode validations encoded in <code translate="no" v-pre>VX:i</code> tag</li>
+</ol>
+<ul>
+<li><code translate="no" v-pre>VX:i:0</code> is invalid (barcode is bad and unreliable)</li>
+<li><code translate="no" v-pre>VX:i:1</code> is good (barcode is good)
+As an example, a &quot;bad&quot; (invalid) TELLseq barcode would contain an <code translate="no" v-pre>N</code> nucleotide,
+giving the barcode an unreliable identity. Since haplotaggin and stLFR chemistries are
+combinatorial, an invalid barcode segment (e.g., <code translate="no" v-pre>C00</code> or <code translate="no" v-pre>0</code>, respectively) would make
+the unique segment combination unreliable, thus invalid.</li>
+</ul>
+<h2 id="index">index</h2>
+<p>The <code translate="no" v-pre>arachne index</code> command is provided for convenience. It&#x27;s a very simple wrapper for <code translate="no" v-pre>bwa index</code>.</p>
+<div id="index-usage" class="codeblock-wrapper"><doc-codeblock>
+<div class="codeblock-title">usage</div>
+<pre translate="no" class="language-bash"><code v-pre class="language-bash">arachne index file.fasta</code></pre>
+</doc-codeblock></div>
+<div id="index-example" class="codeblock-wrapper"><doc-codeblock>
+<div class="codeblock-title">example</div>
+<pre translate="no" class="language-bash"><code v-pre class="language-bash">arachne index galapagos_tortoise.fasta</code></pre>
+</doc-codeblock></div>
+<p>This will create <code translate="no" v-pre>file.fasta.amb</code>, <code translate="no" v-pre>file.fasta.ann</code>, <code translate="no" v-pre>file.fasta.bwt</code>, <code translate="no" v-pre>file.fasta.pac</code>, <code translate="no" v-pre>file.fasta.sa</code>.</p>
+<h2 id="align">align</h2>
+<p>Once your input FASTQ files are in barcode-sorted standard format and the reference fasta is indexed,
+you are ready to align your sample onto the reference. The command arguments follows the BWA design and writes to <code translate="no" v-pre>stdout</code>:</p>
+<div id="align-usage" class="codeblock-wrapper"><doc-codeblock>
+<div class="codeblock-title">usage</div>
+<pre translate="no" class="language-bash"><code v-pre class="language-bash">arachne align [options] -s &lt;sampleID&gt; ref.fa r1.fq r2.fq</code></pre>
+</doc-codeblock></div>
+<div id="align-example" class="codeblock-wrapper"><doc-codeblock>
+<div class="codeblock-title">example</div>
+<pre translate="no" class="language-bash"><code v-pre class="language-bash">arachne align -t 24 -s MC_001 Rclamitans.fa MC_001.F.fq.gz MC_001.R.fq.gz &gt; MC_001.arachne.sam</code></pre>
+</doc-codeblock></div>
+<h3 id="options">Options</h3>
+<retype-table copy-text="|Long| Short| Default| Description |
+|:----------|:----------|:----------|:----------|
+| `centromeres` | `c` |  | TSV file describing known centromeres |
+| `improper-pair-penalty` | `i` | 4.0 | Penalty for improper pair |
+| `infer-distance` | `d` | `50000` | Distance at which to consider reads with the same barcode to originate from different molecules|
+| `sample-id` | `s` | | Sample name [!badge variant=&quot;info&quot; text=&quot;required&quot;]|
+| `threads` | `t` | `4` | Threads to use |
+| `verbose` | `v` | false | Verbose output |">
+<div class="table-wrapper clean scrollbar overflow-hidden">
+<table class="clean compact">
+<thead>
+<tr>
+<th style="text-align: left;" class="whitespace-nowrap">Long</th>
+<th style="text-align: left;" class="whitespace-nowrap">Short</th>
+<th style="text-align: left;" class="whitespace-nowrap">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;" class="whitespace-nowrap"><code translate="no" v-pre>centromeres</code></td>
+<td style="text-align: left;" class="whitespace-nowrap"><code translate="no" v-pre>c</code></td>
+<td style="text-align: left;" class="whitespace-nowrap"> </td>
+<td style="text-align: left;">TSV file describing known centromeres</td>
+</tr>
+<tr>
+<td style="text-align: left;" class="whitespace-nowrap"><code translate="no" v-pre>improper-pair-penalty</code></td>
+<td style="text-align: left;" class="whitespace-nowrap"><code translate="no" v-pre>i</code></td>
+<td style="text-align: left;" class="whitespace-nowrap">4.0</td>
+<td style="text-align: left;">Penalty for improper pair</td>
+</tr>
+<tr>
+<td style="text-align: left;" class="whitespace-nowrap"><code translate="no" v-pre>infer-distance</code></td>
+<td style="text-align: left;" class="whitespace-nowrap"><code translate="no" v-pre>d</code></td>
+<td style="text-align: left;" class="whitespace-nowrap"><code translate="no" v-pre>50000</code></td>
+<td style="text-align: left;">Distance at which to consider reads with the same barcode to originate from different molecules</td>
+</tr>
+<tr>
+<td style="text-align: left;" class="whitespace-nowrap"><code translate="no" v-pre>sample-id</code></td>
+<td style="text-align: left;" class="whitespace-nowrap"><code translate="no" v-pre>s</code></td>
+<td style="text-align: left;" class="whitespace-nowrap"> </td>
+<td style="text-align: left;">Sample name <span class="no-link inline-flex align-middle items-center justify-center font-medium leading-none whitespace-nowrap text-badge-info-text bg-badge-info border border-badge-info-border h-6 px-2 text-xs rounded-md">
+    <span>required</span>
+</span></td>
+</tr>
+<tr>
+<td style="text-align: left;" class="whitespace-nowrap"><code translate="no" v-pre>threads</code></td>
+<td style="text-align: left;" class="whitespace-nowrap"><code translate="no" v-pre>t</code></td>
+<td style="text-align: left;" class="whitespace-nowrap"><code translate="no" v-pre>4</code></td>
+<td style="text-align: left;">Threads to use</td>
+</tr>
+<tr>
+<td style="text-align: left;" class="whitespace-nowrap"><code translate="no" v-pre>verbose</code></td>
+<td style="text-align: left;" class="whitespace-nowrap"><code translate="no" v-pre>v</code></td>
+<td style="text-align: left;" class="whitespace-nowrap">false</td>
+<td style="text-align: left;">Verbose output</td>
+</tr>
+</tbody>
+</table>
+</div>
+</retype-table>
+<h3 id="centromeres">centromeres</h3>
+<p>A file of centromere locations can be provided. I&#x27;m still determining the proper format and what utility it
+has during alignment. The format described in Lariat is:</p>
+<div id="centromeres-code-1" class="codeblock-wrapper"><doc-codeblock>
+<pre translate="no" class="language-none"><code v-pre class="language-none">CEN&lt;chrname&gt; &lt;chrname&gt; &lt;start&gt; &lt;stop&gt;</code></pre>
+</doc-codeblock></div>
+<h3 id="infer-distance">infer-distance</h3>
+<p>The <code translate="no" v-pre>infer-distance</code> option controls the alignment distance-based deconvolution, as described <a href="https://pdimens.github.io/harpy/getting_started/linked_read_data/#barcode-thresholds" class="outbound" target="_blank"><span>here</span><svg xmlns="http://www.w3.org/2000/svg" class="retype-outbound-trigger docs-icon ml-1" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g fill="currentColor"><path d="M15.5 2.25a.75.75 0 0 1 .75-.75h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V4.06l-6.22 6.22a.75.75 0 1 1-1.06-1.06L19.94 3h-3.69a.75.75 0 0 1-.75-.75Z"/><path d="M2.5 4.25c0-.966.784-1.75 1.75-1.75h8.5a.75.75 0 0 1 0 1.5h-8.5a.25.25 0 0 0-.25.25v15.5c0 .138.112.25.25.25h15.5a.25.25 0 0 0 .25-.25v-8.5a.75.75 0 0 1 1.5 0v8.5a1.75 1.75 0 0 1-1.75 1.75H4.25a1.75 1.75 0 0 1-1.75-1.75V4.25Z"/></g></svg></a>.
+I still need to investigate exactly what&#x27;s happening under the hood.</p>
+<h3 id="sample-id">sample-id</h3>
+<p>This is the field that populations the <code translate="no" v-pre>@RG SM:</code> SAM field and is required, since we cannot reliably infer
+sample names from files.</p>
+<h2 id="mark-duplicates">Mark Duplicates</h2>
+<p>Since linked-read barcodes are technically a kind of UMI, Arachne automatically performs duplicate
+identification for reads with the same barcode. You will not need to perform subsequent duplicate marking
+on Arachne-derived alignments. A caveat is that, unlike <code translate="no" v-pre>samtools markdup</code>, Arachne makes no distinction
+between PCR and optical duplicates.</p>
 
                 
                 <!-- Required only on API pages -->

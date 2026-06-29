@@ -18,7 +18,7 @@ remove the linked-read barcode from the sequence and use conventional FASTQ form
 the goal was to update it for current technologies. Arachne drops support for 10X-style data in favor of supporting haplotagging,
 stLFR, and TELLseq. In the effort of **ridding ourselves of unnecessary platform-specific linked-read data formats**, Arachne's caveat
 is that it expects the ['standard' linked-read data format](standardfmt.md), which is a future-proofed consistent format following the widely-used
-FASTQ and SAM specifications. Don't worry, arachne provides a lossless converter that accepts haplotagging, stLFR, and TELLseq FASTQ data.
+FASTQ and SAM specifications. Arachne provides a lossless converter that accepts haplotagging, stLFR, and TELLseq FASTQ data, so this isn't something you need to worry about.
 ===
 
 ## 1.0 release checklist:
@@ -33,6 +33,7 @@ FASTQ and SAM specifications. Don't worry, arachne provides a lossless converter
 - [x] Get everything to compile and run
 - [x] Add build and run tests
 - [x] Restore BWA as a submodule to get latest upstream fixes
+- [x] Add jemalloc as a submodule to get latest upstream fixes
 - [ ] validate output
 
 ## About Lariat
