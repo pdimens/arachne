@@ -29,13 +29,14 @@ var prep = &cobra.Command{
 		if err := cobra.ExactArgs(3)(cmd, args); err != nil {
 			return err
 		}
-		err := fileExists(args[1])
-		if !err {
+		if !fileExists(args[1]) {
 			return fmt.Errorf("file does not exist: %s", args[1])
 		}
-		err = fileExists(args[2])
-		if !err {
+		if !fileExists(args[2]) {
 			return fmt.Errorf("file does not exist: %s", args[2])
+		}
+		if !checkIfExecInPath("samtools") {
+			return fmt.Errorf("samtools was not found on the PATH:")
 		}
 		return nil
 	},

@@ -1,4 +1,4 @@
-export CGO_LDFLAGS = -L$(shell pwd)/gobwa/bwa -L$(shell pwd)/jemalloc
+export CGO_LDFLAGS = -L$(shell pwd)/gobwa/bwa -L$(shell pwd)/jemalloc/lib
 export GOPATH=$(shell pwd)
 
 VERSION=1.0-dev
