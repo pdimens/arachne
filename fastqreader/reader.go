@@ -15,6 +15,8 @@ import (
 var bxRe = regexp.MustCompile(`BX:Z:(\S+)(?:\s|$)`)
 var vxRe = regexp.MustCompile(`VX:i:([01])(?:\s|$)`)
 var vxVALID = []byte("1")
+var auxCOLON = []byte(":")
+var remCOLON = []byte("")
 
 // This structure represents a single read from a fastq file pair
 type FastQRecord struct {
@@ -122,7 +124,9 @@ func ParseBarcodes(rec *fastx.Record) ([]byte, []byte, bool) {
 	rec.Desc = append(rec.Desc[:second[0]], rec.Desc[second[1]:]...)
 	rec.Desc = append(rec.Desc[:first[0]], rec.Desc[first[1]:]...)
 
-	return _barcode, bytes.Clone(rec.Desc), _valid
+	// remove colons ':' to make it sam.Aux compliant.
+	_comment := bytes.ReplaceAll(rec.Desc, auxCOLON, remCOLON)
+	return _barcode, _comment, _valid
 }
 
 // Reaturn an array of all of the reads with the same barcode.

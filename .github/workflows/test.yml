@@ -29,12 +29,18 @@ jobs:
         with:
           fetch-depth: 1
           submodules: true
-      - name: Build and Test Arachne
+      - name: Setup Pixi
         uses: prefix-dev/setup-pixi@v0.9.6
         with:
           cache: true
           activate-environment: false
-      - run: pixi run build
-      - run: test/data.py
-      - run: bin/arachne index test/hap1.fa
-      - run: bin/arachne align -t 4 -s TestSample test/hap1.fa test/test.R{1,2}.fq.gz
+      - name: Build arachne
+        run: pixi run build
+      - name: Create test data
+        run: test/data.py
+      - name: Index reference
+        run: bin/arachne index test/hap1.fa
+      - name: Align default
+        run: bin/arachne align -t 4 -s TestSample test/hap1.fa test/test.R{1,2}.fq.gz
+      - name: Align with -C comments
+        run: bin/arachne align -t 4 -C -s TestSample test/hap1.fa test/test.R{1,2}.fq.gz
