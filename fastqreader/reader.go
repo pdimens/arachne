@@ -215,7 +215,7 @@ func (fqr *FastQRecord) Print() {
 	println("ReadQual2", string(fqr.ReadQual2[:]))
 	println("Valid", fqr.Valid)
 	println("ReadInfo", fqr.ReadInfo)
-	println("")
+	println("Comments\n", string(fqr.Tags[:]))
 }
 
 // Check the existence of a file, return a fatal error if it doesnt

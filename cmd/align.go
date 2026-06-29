@@ -29,21 +29,20 @@ var alignCmd = &cobra.Command{
 			return err
 		}
 		for _, j := range args {
-			err := fileExists(j)
-			if !err {
-				return fmt.Errorf("file does not exist: %s", j)
+			if err := filecheck(j); err != nil {
+				return err
 			}
 		}
 		// if reference index files don't exist, run bwa index on reference
 		exts := []string{".amb", ".ann", ".bwt", ".pac", ".sa"}
 		for _, i := range exts {
 			if _, err := os.Stat(args[0] + i); err != nil {
-				return fmt.Errorf("Missing critical reference index file: %s (and possibly others). Please index reference with \033[94;1mbwa index\033[0m or (\033[94;1marachne index\033[0m", filepath.Base(args[0])+i)
+				return fmt.Errorf("Missing critical reference index file (and possibly others): %s. Please index reference with \033[94;1mbwa index\033[0m or (\033[94;1marachne index\033[0m", filepath.Base(args[0])+i)
 			}
 		}
 		return nil
 	},
-	Run: arachneAlign,
+	RunE: arachneAlign,
 }
 
 func init() {
@@ -62,40 +61,39 @@ func init() {
 	alignCmd.Flags().BoolP("verbose", "v", false, "Verbose output")
 }
 
-func arachneAlign(cmd *cobra.Command, args []string) {
+func arachneAlign(cmd *cobra.Command, args []string) error {
 	//---Flag validations and failsafes -------------
 	var debugSpoof bool
 	sampleID, err := cmd.Flags().GetString("sample-id")
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	inferDistance, err := cmd.Flags().GetInt64("infer-distance")
 	if err != nil {
-		panic(err)
+		return err
 	}
 	inferDistance = max(inferDistance, 100)
 
 	centromeres, err := cmd.Flags().GetString("centromeres")
 	if err != nil {
-		panic(err)
+		return err
 	}
 	if centromeres != "" {
-		err := fileExists(centromeres)
-		if !err {
-			panic(fmt.Errorf("file does not exist: %s", centromeres))
+		if err := filecheck(centromeres); err != nil {
+			return err
 		}
 	}
 
 	threads, err := cmd.Flags().GetInt("threads")
 	if err != nil {
-		panic(err)
+		return err
 	}
 	threads = max(threads, 1)
 
 	improperPairPenalty, err := cmd.Flags().GetFloat64("improper-pair-penalty")
 	if err != nil {
-		panic(err)
+		return err
 	}
 	if improperPairPenalty < 0.0 {
 		improperPairPenalty *= -1.0
@@ -103,12 +101,12 @@ func arachneAlign(cmd *cobra.Command, args []string) {
 
 	comments, err := cmd.Flags().GetBool("comments")
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	verbose, err := cmd.Flags().GetBool("verbose")
 	if err != nil {
-		panic(err)
+		return err
 	}
 	//--- Setup config and run --------------------
 	config := aligner.ArachneArgs{
@@ -127,4 +125,5 @@ func arachneAlign(cmd *cobra.Command, args []string) {
 		Comments:              &comments,
 	}
 	aligner.Arachne(config)
+	return nil
 }

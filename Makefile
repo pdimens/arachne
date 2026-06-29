@@ -14,17 +14,17 @@ arachne: gobwa/bwa/libbwa.a gobwa/bwa/bwa jemalloc/lib/libjemalloc_pic.a
 
 gobwa/bwa/libbwa.a gobwa/bwa/bwa &:
 	@echo "Building BWA"
-	$(MAKE) -C gobwa/bwa libbwa.a bwa
+	$(MAKE) -j 4 -C gobwa/bwa libbwa.a bwa
 
 jemalloc/Makefile:
-		cd jemalloc && ./autogen.sh && \
-		./configure --disable-shared --enable-static
+	cd jemalloc && ./autogen.sh && \
+	./configure --disable-shared --enable-static
 
 jemalloc/lib/libjemalloc_pic.a: jemalloc/Makefile
-		$(MAKE) -C jemalloc build_lib_static
+	$(MAKE) -j 4 -C jemalloc build_lib_static
 
 clean:
 	@echo "Cleaning Build"
 	rm -Rf bin/
-	$(MAKE) -C gobwa/bwa clean
-	$(MAKE) -C jemalloc distclean
+	$(MAKE) -j 4 -C gobwa/bwa clean
+	$(MAKE) -j 4 -C jemalloc distclean

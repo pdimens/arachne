@@ -23,8 +23,8 @@ var indexCmd = &cobra.Command{
 		if err := cobra.ExactArgs(1)(cmd, args); err != nil {
 			return err
 		}
-		if !fileExists(args[0]) {
-			return fmt.Errorf("file does not exist: %s", args[0])
+		if err := filecheck(args[0]); err != nil {
+			return err
 		}
 		return nil
 	},

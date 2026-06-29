@@ -315,8 +315,9 @@ func setMoleculeDifferences(candidate_molecules []*CandidateMolecule, setBad boo
 
 func psuedoCountAlignmentScore(aln *Alignment, log_molecule_penalty float64) float64 {
 	psuedoAlignmentLength := 25.0
-	score := 0.0
-	score -= 10.0                                                        //maximum soft clipping penalty
+	//score := 0.0
+	//score -= 10.0                                                        //maximum soft clipping penalty
+	score := -10.0
 	score -= (float64(len(*aln.read_seq)) - psuedoAlignmentLength) * 0.5 // soft clipping length penalty for 25bp alignment
 	score += log_molecule_penalty
 	return score

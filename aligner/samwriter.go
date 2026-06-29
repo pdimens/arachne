@@ -255,7 +255,7 @@ func buildRecord(aln, primary *Alignment, debugTags *bool, contigs map[string]*s
 			aux = append(aux, sam.Aux(md))
 		}
 	}
-	if *AddComments {
+	if *AddComments && len(*aln.comments) > 0 {
 		for i := range bytes.SplitSeq(*aln.comments, []byte("\t")) {
 			aux = append(aux, i)
 		}
