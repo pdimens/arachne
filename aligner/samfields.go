@@ -19,7 +19,6 @@ const (
 
 func AuxifyString(name []byte, data []byte) []byte {
 	vec := make([]byte, len(data)+3)
-
 	vec[0] = name[0]
 	vec[1] = name[1]
 	vec[2] = byte('Z')
@@ -45,7 +44,6 @@ func AuxifyFloat(name string, data float32) []byte {
 	vec[0] = name[0]
 	vec[1] = name[1]
 	vec[2] = byte('f')
-
 	for i := range 4 {
 		vec[3+i] = *(*byte)(unsafe.Add(unsafe.Pointer(&data), i))
 	}

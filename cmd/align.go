@@ -101,6 +101,11 @@ func arachneAlign(cmd *cobra.Command, args []string) {
 		improperPairPenalty *= -1.0
 	}
 
+	comments, err := cmd.Flags().GetBool("comments")
+	if err != nil {
+		panic(err)
+	}
+
 	verbose, err := cmd.Flags().GetBool("verbose")
 	if err != nil {
 		panic(err)
@@ -119,6 +124,7 @@ func arachneAlign(cmd *cobra.Command, args []string) {
 		DebugPrintMove:        &debugSpoof,
 		Centromeres:           &centromeres,
 		Verbose:               &verbose,
+		Comments:              &comments,
 	}
 	aligner.Arachne(config)
 }
