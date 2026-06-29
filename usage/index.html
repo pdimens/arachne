@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark">
     <meta name="turbo-root" content="/arachne">
-    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="4.6.0.836064960914">
+    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="4.6.0.836065643614">
 
     <!-- See retype.com -->
     <meta name="generator" content="Retype 4.6.0">
@@ -39,12 +39,12 @@
     <script data-cfasync="false">(function(){var cl=document.documentElement.classList,ls=localStorage.getItem("retype_scheme"),hd=cl.contains("dark"),hl=cl.contains("light"),wm=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches;if(ls==="dark"||(!ls&&wm&&!hd&&!hl)){cl.remove("light");cl.add("dark")}else if(ls==="light"||(!ls&&!wm&&!hd&&!hl)){cl.remove("dark");cl.add("light")}})();</script>
 
     <link id="retype-favicon" rel="icon" href="../static/favicon.png" />
-    <link href="../resources/css/retype.css?v=4.6.0.836064960914" rel="stylesheet">
+    <link href="../resources/css/retype.css?v=4.6.0.836065643614" rel="stylesheet">
 
-    <script data-cfasync="false" src="../resources/js/config.js?v=4.6.0.836064960914" data-turbo-eval="false" defer></script>
+    <script data-cfasync="false" src="../resources/js/config.js?v=4.6.0.836065643614" data-turbo-eval="false" defer></script>
     <script data-cfasync="false" src="../resources/js/retype.js?v=4.6.0" data-turbo-eval="false" defer></script>
-    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=4.6.0.836064960914" data-turbo-eval="false" defer></script>
-    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=4.6.0.836064960914" defer></script>
+    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=4.6.0.836065643614" data-turbo-eval="false" defer></script>
+    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=4.6.0.836065643614" defer></script>
 </head>
 <body>
     <div id="retype-app" class="relative text-base antialiased text-base-text bg-base-bg font-body">
@@ -62,7 +62,7 @@
                     <a id="retype-branding-logo" href="https://pdimens.github.io/arachne/" class="flex items-center leading-snug text-2xl">
                         <span class="grow-0 shrink-0 overflow-hidden">
                             <img class="max-h-10 dark:hidden md:inline-block" src="../static/logo.png" alt="" width="179" height="40">
-                            <img class="max-h-10 hidden dark:inline-block" src="../static/logo.png" alt="" width="179" height="40">
+                            <img class="max-h-10 hidden dark:inline-block" src="../static/logo_dark.png" alt="" width="179" height="40">
                         </span>
                     </a><span id="retype-branding-label" class="inline-flex mt-1 px-2 py-1 ml-4 text-xs font-medium leading-none items-center rounded-md bg-branding-label-bg text-branding-label-text ring-1 ring-branding-label-border ring-inset md:inline-block">v1.0-dev</span>
                 </div>
@@ -312,9 +312,9 @@ you are ready to align your sample onto the reference. The command arguments fol
 <h3 id="options">Options</h3>
 <retype-table copy-text="|Long| Short| Default| Description |
 |:----------|:----------|:----------|:----------|
-| `centromeres` | `c` |  | TSV file describing known centromeres |
+| `centromeres` | `c` |  | TSV file describing known centromeres [!badge variant=&quot;info&quot; text=&quot;under construction&quot;] |
 | `improper-pair-penalty` | `i` | 4.0 | Penalty for improper pair |
-| `infer-distance` | `d` | `50000` | Distance at which to consider reads with the same barcode to originate from different molecules|
+| `infer-distance` | `d` | `50000` | Distance at which to consider reads with the same barcode to originate from different molecules [!badge variant=&quot;info&quot; text=&quot;under construction&quot;]|
 | `sample-id` | `s` | | Sample name [!badge variant=&quot;info&quot; text=&quot;required&quot;]|
 | `threads` | `t` | `4` | Threads to use |
 | `verbose` | `v` | false | Verbose output |">
@@ -333,7 +333,9 @@ you are ready to align your sample onto the reference. The command arguments fol
 <td style="text-align: left;" class="whitespace-nowrap"><code translate="no" v-pre>centromeres</code></td>
 <td style="text-align: left;" class="whitespace-nowrap"><code translate="no" v-pre>c</code></td>
 <td style="text-align: left;" class="whitespace-nowrap"> </td>
-<td style="text-align: left;">TSV file describing known centromeres</td>
+<td style="text-align: left;">TSV file describing known centromeres <span class="no-link inline-flex align-middle items-center justify-center font-medium leading-none whitespace-nowrap text-badge-info-text bg-badge-info border border-badge-info-border h-6 px-2 text-xs rounded-md">
+    <span>under construction</span>
+</span></td>
 </tr>
 <tr>
 <td style="text-align: left;" class="whitespace-nowrap"><code translate="no" v-pre>improper-pair-penalty</code></td>
@@ -345,7 +347,9 @@ you are ready to align your sample onto the reference. The command arguments fol
 <td style="text-align: left;" class="whitespace-nowrap"><code translate="no" v-pre>infer-distance</code></td>
 <td style="text-align: left;" class="whitespace-nowrap"><code translate="no" v-pre>d</code></td>
 <td style="text-align: left;" class="whitespace-nowrap"><code translate="no" v-pre>50000</code></td>
-<td style="text-align: left;">Distance at which to consider reads with the same barcode to originate from different molecules</td>
+<td style="text-align: left;">Distance at which to consider reads with the same barcode to originate from different molecules <span class="no-link inline-flex align-middle items-center justify-center font-medium leading-none whitespace-nowrap text-badge-info-text bg-badge-info border border-badge-info-border h-6 px-2 text-xs rounded-md">
+    <span>under construction</span>
+</span></td>
 </tr>
 <tr>
 <td style="text-align: left;" class="whitespace-nowrap"><code translate="no" v-pre>sample-id</code></td>
