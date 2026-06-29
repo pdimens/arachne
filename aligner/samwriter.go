@@ -1,18 +1,18 @@
 package aligner
 
 import (
+	"bytes"
 	"strconv"
 	"strings"
 
 	sam "github.com/biogo/hts/sam"
 )
 
-func buildRecord(aln, primary *Alignment, debugTags *bool, contigs map[string]*sam.Reference) *sam.Record {
-	rec := &sam.Record{} // local, not shared
+var _TAB []byte = []byte("\t")
 
-	// replace all rec.X = ... with rec.X = ... -CHECK
+func buildRecord(aln, primary *Alignment, debugTags *bool, contigs map[string]*sam.Reference) *sam.Record {
+	rec := &sam.Record{}
 	// replace b.Contigs[...] with contigs[...]
-	// remove the final b.Writer.Write(&rec) line
 
 	ref := contigs[aln.contig]
 	var flags int32
@@ -122,24 +122,6 @@ func buildRecord(aln, primary *Alignment, debugTags *bool, contigs map[string]*s
 	barcode := strings.Split(string(*aln.barcode), "-")
 	aux := []sam.Aux{}
 	as := auxify_int("AS", aln.score)
-	//	qx := auxify_string([]byte("QX"), *aln.barcode_qual)
-	//	rx := auxify_string([]byte("RX"), *aln.raw_barcode)
-	//	aux = append(aux, sam.Aux(rx))
-	//	aux = append(aux, sam.Aux(qx))
-
-	//bc := auxify_string([]byte("BC"), *aln.sample_index)
-	//qt := auxify_string([]byte("QT"), *aln.sample_index_qual)
-
-	//if aln.read1 {
-	//	tx := auxify_string([]byte("TR"), *aln.trim_seq)
-	//	tq := auxify_string([]byte("TQ"), *aln.trim_qual)
-	//	aux = append(aux, sam.Aux(tx))
-	//	aux = append(aux, sam.Aux(tq))
-	//}
-	//if len(*aln.sample_index) > 1 {
-	//	aux = append(aux, sam.Aux(bc))
-	//	aux = append(aux, sam.Aux(qt))
-	//}
 	if len(*aln.read_group) > 0 {
 		rg := auxify_string([]byte("RG"), []byte(*aln.read_group))
 		aux = append(aux, sam.Aux(rg))
@@ -164,7 +146,6 @@ func buildRecord(aln, primary *Alignment, debugTags *bool, contigs map[string]*s
 		xc := auxify_string([]byte("XC"), []byte(xc_string.String()))
 		aux = append(aux, sam.Aux(xc))
 		var ac_string strings.Builder
-		//ac_string := ""
 		mismatchReadLocs := aln.mismatchReadLocs
 		mismatchLocs := aln.mismatchLocs
 		for i := range mismatchReadLocs {
@@ -242,7 +223,6 @@ func buildRecord(aln, primary *Alignment, debugTags *bool, contigs map[string]*s
 		snd.WriteString(",")
 		snd.WriteString(strconv.FormatInt(int64(len(secondaryAlignment.mismatchLocs)+indelLength), 10))
 		snd.WriteString(";")
-		//secondaryAlignmentString := []byte(secondaryAlignment.contig + "," + strconv.FormatInt(int64(secondaryAlignment.pos), 10) + "," + strand + "," + cigar + "," + strconv.FormatInt(int64(secondaryAlignment.mapq), 10) + "," + strconv.FormatInt(int64(len(secondaryAlignment.mismatchLocs)+indelLength), 10) + ";")
 		sa := auxify_string([]byte("SA"), []byte(snd.String()))
 		aux = append(aux, sam.Aux(sa))
 	}
@@ -260,8 +240,12 @@ func buildRecord(aln, primary *Alignment, debugTags *bool, contigs map[string]*s
 			aux = append(aux, sam.Aux(md))
 		}
 	}
+	if *AddComments {
+		for i := range bytes.SplitSeq(*aln.comments, []byte("\t")) {
+			aux = append(aux, i)
+		}
+	}
 	rec.AuxFields = aux
-
 	return rec
 }
 

@@ -14,16 +14,18 @@ import (
 
 var bxRe = regexp.MustCompile(`BX:Z:(\S+)(?:\s|$)`)
 var vxRe = regexp.MustCompile(`VX:i:([01])(?:\s|$)`)
+var vxVALID = []byte("1")
 
 // This structure represents a single read from a fastq file pair
 type FastQRecord struct {
+	ReadInfo    string
 	Read1       []byte
 	ReadQual1   []byte
 	Read2       []byte
 	ReadQual2   []byte
 	Barcode     []byte
 	Valid       bool
-	ReadInfo    string
+	Tags        []byte // preserve non-BX/VX comments
 	ReadGroupId string
 }
 
@@ -51,7 +53,7 @@ type FastQReader struct {
 // Close the underlying FASTX readers
 func (fq *FastQReader) Close() {
 	fq.R1.Close()
-	fq.R1.Close()
+	fq.R2.Close()
 }
 
 // Open two (paired) FASTQ files for synchronous reading.
@@ -80,7 +82,7 @@ func (fqr *FastQReader) ReadOneRecord(result *FastQRecord) error {
 	}
 
 	result.ReadInfo = string(rec1.ID[:len(rec1.ID)-2])
-	result.Barcode, result.Valid = ParseBarcodes(rec1)
+	result.Barcode, result.Tags, result.Valid = ParseBarcodes(rec1)
 	result.Read1 = slices.Clone(rec1.Seq.Seq)
 	result.ReadQual1 = slices.Clone(rec1.Seq.Qual)
 	result.Read2 = slices.Clone(rec2.Seq.Seq)
@@ -89,30 +91,43 @@ func (fqr *FastQReader) ReadOneRecord(result *FastQRecord) error {
 	return nil
 }
 
-func ParseBarcodes(rec *fastx.Record) ([]byte, bool) {
+// Parse fastx.Record and return []byte of BX:Z barcode
+// and VX:i value as a bool (0 = false, 1 = true). The second []byte return
+// is the remaining comments that arent' BX:Z: and VX:i
+func ParseBarcodes(rec *fastx.Record) ([]byte, []byte, bool) {
 	var _barcode []byte
+	var _comments []byte
 	var _valid bool
 
 	// regex match BX:Z:*
-	bxMatches := bxRe.FindSubmatch(rec.Desc)
-	if len(bxMatches) > 1 {
-		_barcode = bxMatches[1]
-	} else {
-		return []byte(""), _valid
+	bloc := bxRe.FindSubmatchIndex(rec.Desc)
+	if bloc == nil {
+		return _barcode, _comments, _valid
 	}
+	_barcode = bytes.Clone(rec.Desc[bloc[2]:bloc[3]])
+
 	// regex match VX:i:[01]
-	vxMatches := vxRe.FindSubmatch(rec.Desc)
-	if len(vxMatches) > 1 && bytes.Equal(vxMatches[1], []byte("1")) {
+	vloc := vxRe.FindSubmatchIndex(rec.Desc)
+	if vloc == nil {
+		return _barcode, _comments, _valid
+	}
+	if bytes.Equal(rec.Desc[vloc[2]:vloc[3]], vxVALID) {
 		_valid = true
 	}
-	return bytes.Clone(_barcode), _valid
+	// excise BX and VX tags
+	first, second := bloc, vloc
+	if vloc[0] < bloc[0] {
+		first, second = vloc, bloc
+	}
+	rec.Desc = append(rec.Desc[:second[0]], rec.Desc[second[1]:]...)
+	rec.Desc = append(rec.Desc[:first[0]], rec.Desc[first[1]:]...)
+
+	return _barcode, bytes.Clone(rec.Desc), _valid
 }
 
-/*
- * Reaturn an array of all of the reads with the same barcode.
- * "space" may be null or may be the result of a previous call to this function.
- * If present the array will be destructively re-used
- */
+// Reaturn an array of all of the reads with the same barcode.
+// "space" may be null or may be the result of a previous call to this function.
+// If present the array will be destructively re-used
 func (fqr *FastQReader) ReadBarcodeSet(space *[]FastQRecord) ([]FastQRecord, error, bool) {
 	new_barcode := false
 	if fqr.DefferedError != nil {

@@ -2,15 +2,9 @@ package aligner
 
 import "fmt"
 
-// #TODO ALIGNMENT NEEDS tO GET RID OF 10X STUFF
 type Alignment struct {
-	//	trim_seq                          *[]byte
-	//	trim_qual                         *[]byte
-	//	raw_barcode                       *[]byte
-	//  barcode_qual                      *[]byte
-	//  sample_index                      *[]byte
-	//  sample_index_qual                 *[]byte
 	id                                int
+	comments                          *[]byte
 	read1                             bool
 	is_proper                         bool
 	soft_clipped                      int

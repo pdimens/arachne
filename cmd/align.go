@@ -50,14 +50,15 @@ func init() {
 	rootCmd.AddCommand(alignCmd)
 
 	//---Command line arguments-------------
-	alignCmd.Flags().StringP("centromeres", "c", "", "TSV file describing known centromeres with CEN<chrname> <chrname> <start> <stop>, other rows will be ignored")
-	alignCmd.Flags().IntP("threads", "t", 4, "Threads to use")
+	alignCmd.Flags().StringP("centromeres", "c", "", "TSV file describing known centromeres as CEN<chrname> <chrname> <start> <stop>")
+	alignCmd.Flags().BoolP("comments", "C", false, "Append comments to SAM output")
 	alignCmd.Flags().Float64P("improper-pair-penalty", "i", 4.0, "Penalty for improper pair")
+	alignCmd.Flags().Int64P("infer-distance", "d", 50000, "Distance at which to consider reads with the same barcode to originate from different molecules")
 	alignCmd.Flags().StringP("sample-id", "s", "", "Sample name (required)")
 	if err := alignCmd.MarkFlagRequired("sample-id"); err != nil {
 		panic(err)
 	}
-	alignCmd.Flags().Int64P("infer-distance", "d", 50000, "Distance at which to consider reads with the same barcode to originate from different molecules")
+	alignCmd.Flags().IntP("threads", "t", 4, "Threads to use")
 	alignCmd.Flags().BoolP("verbose", "v", false, "Verbose output")
 }
 

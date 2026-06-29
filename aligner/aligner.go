@@ -42,6 +42,7 @@ type ArachneArgs struct {
 	Reference         *string
 	Centromeres       *string
 	Verbose           *bool
+	Comments          *bool
 }
 
 type ChainedHit struct {
@@ -138,6 +139,7 @@ var debugPrintMove *bool
 var centromeres map[string]Region
 var verbose *bool
 var inferDisance *int64
+var AddComments *bool
 
 // this is the actual arachne program
 func Arachne(args ArachneArgs) {
@@ -152,6 +154,7 @@ func Arachne(args ArachneArgs) {
 	reference = args.Reference
 	centromeres = loadCentromeres(args.Centromeres)
 	inferDisance = args.InferDistance
+	AddComments = args.Comments
 	verbose = args.Verbose
 	// unused
 	DEBUG = args.DEBUG
@@ -216,7 +219,6 @@ func Arachne(args ArachneArgs) {
 			bufChan <- buf // return unused buffer
 			break
 		}
-		//TODO don't skip invalid, just don't do RFA
 		if !records[0].Valid {
 			if *verbose {
 				fmt.Printf("Detected invalid barcode (%v), skipping.\n", records[0].Barcode)
@@ -346,21 +348,6 @@ func scoreAlignment(aln *Alignment, mate *Alignment, log_molecule_penalty float6
 	}
 	return score
 }
-
-//func SetArgsForTests(args ArachneArgs) {
-//	r1 = args.R1
-//	r2 = args.R2
-//	improper_pair_penalty = args.Improper_pair_penalty
-//	output = args.Output
-//	read_groups = args.Read_groups
-//	sample_id = args.Sample_id
-//	threads = args.Threads
-//	DEBUG = args.DEBUG
-//	positionChunkSize = args.PositionChunkSize
-//	debugTags = args.DebugTags
-//	debugPrintMove = args.DebugPrintMove
-//	reference = args.Reference
-//}
 
 func updateAlignmentsMoleculeStatus(alignments [][]*Alignment, candidate_molecules []*CandidateMolecule, read_copies_in_active_molecule, read_copies_not_in_active_molecule map[int]int, unique_molecules_active map[int]map[int]bool) {
 	if candidate_molecules != nil {
@@ -1213,33 +1200,33 @@ func GetAlignments(ref *gobwa.GoBwaReference, settings *gobwa.GoBwaSettings, bar
 			//trim_qual := &chain.fastq.TrimQuals
 
 			full_alignment := Alignment{
-				id:                  chain.hit_id,
-				aend:                aend,
-				read_name:           &chain.fastq.ReadInfo,
-				read_seq:            chain.read,
-				read_qual:           quals,
-				matches:             matches,
-				mismatches:          mismatches,
-				mismatchLocs:        mismatchLocs,
-				mismatchReadLocs:    mismatchReadLocs,
-				indels:              indels,
-				soft_clipped:        soft_clipping,
-				soft_clipped_length: soft_clipping_length,
-				read1:               chain.read1,
-				mapq_data:           &MapQData{active_alignments_in_molecules: ""},
-				barcode:             &chain.fastq.Barcode,
-				contig:              alignment.Chrom,
-				pos:                 pos,
-				molecule_id:         -1,
-				score:               chain.score,
-				cigar:               alignment.Cigar,
-				read_id:             chain.read_id,
-				mate_id:             chain.mate_id,
-				reversed:            alignment.Reversed,
-				//sample_index:                &chain.fastq.Barcode,
+				id:                          chain.hit_id,
+				comments:                    &chain.fastq.Tags,
+				aend:                        aend,
+				read_name:                   &chain.fastq.ReadInfo,
+				read_seq:                    chain.read,
+				read_qual:                   quals,
+				matches:                     matches,
+				mismatches:                  mismatches,
+				mismatchLocs:                mismatchLocs,
+				mismatchReadLocs:            mismatchReadLocs,
+				indels:                      indels,
+				soft_clipped:                soft_clipping,
+				soft_clipped_length:         soft_clipping_length,
+				read1:                       chain.read1,
+				mapq_data:                   &MapQData{active_alignments_in_molecules: ""},
+				barcode:                     &chain.fastq.Barcode,
+				contig:                      alignment.Chrom,
+				pos:                         pos,
+				molecule_id:                 -1,
+				score:                       chain.score,
+				cigar:                       alignment.Cigar,
+				read_id:                     chain.read_id,
+				mate_id:                     chain.mate_id,
+				reversed:                    alignment.Reversed,
 				read_group:                  &chain.fastq.ReadGroupId,
 				sum_move_probability_change: 1.0,
-				molecule_confidence:         0.00075 * 0.025,
+				molecule_confidence:         0.00001875, //0.00075 * 0.025
 				duplicate:                   false,
 			}
 
@@ -1282,8 +1269,6 @@ func GetChains(ref *gobwa.GoBwaReference, settings *gobwa.GoBwaSettings, reads_f
 				fastq:     &reads_for_barcode[i],
 				read:      &reads_for_barcode[i].Read1,
 				aln:       &read1_chains[j],
-				//seq:       &reads_for_barcode[i].TrimBases,
-				//qual:      &reads_for_barcode[i].TrimQuals,
 			}
 			read1_num++
 			toReturn[len(toReturn)-1] = append(toReturn[len(toReturn)-1], read1_chain_n)
@@ -1298,8 +1283,6 @@ func GetChains(ref *gobwa.GoBwaReference, settings *gobwa.GoBwaSettings, reads_f
 				chain:   nil,
 				fastq:   &reads_for_barcode[i],
 				read:    &reads_for_barcode[i].Read1,
-				//trim_seq:  &reads_for_barcode[i].TrimBases,
-				//trim_qual: &reads_for_barcode[i].TrimQuals,
 			})
 			hit_num++
 		}
