@@ -1,10 +1,10 @@
 // Copyright (c) 2015 10X Genomics, Inc. All rights reserved.
 
-/* This provides a Go <--> BWA interface */
+// This provides a Go <--> BWA interface
 
 package gobwa
 
-// #cgo LDFLAGS: -lbwa -lz -lm -ljemalloc
+// #cgo LDFLAGS: -L${SRCDIR}/../jemalloc/lib -lbwa -lz -lm -ljemalloc_pic -lpthread -ldl
 // #include "bwa_bridge.h"
 // #include "bwa/bwamem.h"
 // #include "bwa/bwa.h"

@@ -10,11 +10,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// preprocessCmd represents the preprocess command
-var preprocessCmd = &cobra.Command{
-	Use:     "preprocess [-t] PREFIX R1.fq R2.fq",
+// preCmd represents the preprocess command
+var prep = &cobra.Command{
+	Use:     "prep [-t] PREFIX R1.fq R2.fq",
 	Short:   "Format FASTQ files for alignment \033[94;1m[start here]\033[0m",
-	Example: "preprocess -t 12 sample1 smp1.R1.fq.gz smp1.R2.fq.gz",
+	Example: "prep -t 12 sample1 smp1.R1.fq.gz smp1.R2.fq.gz",
 	Long: "Converts a set of paired-end FASTQ files into the format required for the arachne aligner. " +
 		"For arachne to work correctly, input FASTQ files need to be properly paired, in \"standard\" format " +
 		"(\033[94;1mBX:Z\033[0m and \033[94;1mVX:i\033[0m tags), and sorted by barcode. " +
@@ -49,12 +49,11 @@ var preprocessCmd = &cobra.Command{
 		// clamp between 1 and max system threads
 		threads = min(maxCores, max(threads, 1))
 		runtime.GOMAXPROCS(threads)
-		preprocess.Preprocess(threads, args[0], args[1], args[2])
-		return nil
+		return preprocess.Preprocess(threads, args[0], args[1], args[2])
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(preprocessCmd)
-	preprocessCmd.Flags().IntP("threads", "t", 2, "Number of threads to use")
+	rootCmd.AddCommand(prep)
+	prep.Flags().IntP("threads", "t", 2, "Number of threads to use")
 }

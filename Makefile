@@ -3,24 +3,25 @@ export GOPATH=$(shell pwd)
 
 VERSION=1.0-dev
 
-GO_VERSION=$(strip $(shell go version | sed 's/.*go\([0-9]*\.[0-9]*\).*/\1/'))
-
 all: arachne gobwa/bwa/libbwa.a gobwa/bwa/bwa
-
-gobwa/bwa/bwa: gobwa/bwa/libbwa.a
-	@echo "Building bwa binary (for bwa index)"
-	make -C gobwa/bwa bwa
 
 arachne: gobwa/bwa/libbwa.a gobwa/bwa/bwa
 	@echo "Building arachne"
 	mkdir -p bin/
-	go build -o bin/arachne $@
+	go build -o bin/$@
 	cp gobwa/bwa/bwa bin/
 	chmod +x bin/arachne
 
-gobwa/bwa/libbwa.a:
+gobwa/bwa/libbwa.a gobwa/bwa/bwa &:
 	@echo "Building BWA"
-	make -C gobwa/bwa libbwa.a
+	$(MAKE) -C gobwa/bwa libbwa.a bwa
+
+jemalloc/Makefile:
+		cd jemalloc && ./autogen.sh && \
+		./configure --disable-shared --enable-static
+
+jemalloc/lib/libjemalloc_pic.a: jemalloc/Makefile
+		$(MAKE) -C jemalloc build_lib_static
 
 clean:
 	@echo "Cleaning Build"

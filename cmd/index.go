@@ -8,7 +8,7 @@ import (
 )
 
 var indexCmd = &cobra.Command{
-	Short:                 "Index reference fasta",
+	Short:                 "Index reference.fasta",
 	Use:                   "index REF.fa",
 	Example:               "arachne index ref.fa",
 	Long:                  "This is a small wrapper to use BWA (included) to index a reference FASTA file prior to alignment.",
