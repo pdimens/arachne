@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -37,7 +38,7 @@ var alignCmd = &cobra.Command{
 		exts := []string{".amb", ".ann", ".bwt", ".pac", ".sa"}
 		for _, i := range exts {
 			if _, err := os.Stat(args[0] + i); err != nil {
-				return fmt.Errorf("Missing critical reference index file (and possibly others): %s. Please index reference with \033[94;1mbwa index\033[0m or (\033[94;1marachne index\033[0m", filepath.Base(args[0])+i)
+				return fmt.Errorf("missing reference index file: %s\nPlease index reference with \033[94;1marachne index\033[0m or (\033[94;1mbwa index\033[0m)", filepath.Base(args[0])+i)
 			}
 		}
 		return nil
@@ -124,6 +125,12 @@ func arachneAlign(cmd *cobra.Command, args []string) error {
 		Verbose:               &verbose,
 		Comments:              &comments,
 	}
+	start := time.Now()
+	fmt.Fprintf(os.Stderr, "🕷️  Starting arachne. Version: %s\n", aligner.VERSION)
+
 	aligner.Arachne(config)
+
+	elapsed := time.Since(start).Round(time.Second).String()
+	fmt.Fprintf(os.Stderr, "🕸️  Arachne finished successfully! Elapsed: %s\n\n", elapsed)
 	return nil
 }

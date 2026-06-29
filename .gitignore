@@ -3,6 +3,7 @@ bin/
 pkg/
 go/
 test/*.fa*
+scratch/
 
 # pixi environments
 .pixi/*

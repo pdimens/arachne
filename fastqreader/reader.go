@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"io"
 	"log"
-	"os"
-	"path/filepath"
 	"regexp"
 	"slices"
 
@@ -125,8 +123,9 @@ func ParseBarcodes(rec *fastx.Record) ([]byte, []byte, bool) {
 	rec.Desc = append(rec.Desc[:first[0]], rec.Desc[first[1]:]...)
 
 	// remove colons ':' to make it sam.Aux compliant.
-	_comment := bytes.ReplaceAll(rec.Desc, auxCOLON, remCOLON)
-	return _barcode, _comment, _valid
+	_comments = bytes.ReplaceAll(bytes.TrimSpace(rec.Desc), auxCOLON, remCOLON)
+
+	return _barcode, _comments, _valid
 }
 
 // Reaturn an array of all of the reads with the same barcode.
@@ -215,19 +214,5 @@ func (fqr *FastQRecord) Print() {
 	println("ReadQual2", string(fqr.ReadQual2[:]))
 	println("Valid", fqr.Valid)
 	println("ReadInfo", fqr.ReadInfo)
-	println("Comments\n", string(fqr.Tags[:]))
-}
-
-// Check the existence of a file, return a fatal error if it doesnt
-func FileExists(path string, filetype string) bool {
-	absfile, err := filepath.Abs(path)
-	if err != nil {
-		log.Fatalf("\033[31;1mError:\033[0m %s file \033[33;1m%s\033[0m does not exist or does not have read persmissions.\n", filetype, path)
-	}
-	file, err := os.Open(absfile)
-	if err != nil {
-		log.Fatalf("\033[31;1mError:\033[0m %s file \033[33;1m%s\033[0m does not exist or does not have read persmissions.\n", filetype, path)
-	}
-	defer file.Close()
-	return true
+	println("Comments", string(fqr.Tags[:]))
 }

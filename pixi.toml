@@ -22,7 +22,7 @@ mimick = "3.*"
 [feature.test.tasks]
 fasta = {cmd = "test/data.py", outputs = ["test/hap1.fa", "test/hap2.fa"]}
 reads = {cmd = "mimick --quiet -g 10 -s 6969 -o test/simulated test/hap1.fa test/hap2.fa", inputs = ["test/hap1.fa", "test/hap2.fa"], outputs = ["test/simulated.R1.fq.gz", "test/simulated.R2.fq.gz"], depends-on = ["fasta"]}
-prep = {cmd = "bin/arachne preprocess test/test test/simulated.R1.fq.gz test/simulated.R2.fq.gz", inputs = ["test/simulated.R1.fq.gz", "test/simulated.R2.fq.gz"], outputs = ["test/test.R1.fq.gz", "test/test.R2.fq.gz"], depends-on = ["reads"]}
+prep = {cmd = "bin/arachne prep test/test test/simulated.R1.fq.gz test/simulated.R2.fq.gz", inputs = ["test/simulated.R1.fq.gz", "test/simulated.R2.fq.gz"], outputs = ["test/test.R1.fq.gz", "test/test.R2.fq.gz"], depends-on = ["reads"]}
 test = {cmd = "bin/arachne align -t 4 -s TESTSAMP test/hap1.fa test/test.R1.fq.gz test/test.R2.fq.gz", depends-on = ["prep"]}
 
 [environments]
