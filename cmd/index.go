@@ -1,3 +1,4 @@
+// Copyright © 2026 Pavel Dimens | Github: pdimens
 package cmd
 
 import (
@@ -11,7 +12,7 @@ var indexCmd = &cobra.Command{
 	Short:                 "Index reference.fasta",
 	Use:                   "index REF.fa",
 	Example:               "arachne index ref.fa",
-	Long:                  "This is a small wrapper to use BWA (included) to index a reference FASTA file prior to alignment.",
+	Long:                  "A small wrapper to use BWA (included) to index a reference FASTA file prior to alignment.",
 	DisableFlagsInUseLine: true,
 	SilenceUsage:          true,
 	Args: func(cmd *cobra.Command, args []string) error {

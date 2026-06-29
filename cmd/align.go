@@ -15,8 +15,9 @@ var alignCmd = &cobra.Command{
 	Short:   "Align linked-read sequences to a reference",
 	Use:     "align [flags] --sample-id REF.fa R1.fq R2.fq",
 	Example: "arachne align -t 12 --sample-id sample1 ref.fa smp1.R1.fq.gz smp1.R2.fq.gz > smp1.sam",
-	Long: "Align (short-read) linked-read sequences to a reference. Use \033[4;34marachne preprocess\033[0m to properly format input FASTQ files for the aligner. " +
-		"Inputs can be Gzipped. See the documentation for more information: https://pdimens.github.io/arachne",
+	Long: "Align (short-read) linked-read sequences to a reference. Use \033[4;34marachne prep\033[0m to format " +
+		"input FASTQ files for the aligner. Inputs must be sorted by barcode and in \"standard\" format, and can be Gzipped. " +
+		"See the documentation for more information: https://pdimens.github.io/arachne",
 	DisableFlagsInUseLine: true,
 	SilenceUsage:          true,
 	Args: func(cmd *cobra.Command, args []string) error {

@@ -6,6 +6,7 @@ platforms = ["linux-64"]
 version = "1.0-dev"
 
 [dependencies]
+autoconf = "*"
 c-compiler = "*"
 go = "1.25.*"
 sysroot_linux-64 = "2.17.*"
