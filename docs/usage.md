@@ -81,14 +81,14 @@ arachne align -t 24 -s MC_001 Rclamitans.fa MC_001.F.fq.gz MC_001.R.fq.gz > MC_0
 {.clean .compact}
 |Long {.whitespace-nowrap}  | Short {.whitespace-nowrap} | Default {.whitespace-nowrap}  | Description |
 |:----------|:----------|:----------|:----------|
-| `centromeres` | `c` |  | TSV file describing known centromeres |
+| `centromeres` | `c` |  | TSV file describing known centromeres [!badge variant="info" text="under construction"] |
 | `improper-pair-penalty` | `i` | 4.0 | Penalty for improper pair |
-| `infer-distance` | `d` | `50000` | Distance at which to consider reads with the same barcode to originate from different molecules|
+| `infer-distance` | `d` | `50000` | Distance at which to consider reads with the same barcode to originate from different molecules [!badge variant="info" text="under construction"]|
 | `sample-id` | `s` | | Sample name [!badge variant="info" text="required"]|
 | `threads` | `t` | `4` | Threads to use |
 | `verbose` | `v` | false | Verbose output |
 
-### centromeres
+### centromeres 
 A file of centromere locations can be provided. I'm still determining the proper format and what utility it
 has during alignment. The format described in Lariat is:
 ```

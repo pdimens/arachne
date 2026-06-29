@@ -19,7 +19,7 @@ theme:
 branding:
   label: v1.0-dev
   logo: static/logo.png
-  logoDark: static/logo.png
+  logoDark: static/logo_dark.png
   logoAlign: left
 favicon: static/favicon.png
 search:
