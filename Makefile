@@ -5,7 +5,7 @@ VERSION=1.0-dev
 
 all: arachne gobwa/bwa/libbwa.a gobwa/bwa/bwa
 
-arachne: gobwa/bwa/libbwa.a gobwa/bwa/bwa
+arachne: gobwa/bwa/libbwa.a gobwa/bwa/bwa jemalloc/lib/libjemalloc_pic.a
 	@echo "Building arachne"
 	mkdir -p bin/
 	go build -o bin/$@
@@ -27,3 +27,4 @@ clean:
 	@echo "Cleaning Build"
 	rm -Rf bin/
 	$(MAKE) -C gobwa/bwa clean
+	$(MAKE) -C jemalloc distclean
