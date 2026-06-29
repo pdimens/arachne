@@ -256,8 +256,8 @@ func buildRecord(aln, primary *Alignment, debugTags *bool, contigs map[string]*s
 		}
 	}
 	if *AddComments && len(*aln.comments) > 0 {
-		for i := range bytes.SplitSeq(*aln.comments, []byte("\t")) {
-			aux = append(aux, i)
+		for i := range bytes.SplitSeq(*aln.comments, _TAB) {
+			aux = append(aux, sam.Aux(i))
 		}
 	}
 	rec.AuxFields = aux
