@@ -11,6 +11,7 @@ c-compiler = "*"
 go = "1.25.*"
 sysroot_linux-64 = "2.17.*"
 zlib = "*"
+automake = "*"
 
 [tasks]
 build = "make clean; make"
