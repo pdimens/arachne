@@ -2,6 +2,7 @@ package aligner
 
 import (
 	"bytes"
+	"log"
 	"strconv"
 	"strings"
 
@@ -9,6 +10,20 @@ import (
 )
 
 var _TAB []byte = []byte("\t")
+
+func fixCigar(in []uint32) []uint32 {
+	var out = make([]uint32, len(in))
+	for i := 0; i < len(in)/2; i++ {
+		idx := i * 2
+		if int(in[idx]) > len(cigartable) {
+			log.Printf("BAMOP: %v", in[idx])
+			panic("ILLEGAL CIGAR OP")
+		}
+		out[idx] = cigartable[int(in[idx])]
+		out[idx+1] = in[idx+1]
+	}
+	return out
+}
 
 func buildRecord(aln, primary *Alignment, debugTags *bool, contigs map[string]*sam.Reference) *sam.Record {
 	rec := &sam.Record{}
@@ -102,8 +117,8 @@ func buildRecord(aln, primary *Alignment, debugTags *bool, contigs map[string]*s
 	qual := *aln.read_qual
 
 	if aln.reversed {
-		seq = reverseComp(seq)
-		qual = reverseQual(qual)
+		seq = ReverseComp(seq)
+		qual = ReverseQual(qual)
 	}
 
 	if primary != aln {
@@ -117,19 +132,19 @@ func buildRecord(aln, primary *Alignment, debugTags *bool, contigs map[string]*s
 	rec.Pos = pos
 	rec.Cigar = FixCigar(cigar)
 	rec.Seq = sam.NewSeq(seq)
-	rec.Qual = fixQual(qual)
+	rec.Qual = FixQual(qual)
 
 	barcode := strings.Split(string(*aln.barcode), "-")
 	aux := []sam.Aux{}
-	as := auxify_int("AS", aln.score)
+	as := AuxifyInt("AS", aln.score)
 	if len(*aln.read_group) > 0 {
-		rg := auxify_string([]byte("RG"), []byte(*aln.read_group))
+		rg := AuxifyString([]byte("RG"), []byte(*aln.read_group))
 		aux = append(aux, sam.Aux(rg))
 	}
 	if aln.mapq_data != nil {
-		xs := auxify_int("XS", int(aln.mapq_data.second_best_score))
+		xs := AuxifyInt("XS", int(aln.mapq_data.second_best_score))
 		aux = append(aux, sam.Aux(xs))
-		as = auxify_int("AS", int(aln.mapq_data.score))
+		as = AuxifyInt("AS", int(aln.mapq_data.score))
 		var xc_string strings.Builder
 		if aln.mapq_data.second_best != nil {
 			mismatchReadLocs := aln.mapq_data.second_best.mismatchReadLocs
@@ -143,7 +158,7 @@ func buildRecord(aln, primary *Alignment, debugTags *bool, contigs map[string]*s
 				xc_string.WriteString(",1;")
 			}
 		}
-		xc := auxify_string([]byte("XC"), []byte(xc_string.String()))
+		xc := AuxifyString([]byte("XC"), []byte(xc_string.String()))
 		aux = append(aux, sam.Aux(xc))
 		var ac_string strings.Builder
 		mismatchReadLocs := aln.mismatchReadLocs
@@ -156,7 +171,7 @@ func buildRecord(aln, primary *Alignment, debugTags *bool, contigs map[string]*s
 			ac_string.WriteString(strconv.FormatInt(int64(readLoc), 10))
 			ac_string.WriteString(",1;")
 		}
-		ac := auxify_string([]byte("AC"), []byte(ac_string.String()))
+		ac := AuxifyString([]byte("AC"), []byte(ac_string.String()))
 		aux = append(aux, sam.Aux(ac))
 	}
 	aux = append(aux, sam.Aux(as))
@@ -164,19 +179,19 @@ func buildRecord(aln, primary *Alignment, debugTags *bool, contigs map[string]*s
 	if aln.mapq_data != nil && aln.mapq_data.second_best != nil && aln.mapq_data.second_best.active_molecule {
 		second_best_active_molecule = 1
 	}
-	xm := auxify_string([]byte("XM"), []byte(strconv.FormatInt(int64(second_best_active_molecule), 10)))
+	xm := AuxifyString([]byte("XM"), []byte(strconv.FormatInt(int64(second_best_active_molecule), 10)))
 	aux = append(aux, sam.Aux(xm))
 	active_molecule := "0"
 	if aln.active_molecule {
 		active_molecule = "1"
 	}
-	am := auxify_string([]byte("AM"), []byte(active_molecule))
+	am := AuxifyString([]byte("AM"), []byte(active_molecule))
 	aux = append(aux, sam.Aux(am))
 	tandem := 0
 	if aln.mapq_data != nil && aln.mapq_data.second_best != nil && aln.molecule_id == aln.mapq_data.second_best.molecule_id {
 		tandem = 1
 	}
-	xt := auxify_int("XT", tandem)
+	xt := AuxifyInt("XT", tandem)
 	aux = append(aux, sam.Aux(xt))
 
 	var secondaryAlignment *Alignment
@@ -223,20 +238,20 @@ func buildRecord(aln, primary *Alignment, debugTags *bool, contigs map[string]*s
 		snd.WriteString(",")
 		snd.WriteString(strconv.FormatInt(int64(len(secondaryAlignment.mismatchLocs)+indelLength), 10))
 		snd.WriteString(";")
-		sa := auxify_string([]byte("SA"), []byte(snd.String()))
+		sa := AuxifyString([]byte("SA"), []byte(snd.String()))
 		aux = append(aux, sam.Aux(sa))
 	}
 	if *debugTags && aln.mapq_data != nil {
 		addAuxDebug(aln, primary, aux)
 	}
 	if len(barcode[0]) > 1 {
-		bx := auxify_string([]byte("BX"), *aln.barcode)
+		bx := AuxifyString([]byte("BX"), *aln.barcode)
 		aux = append(aux, sam.Aux(bx))
-		vx := auxify_int("VX", 1)
+		vx := AuxifyInt("VX", 1)
 		aux = append(aux, sam.Aux(vx))
 
 		if aln.active_molecule {
-			md := auxify_string([]byte("DM"), []byte(strconv.FormatFloat(aln.molecule_difference, 'f', 6, 64)))
+			md := AuxifyString([]byte("DM"), []byte(strconv.FormatFloat(aln.molecule_difference, 'f', 6, 64)))
 			aux = append(aux, sam.Aux(md))
 		}
 	}
@@ -276,41 +291,41 @@ func addAuxDebug(aln, primary *Alignment, aux []sam.Aux) {
 	// Arachne optimization process has finished.
 
 	// Total number of alignments returned by BWA
-	cp := auxify_string([]byte("CP"), []byte(strconv.FormatInt(int64(aln.mapq_data.copies), 10)))
+	cp := AuxifyString([]byte("CP"), []byte(strconv.FormatInt(int64(aln.mapq_data.copies), 10)))
 	// number of alignments in active molecules
-	cm := auxify_string([]byte("CM"), []byte(strconv.FormatInt(int64(aln.mapq_data.copies_in_active_molecules), 10)))
+	cm := AuxifyString([]byte("CM"), []byte(strconv.FormatInt(int64(aln.mapq_data.copies_in_active_molecules), 10)))
 	// number of unique active molecules
-	cu := auxify_string([]byte("CU"), []byte(strconv.FormatInt(int64(aln.mapq_data.unique_molecules_active), 10)))
+	cu := AuxifyString([]byte("CU"), []byte(strconv.FormatInt(int64(aln.mapq_data.unique_molecules_active), 10)))
 	// Alignments outside active molecules
-	cs := auxify_string([]byte("CS"), []byte(strconv.FormatInt(int64(aln.mapq_data.copies_outside_active_molecules), 10)))
+	cs := AuxifyString([]byte("CS"), []byte(strconv.FormatInt(int64(aln.mapq_data.copies_outside_active_molecules), 10)))
 	// Total number of active alignments in the molecule containing the alignment
-	rd := auxify_string([]byte("RD"), []byte(strconv.FormatInt(int64(aln.mapq_data.reads_in_molecule), 10)))
+	rd := AuxifyString([]byte("RD"), []byte(strconv.FormatInt(int64(aln.mapq_data.reads_in_molecule), 10)))
 	// Alignment of the read-pair forms a 'proper' read-pair: reads have the correct relative orientation & distance.
-	pp := auxify_string([]byte("PP"), []byte(strconv.FormatBool(aln.is_proper)))
+	pp := AuxifyString([]byte("PP"), []byte(strconv.FormatBool(aln.is_proper)))
 	// A string representation of the alignments for this read that fall in active molecules.
-	aa := auxify_string([]byte("AA"), []byte(aln.mapq_data.active_alignments_in_molecules))
+	aa := AuxifyString([]byte("AA"), []byte(aln.mapq_data.active_alignments_in_molecules))
 	// Confidence score for the existence of the molecule containing this alignment
-	mc := auxify_string([]byte("MC"), []byte(strconv.FormatFloat(float64(aln.molecule_confidence), 'f', 6, 64)))
-	ms := auxify_string([]byte("MS"), []byte(strconv.FormatFloat(float64(aln.sum_move_probability_change), 'f', 6, 64)))
+	mc := AuxifyString([]byte("MC"), []byte(strconv.FormatFloat(float64(aln.molecule_confidence), 'f', 6, 64)))
+	ms := AuxifyString([]byte("MS"), []byte(strconv.FormatFloat(float64(aln.sum_move_probability_change), 'f', 6, 64)))
 	// Mate alignment score
-	ps := auxify_string([]byte("PS"), []byte(strconv.FormatInt(int64(primary.mate_alignment.score), 10)))
-	pl := auxify_string([]byte("PL"), []byte(strconv.FormatFloat(float64(primary.mate_alignment.log_alignment_probability), 'f', 6, 64)))
+	ps := AuxifyString([]byte("PS"), []byte(strconv.FormatInt(int64(primary.mate_alignment.score), 10)))
+	pl := AuxifyString([]byte("PL"), []byte(strconv.FormatFloat(float64(primary.mate_alignment.log_alignment_probability), 'f', 6, 64)))
 	// Count of alignment operations in this alignment
-	ac := auxify_string([]byte("AC"), []byte("Match:"+strconv.FormatInt(int64(aln.matches), 10)+":Mismatches:"+strconv.FormatInt(int64(aln.mismatches), 10)+":Indels:"+strconv.FormatInt(int64(aln.indels), 10)+":soft_clipped:"+strconv.FormatInt(int64(aln.soft_clipped), 10)))
+	ac := AuxifyString([]byte("AC"), []byte("Match:"+strconv.FormatInt(int64(aln.matches), 10)+":Mismatches:"+strconv.FormatInt(int64(aln.mismatches), 10)+":Indels:"+strconv.FormatInt(int64(aln.indels), 10)+":soft_clipped:"+strconv.FormatInt(int64(aln.soft_clipped), 10)))
 	// Count of alignment operations in the mate of this alignment
-	pc := auxify_string([]byte("PC"), []byte("Match:"+strconv.FormatInt(int64(primary.mate_alignment.matches), 10)+":Mismatches:"+strconv.FormatInt(int64(primary.mate_alignment.mismatches), 10)+":Indels:"+strconv.FormatInt(int64(primary.mate_alignment.indels), 10)+":soft_clipped:"+strconv.FormatInt(int64(primary.mate_alignment.soft_clipped), 10)))
+	pc := AuxifyString([]byte("PC"), []byte("Match:"+strconv.FormatInt(int64(primary.mate_alignment.matches), 10)+":Mismatches:"+strconv.FormatInt(int64(primary.mate_alignment.mismatches), 10)+":Indels:"+strconv.FormatInt(int64(primary.mate_alignment.indels), 10)+":soft_clipped:"+strconv.FormatInt(int64(primary.mate_alignment.soft_clipped), 10)))
 	if aln.mapq_data.second_best != nil {
-		second_best_log_probability := auxify_string([]byte("XL"), []byte(strconv.FormatFloat(aln.mapq_data.second_best.log_alignment_probability, 'f', 6, 64)))
-		second_best_proper_pair := auxify_string([]byte("XP"), []byte(strconv.FormatBool(aln.mapq_data.second_best_proper_pair)))
-		second_best_molecule_reads := auxify_string([]byte("XR"), []byte(strconv.FormatInt(int64(aln.mapq_data.second_best_molecule_reads), 10)))
-		second_best_molecule_confidence := auxify_string([]byte("XC"), []byte(strconv.FormatFloat(aln.mapq_data.second_best_molecule_confidence, 'f', 6, 64)))
+		second_best_log_probability := AuxifyString([]byte("XL"), []byte(strconv.FormatFloat(aln.mapq_data.second_best.log_alignment_probability, 'f', 6, 64)))
+		second_best_proper_pair := AuxifyString([]byte("XP"), []byte(strconv.FormatBool(aln.mapq_data.second_best_proper_pair)))
+		second_best_molecule_reads := AuxifyString([]byte("XR"), []byte(strconv.FormatInt(int64(aln.mapq_data.second_best_molecule_reads), 10)))
+		second_best_molecule_confidence := AuxifyString([]byte("XC"), []byte(strconv.FormatFloat(aln.mapq_data.second_best_molecule_confidence, 'f', 6, 64)))
 		if aln.mapq_data.second_best.mate_alignment != nil {
-			xm := auxify_string([]byte("XM"), []byte(strconv.FormatFloat(float64(aln.mapq_data.second_best.mate_alignment.log_alignment_probability), 'f', 6, 64)))
+			xm := AuxifyString([]byte("XM"), []byte(strconv.FormatFloat(float64(aln.mapq_data.second_best.mate_alignment.log_alignment_probability), 'f', 6, 64)))
 			aux = append(aux, sam.Aux(xm))
-			xz := auxify_string([]byte("XZ"), []byte("Match:"+strconv.FormatInt(int64(aln.mapq_data.second_best.mate_alignment.matches), 10)+":Mismatches:"+strconv.FormatInt(int64(aln.mapq_data.second_best.mate_alignment.mismatches), 10)+":Indels:"+strconv.FormatInt(int64(aln.mapq_data.second_best.mate_alignment.indels), 10)+":soft_clipped:"+strconv.FormatInt(int64(aln.mapq_data.second_best.mate_alignment.soft_clipped), 10)))
+			xz := AuxifyString([]byte("XZ"), []byte("Match:"+strconv.FormatInt(int64(aln.mapq_data.second_best.mate_alignment.matches), 10)+":Mismatches:"+strconv.FormatInt(int64(aln.mapq_data.second_best.mate_alignment.mismatches), 10)+":Indels:"+strconv.FormatInt(int64(aln.mapq_data.second_best.mate_alignment.indels), 10)+":soft_clipped:"+strconv.FormatInt(int64(aln.mapq_data.second_best.mate_alignment.soft_clipped), 10)))
 			aux = append(aux, sam.Aux(xz))
 		}
-		xx := auxify_string([]byte("XX"), []byte("Match:"+strconv.FormatInt(int64(aln.mapq_data.second_best.matches), 10)+":Mismatches:"+strconv.FormatInt(int64(aln.mapq_data.second_best.mismatches), 10)+":Indels:"+strconv.FormatInt(int64(aln.mapq_data.second_best.indels), 10)+":soft_clipped:"+strconv.FormatInt(int64(aln.mapq_data.second_best.soft_clipped), 10)))
+		xx := AuxifyString([]byte("XX"), []byte("Match:"+strconv.FormatInt(int64(aln.mapq_data.second_best.matches), 10)+":Mismatches:"+strconv.FormatInt(int64(aln.mapq_data.second_best.mismatches), 10)+":Indels:"+strconv.FormatInt(int64(aln.mapq_data.second_best.indels), 10)+":soft_clipped:"+strconv.FormatInt(int64(aln.mapq_data.second_best.soft_clipped), 10)))
 		aux = append(aux, sam.Aux(xx))
 		aux = append(aux, sam.Aux(second_best_log_probability))
 		aux = append(aux, sam.Aux(second_best_proper_pair))
