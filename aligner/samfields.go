@@ -17,6 +17,41 @@ const (
 	SAM_CIGAR_HARD_CLIP = 5
 )
 
+// --- reusable AUX tags --------------------
+var _TAB = []byte("\t")
+var auxAC = []byte{'A', 'C'}
+var auxAM = []byte{'A', 'M'}
+var auxAS = []byte{'A', 'S'}
+var auxBX = []byte{'B', 'X'}
+var auxDM = []byte{'D', 'M'}
+var auxRG = []byte{'R', 'G'}
+var auxSA = []byte{'S', 'A'}
+var auxVX = []byte{'V', 'X'}
+var auxXB = []byte{'X', 'B'}
+var auxXC = []byte{'X', 'C'}
+var auxXM = []byte{'X', 'M'}
+var auxXS = []byte{'X', 'S'}
+var auxXT = []byte{'X', 'T'}
+
+// ---- reusable debug AUX tags -----------
+var auxAA = []byte{'A', 'A'}
+var auxCM = []byte{'C', 'M'}
+var auxCP = []byte{'C', 'P'}
+var auxCS = []byte{'C', 'S'}
+var auxCU = []byte{'C', 'U'}
+var auxMC = []byte{'M', 'C'}
+var auxMS = []byte{'M', 'S'}
+var auxPC = []byte{'P', 'C'}
+var auxPL = []byte{'P', 'L'}
+var auxPP = []byte{'P', 'P'}
+var auxPS = []byte{'P', 'S'}
+var auxRD = []byte{'R', 'D'}
+var auxXL = []byte{'X', 'L'}
+var auxXP = []byte{'X', 'P'}
+var auxXR = []byte{'X', 'R'}
+var auxXX = []byte{'X', 'X'}
+var auxXZ = []byte{'X', 'Z'}
+
 func AuxifyString(name []byte, data []byte) []byte {
 	vec := make([]byte, len(data)+3)
 	vec[0] = name[0]
