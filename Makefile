@@ -1,7 +1,7 @@
 export CGO_LDFLAGS = -L$(shell pwd)/gobwa/bwa -L$(shell pwd)/jemalloc/lib
 export GOPATH=$(shell pwd)
 
-VERSION=0.1.0
+VERSION=0.1
 
 all: arachne gobwa/bwa/libbwa.a gobwa/bwa/bwa
 
