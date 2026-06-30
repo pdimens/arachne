@@ -426,7 +426,6 @@ func moleculeMapqProbabilitySums(candidate_molecules []*CandidateMolecule, log_u
 
 func calculateLogMoleculePenalty(candidate_molecules []*CandidateMolecule, referenceLength float64) float64 {
 	dnaLength := 1000.0
-	numMolecules := 0
 	if len(candidate_molecules) == 0 {
 		return 0.0
 	}
@@ -435,7 +434,6 @@ func calculateLogMoleculePenalty(candidate_molecules []*CandidateMolecule, refer
 		if mol.active_molecule {
 			smallest := int64(math.MaxInt64)
 			biggest := int64(-1)
-			numMolecules++
 			for _, alignment := range mol.active_alignments.Iter() {
 				if alignment.pos > biggest {
 					biggest = alignment.pos
@@ -453,8 +451,8 @@ func calculateLogMoleculePenalty(candidate_molecules []*CandidateMolecule, refer
 			}
 		}
 	}
-	singletonProb := 0.05
-	moleculePenalty := math.Log10(dnaLength / referenceLength * singletonProb)
+	// singletonProb := 0.05
+	moleculePenalty := math.Log10(dnaLength / referenceLength * 0.05)
 	return moleculePenalty
 }
 
@@ -479,25 +477,27 @@ func checkMates(alignments [][]*Alignment) {
 	}
 }
 
-// So the basic strategy here is two-fold
-//  1. is based on calculating a mapq vs being able to move that read to any of the other
-//     alignments that it has. This includes the probabilities of a read being a singleton vs being in an active molecule.
-//     Every alignment has some probability calculated from its alignment score/cigar string. Then alignments are
-//     penalized for improper_pair and for being outside of active molecules. The mapq is then calculated by normalizing the sum of
-//     alignment probabilities to 1 and then the mapq is -10*log10(1-probability_of_chosen_alignment)
-//     If there is a problem with this method it is that it dings alignments for not being in an active read, but if a whole
-//     molecule could have moved to that location with very little probability change making it an active molecule, the read
-//     shouldn't have gotten that ding. I have tried not dinging reads in candidate molecules that are inactive but have
-//     greater than some number of alignments but have found it better to just include method #2
-//  2. is a mapq considering the probability change in the case of a candidate molecule making a sub-move (moving all of the reads
-//     that can move from this molecule to another candidate molecule) to every candidate molecule that it can make a sub move to.
-//     So for each active molecule we calculate the probability change of a sub-move to every candidate molecule that it can. For each
-//     sub-move calculated, every alignment that was involved in that sub move gets that probability change added to a sum.
-//     The log probability change of making a sub-move from a molecule to itself is 0 so probability 1.0. then we normalize the probability
-//     of the final selected sub-move which is the molecule moving to itself p = 1.0 vs the sum of all of the probabilities of the moves
-//     which is p_final = 1.0/sum_i(p(move_i)) and then calculate a mapq from that probability = -10*log10(1-p_final)
-//
-// Finally we take the min of the two approaches as the final mapq
+/*
+So the basic strategy here is two-fold
+ 1. is based on calculating a mapq vs being able to move that read to any of the other
+    alignments that it has. This includes the probabilities of a read being a singleton vs being in an active molecule.
+    Every alignment has some probability calculated from its alignment score/cigar string. Then alignments are
+    penalized for improper_pair and for being outside of active molecules. The mapq is then calculated by normalizing the sum of
+    alignment probabilities to 1 and then the mapq is -10*log10(1-probability_of_chosen_alignment)
+    If there is a problem with this method it is that it dings alignments for not being in an active read, but if a whole
+    molecule could have moved to that location with very little probability change making it an active molecule, the read
+    shouldn't have gotten that ding. I have tried not dinging reads in candidate molecules that are inactive but have
+    greater than some number of alignments but have found it better to just include method #2
+ 2. is a mapq considering the probability change in the case of a candidate molecule making a sub-move (moving all of the reads
+    that can move from this molecule to another candidate molecule) to every candidate molecule that it can make a sub move to.
+    So for each active molecule we calculate the probability change of a sub-move to every candidate molecule that it can. For each
+    sub-move calculated, every alignment that was involved in that sub move gets that probability change added to a sum.
+    The log probability change of making a sub-move from a molecule to itself is 0 so probability 1.0. then we normalize the probability
+    of the final selected sub-move which is the molecule moving to itself p = 1.0 vs the sum of all of the probabilities of the moves
+    which is p_final = 1.0/sum_i(p(move_i)) and then calculate a mapq from that probability = -10*log10(1-p_final)
+
+Finally we take the min of the two approaches as the final mapq
+*/
 func estimateMapQualities( //barcode int, //TODO remove, this isn't used
 	alignments [][]*Alignment,
 	candidate_molecules []*CandidateMolecule,
