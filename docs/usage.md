@@ -11,7 +11,7 @@ Use `--help` or `-h`, or call `arachne` (or its subcommands) without arguments t
 
 Arachne comes with three commands, generally intended to be used in this order:
 >>> `prep`
-convert FASTQ files to Standard format and sort by BX:Z barcode (requires `samtools` to be available on your PATH)
+convert FASTQ files to [Standard format](https://pdimens.github.io/lastq/) and sort by BX:Z barcode (requires `samtools` to be available on your PATH)
 ```bash
 arachne prep [-t] PREFIX r1.fq r2.fq
 ```
@@ -29,8 +29,10 @@ arachne align [options] ref.fa r1.fq r2.fq
 
 ## prep
 The `arachne prep` command will convert your input FASTQ files into the format necessary for `arachne align`.
-That format requires data to be 1) sorted by barcode and 2) in "standard" linked read format.
-Because they are unrelaible, records with invalid barcodes will be filtered out into separate FASTQ files so you can align them using another tool like `bwa`. This process will standardize the barcodes and temporarily convert FASTQ records with valid barcodes into unaligned SAM records for `samtools sort` to efficiently sort them by barcode. This conversion is lossless.
+That format requires data to be 1) sorted by barcode and 2) in [standard/lastq linked read format](https://pdimens.github.io/lastq/).
+Because they are unrelaible, records with invalid barcodes will be filtered out into separate FASTQ files so you can align them using
+another tool like `bwa`. This process will standardize the barcodes and temporarily convert FASTQ records with valid barcodes into
+unaligned SAM records for `samtools sort` to efficiently sort them by barcode. This conversion is lossless.
 
 ```bash usage
 arachne prep [-t/--threads] PREFIX FORWARD_FASTQ REVERSE_FASTQ
@@ -41,17 +43,16 @@ arachne prep -t 6 sample1 sample1.R1.fq.gz sample1.R2.fq.gz
 
 This will create `PREFIX.arachne.R1.fq.gz`, `PREFIX.arachne.R2.fq.gz`, `PREFIX.invalid.R1.fq.gz`, `PREFIX.invalid.R1.fq.gz`.
 
-### Standard format
+### Standard format ([spec](https://pdimens.github.io/lastq/))
 1. "old" CASAVA forward/reverse identifier (i.e. `/1` and `/2`)
 2. barcodes encoded in `BX:Z` SAM tag (e.g. `BX:Z:32_11_58`)
 3. barcode validations encoded in `VX:i` tag
   - `VX:i:0` is invalid (barcode is bad and unreliable)
   - `VX:i:1` is good (barcode is good)
 As an example, a "bad" (invalid) TELLseq barcode would contain an `N` nucleotide,
-giving the barcode an unreliable identity. Since haplotaggin and stLFR chemistries are
+giving the barcode an unreliable identity. Since haplotagging and stLFR chemistries are
 combinatorial, an invalid barcode segment (e.g., `C00` or `0`, respectively) would make
 the unique segment combination unreliable, thus invalid.
-
 
 ## index
 The `arachne index` command is provided for convenience. It's a very simple wrapper for `bwa index`.
