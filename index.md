@@ -1,7 +1,5 @@
 ![](static/logo.png)
 
-# Arachne linked-read aligner
-
 Arachne is a fork intended to be a revival and [hopefully] continuation of [Lariat](https://github.com/10XGenomics/lariat), the linked-read aware
 aligner created by 10X Genomics and bundled in their LongRanger pipeline.
 
