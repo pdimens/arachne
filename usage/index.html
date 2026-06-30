@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark">
     <meta name="turbo-root" content="/arachne">
-    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="4.6.0.836140882381">
+    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="4.6.0.836167888534">
 
     <!-- See retype.com -->
     <meta name="generator" content="Retype 4.6.0">
@@ -39,12 +39,12 @@
     <script data-cfasync="false">(function(){var cl=document.documentElement.classList,ls=localStorage.getItem("retype_scheme"),hd=cl.contains("dark"),hl=cl.contains("light"),wm=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches;if(ls==="dark"||(!ls&&wm&&!hd&&!hl)){cl.remove("light");cl.add("dark")}else if(ls==="light"||(!ls&&!wm&&!hd&&!hl)){cl.remove("dark");cl.add("light")}})();</script>
 
     <link id="retype-favicon" rel="icon" href="../static/favicon.png" />
-    <link href="../resources/css/retype.css?v=4.6.0.836140882381" rel="stylesheet">
+    <link href="../resources/css/retype.css?v=4.6.0.836167888534" rel="stylesheet">
 
-    <script data-cfasync="false" src="../resources/js/config.js?v=4.6.0.836140882381" data-turbo-eval="false" defer></script>
+    <script data-cfasync="false" src="../resources/js/config.js?v=4.6.0.836167888534" data-turbo-eval="false" defer></script>
     <script data-cfasync="false" src="../resources/js/retype.js?v=4.6.0" data-turbo-eval="false" defer></script>
-    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=4.6.0.836140882381" data-turbo-eval="false" defer></script>
-    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=4.6.0.836140882381" defer></script>
+    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=4.6.0.836167888534" data-turbo-eval="false" defer></script>
+    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=4.6.0.836167888534" defer></script>
 </head>
 <body>
     <div id="retype-app" class="relative text-base antialiased text-base-text bg-base-bg font-body">
@@ -240,7 +240,7 @@
 <doc-steps>
    <doc-step id="prep-1" step-number="1">
       <template #title><code translate="no" v-pre>prep</code></template>
-<p>convert FASTQ files to Standard format and sort by BX:Z barcode (requires <code translate="no" v-pre>samtools</code> to be available on your PATH)</p>
+<p>convert FASTQ files to <a href="https://pdimens.github.io/lastq/" class="outbound" target="_blank"><span>Standard format</span><svg xmlns="http://www.w3.org/2000/svg" class="retype-outbound-trigger docs-icon ml-1" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g fill="currentColor"><path d="M15.5 2.25a.75.75 0 0 1 .75-.75h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V4.06l-6.22 6.22a.75.75 0 1 1-1.06-1.06L19.94 3h-3.69a.75.75 0 0 1-.75-.75Z"/><path d="M2.5 4.25c0-.966.784-1.75 1.75-1.75h8.5a.75.75 0 0 1 0 1.5h-8.5a.25.25 0 0 0-.25.25v15.5c0 .138.112.25.25.25h15.5a.25.25 0 0 0 .25-.25v-8.5a.75.75 0 0 1 1.5 0v8.5a1.75 1.75 0 0 1-1.75 1.75H4.25a1.75 1.75 0 0 1-1.75-1.75V4.25Z"/></g></svg></a> and sort by BX:Z barcode (requires <code translate="no" v-pre>samtools</code> to be available on your PATH)</p>
 <div class="codeblock-wrapper"><doc-codeblock>
 <pre translate="no" class="language-bash"><code v-pre class="language-bash">arachne prep [-t] PREFIX r1.fq r2.fq</code></pre>
 </doc-codeblock></div>
@@ -262,8 +262,10 @@
 </doc-steps>
 <h2 id="prep">prep</h2>
 <p>The <code translate="no" v-pre>arachne prep</code> command will convert your input FASTQ files into the format necessary for <code translate="no" v-pre>arachne align</code>.
-That format requires data to be 1) sorted by barcode and 2) in &quot;standard&quot; linked read format.
-Because they are unrelaible, records with invalid barcodes will be filtered out into separate FASTQ files so you can align them using another tool like <code translate="no" v-pre>bwa</code>. This process will standardize the barcodes and temporarily convert FASTQ records with valid barcodes into unaligned SAM records for <code translate="no" v-pre>samtools sort</code> to efficiently sort them by barcode. This conversion is lossless.</p>
+That format requires data to be 1) sorted by barcode and 2) in <a href="https://pdimens.github.io/lastq/" class="outbound" target="_blank"><span>standard/lastq linked read format</span><svg xmlns="http://www.w3.org/2000/svg" class="retype-outbound-trigger docs-icon ml-1" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g fill="currentColor"><path d="M15.5 2.25a.75.75 0 0 1 .75-.75h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V4.06l-6.22 6.22a.75.75 0 1 1-1.06-1.06L19.94 3h-3.69a.75.75 0 0 1-.75-.75Z"/><path d="M2.5 4.25c0-.966.784-1.75 1.75-1.75h8.5a.75.75 0 0 1 0 1.5h-8.5a.25.25 0 0 0-.25.25v15.5c0 .138.112.25.25.25h15.5a.25.25 0 0 0 .25-.25v-8.5a.75.75 0 0 1 1.5 0v8.5a1.75 1.75 0 0 1-1.75 1.75H4.25a1.75 1.75 0 0 1-1.75-1.75V4.25Z"/></g></svg></a>.
+Because they are unrelaible, records with invalid barcodes will be filtered out into separate FASTQ files so you can align them using
+another tool like <code translate="no" v-pre>bwa</code>. This process will standardize the barcodes and temporarily convert FASTQ records with valid barcodes into
+unaligned SAM records for <code translate="no" v-pre>samtools sort</code> to efficiently sort them by barcode. This conversion is lossless.</p>
 <div id="prep-usage" class="codeblock-wrapper"><doc-codeblock>
 <div class="codeblock-title">usage</div>
 <pre translate="no" class="language-bash"><code v-pre class="language-bash">arachne prep [-t/--threads] PREFIX FORWARD_FASTQ REVERSE_FASTQ</code></pre>
@@ -273,7 +275,7 @@ Because they are unrelaible, records with invalid barcodes will be filtered out 
 <pre translate="no" class="language-bash"><code v-pre class="language-bash">arachne prep -t 6 sample1 sample1.R1.fq.gz sample1.R2.fq.gz</code></pre>
 </doc-codeblock></div>
 <p>This will create <code translate="no" v-pre>PREFIX.arachne.R1.fq.gz</code>, <code translate="no" v-pre>PREFIX.arachne.R2.fq.gz</code>, <code translate="no" v-pre>PREFIX.invalid.R1.fq.gz</code>, <code translate="no" v-pre>PREFIX.invalid.R1.fq.gz</code>.</p>
-<h3 id="standard-format">Standard format</h3>
+<h3 id="standard-format-spec">Standard format (<a href="https://pdimens.github.io/lastq/" class="outbound" target="_blank"><span>spec</span><svg xmlns="http://www.w3.org/2000/svg" class="retype-outbound-trigger docs-icon ml-1" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g fill="currentColor"><path d="M15.5 2.25a.75.75 0 0 1 .75-.75h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V4.06l-6.22 6.22a.75.75 0 1 1-1.06-1.06L19.94 3h-3.69a.75.75 0 0 1-.75-.75Z"/><path d="M2.5 4.25c0-.966.784-1.75 1.75-1.75h8.5a.75.75 0 0 1 0 1.5h-8.5a.25.25 0 0 0-.25.25v15.5c0 .138.112.25.25.25h15.5a.25.25 0 0 0 .25-.25v-8.5a.75.75 0 0 1 1.5 0v8.5a1.75 1.75 0 0 1-1.75 1.75H4.25a1.75 1.75 0 0 1-1.75-1.75V4.25Z"/></g></svg></a>)</h3>
 <ol>
 <li>&quot;old&quot; CASAVA forward/reverse identifier (i.e. <code translate="no" v-pre>/1</code> and <code translate="no" v-pre>/2</code>)</li>
 <li>barcodes encoded in <code translate="no" v-pre>BX:Z</code> SAM tag (e.g. <code translate="no" v-pre>BX:Z:32_11_58</code>)</li>
@@ -283,7 +285,7 @@ Because they are unrelaible, records with invalid barcodes will be filtered out 
 <li><code translate="no" v-pre>VX:i:0</code> is invalid (barcode is bad and unreliable)</li>
 <li><code translate="no" v-pre>VX:i:1</code> is good (barcode is good)
 As an example, a &quot;bad&quot; (invalid) TELLseq barcode would contain an <code translate="no" v-pre>N</code> nucleotide,
-giving the barcode an unreliable identity. Since haplotaggin and stLFR chemistries are
+giving the barcode an unreliable identity. Since haplotagging and stLFR chemistries are
 combinatorial, an invalid barcode segment (e.g., <code translate="no" v-pre>C00</code> or <code translate="no" v-pre>0</code>, respectively) would make
 the unique segment combination unreliable, thus invalid.</li>
 </ul>
