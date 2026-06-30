@@ -21,14 +21,12 @@ func AuxifyString(name []byte, data []byte) []byte {
 	vec := make([]byte, len(data)+3)
 	vec[0] = name[0]
 	vec[1] = name[1]
-	vec[2] = byte('Z')
-	for i := range data {
-		vec[3+i] = data[i]
-	}
+	vec[2] = 'Z'
+	copy(vec[3:], data)
 	return vec
 }
 
-func AuxifyInt(name string, data int) []byte {
+func AuxifyInt(name []byte, data int) []byte {
 	vec := make([]byte, 7)
 	vec[0] = name[0]
 	vec[1] = name[1]
@@ -39,7 +37,7 @@ func AuxifyInt(name string, data int) []byte {
 	return vec
 }
 
-func AuxifyFloat(name string, data float32) []byte {
+func AuxifyFloat(name []byte, data float32) []byte {
 	vec := make([]byte, 7)
 	vec[0] = name[0]
 	vec[1] = name[1]
@@ -123,9 +121,8 @@ func ReverseQual(qual []byte) []byte {
 // Convert from "soft" clipping to "hard" clipping. Truncate the sequence and quality
 // and convert "S" to "H" in the cigar string.
 func HardClip(seq []byte, qual []byte, cigar []uint32, reversed bool) ([]byte, []byte, []uint32) {
-	var start, end int
-	start = 0
-	end = len(seq)
+	var start int
+	end := len(seq)
 
 	newcigar := make([]uint32, len(cigar))
 	copy(newcigar, cigar)
@@ -143,7 +140,7 @@ func HardClip(seq []byte, qual []byte, cigar []uint32, reversed bool) ([]byte, [
 		}
 	}
 
-	newseq := (seq)[start:end]
-	newqual := (qual)[start:end]
+	newseq := seq[start:end]
+	newqual := qual[start:end]
 	return newseq, newqual, newcigar
 }

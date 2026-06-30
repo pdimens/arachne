@@ -137,7 +137,7 @@ var DEBUG *bool
 var debugPrintMove *bool
 var centromeres map[string]Region
 var verbose *bool
-var inferDisance *int64
+var inferDistance *int64
 var AddComments *bool
 
 // this is the actual arachne program
@@ -151,7 +151,7 @@ func Arachne(args ArachneArgs) {
 	debugTags = args.DebugTags
 	reference = args.Reference
 	centromeres = loadCentromeres(args.Centromeres)
-	inferDisance = args.InferDistance
+	inferDistance = args.InferDistance
 	AddComments = args.Comments
 	verbose = args.Verbose
 	// unused
@@ -522,7 +522,7 @@ func estimateMapQualities( //barcode int, //TODO remove, this isn't used
 		// find best pair for alignments and make list of those alignment pair scores for use of probability normalization to sum to 1.0
 		scores := []float64{}
 		scores = appendPsuedocountAlignmentScore(scores, alignmentArray, alignments, log_molecule_penalty)
-		total_probability := float64(0)
+		total_probability := float64(0.0)
 		for _, alignment := range alignmentArray {
 			mateArray := alignments[alignment.mate_id]
 			for _, mateAlignment := range mateArray {
@@ -605,10 +605,10 @@ func estimateMapQualities( //barcode int, //TODO remove, this isn't used
 		for _, alignment := range alignmentArray {
 
 			score := scoreAlignment(alignment, alignment.mate_alignment, log_molecule_penalty)
-			mapq := -10.0 * math.Log10(1.0-math.Pow(10, score)/total_probability)               // method 1: read probability normalization w/ molecule penalties
+			mapq := -10.0 * math.Log10(1.0-math.Pow(10.0, score)/total_probability)             // method 1: read probability normalization w/ molecule penalties
 			moleculeMapq := -10.0 * math.Log10(1.0-(1.0/alignment.sum_move_probability_change)) // method 2: molecule move probability normalization
 			mapq = math.Min(mapq, moleculeMapq)                                                 // take min of both techniques
-			mapq = math.Min(float64(60), mapq)                                                  // cap at q60
+			mapq = math.Min(float64(60.0), mapq)                                                // cap at q60
 			centromereRegion, ok := centromeres[alignment.contig]
 			start := -1
 			end := -1
@@ -911,9 +911,8 @@ func inferMolecules(positions [][]*Alignment) []*CandidateMolecule {
 	molecule_num := 0
 	var currentMolecule *CandidateMolecule
 	for _, position_list := range positions {
-		//TODO make sure replacing position_list[i] with pos doesn't cause issues
 		for i, pos := range position_list {
-			if i == 0 || (i > 0 && pos.pos-position_list[i-1].pos > *inferDisance) {
+			if i == 0 || (i > 0 && pos.pos-position_list[i-1].pos > *inferDistance) {
 				if i > 0 {
 					currentMolecule.stop = position_list[i-1].pos
 				}

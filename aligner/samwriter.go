@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"log"
 	"strconv"
-	"strings"
 
 	sam "github.com/biogo/hts/sam"
 )
@@ -18,6 +17,7 @@ var auxVX = []byte("VX")
 var auxXB = []byte("XB")
 var auxXC = []byte("XC")
 var auxXM = []byte("XM")
+var auxXS = []byte("XS")
 var auxAC = []byte("AC")
 var auxXT = []byte("XT")
 var auxAM = []byte("AM")
@@ -119,8 +119,7 @@ func buildRecord(aln, primary *Alignment, debugTags *bool, contigs map[string]*s
 	if aln.reversed {
 		flags |= 0x10
 	}
-	rec.Name = strings.TrimRight(*(aln.read_name), "\n")
-
+	rec.Name = string(*aln.read_name)
 	rec.Flags = sam.Flags(flags)
 
 	seq := *aln.read_seq
@@ -134,11 +133,11 @@ func buildRecord(aln, primary *Alignment, debugTags *bool, contigs map[string]*s
 	}
 
 	if primary != aln {
-		var deltapos int
+		//var deltapos int // NOTE: never assigned — this block is currently a no-op; check HardClip's contract
 		seq, qual, cigar = HardClip(seq, qual, cigar, aln.reversed)
-		if pos > 0 {
-			pos += deltapos
-		}
+		//if pos > 0 {
+		//	pos += deltapos
+		//}
 	}
 
 	rec.Pos = pos
@@ -146,64 +145,69 @@ func buildRecord(aln, primary *Alignment, debugTags *bool, contigs map[string]*s
 	rec.Seq = sam.NewSeq(seq)
 	rec.Qual = FixQual(qual)
 
-	barcode := strings.Split(string(*aln.barcode), "-")
 	aux := []sam.Aux{}
-	as := AuxifyInt("AS", aln.score)
+	as := AuxifyInt(auxAS, aln.score)
 	if len(*aln.read_group) > 0 {
 		rg := AuxifyString(auxRG, []byte(*aln.read_group))
 		aux = append(aux, sam.Aux(rg))
 	}
 	if aln.mapq_data != nil {
-		xs := AuxifyInt("XS", int(aln.mapq_data.second_best_score))
+		xs := AuxifyInt(auxXS, int(aln.mapq_data.second_best_score))
 		aux = append(aux, sam.Aux(xs))
-		as = AuxifyInt("AS", int(aln.mapq_data.score))
-		var xc_string strings.Builder
+		as = AuxifyInt(auxAS, int(aln.mapq_data.score))
+
+		var xcBuf []byte
 		if aln.mapq_data.second_best != nil {
 			mismatchReadLocs := aln.mapq_data.second_best.mismatchReadLocs
 			mismatchLocs := aln.mapq_data.second_best.mismatchLocs
+			xcBuf = make([]byte, 0, len(mismatchReadLocs)*8)
 			for i := range mismatchReadLocs {
-				readLoc := mismatchReadLocs[i]
-				refLoc := mismatchLocs[i]
-				xc_string.WriteString(strconv.FormatInt(int64(refLoc), 10))
-				xc_string.WriteString(",")
-				xc_string.WriteString(strconv.FormatInt(int64(readLoc), 10))
-				xc_string.WriteString(",1;")
+				xcBuf = strconv.AppendInt(xcBuf, int64(mismatchLocs[i]), 10)
+				xcBuf = append(xcBuf, ',')
+				xcBuf = strconv.AppendInt(xcBuf, int64(mismatchReadLocs[i]), 10)
+				xcBuf = append(xcBuf, ',', '1', ';')
 			}
 		}
-		xc := AuxifyString(auxXC, []byte(xc_string.String()))
-		aux = append(aux, sam.Aux(xc))
-		var ac_string strings.Builder
+		xc := AuxifyString(auxXC, xcBuf)
+		if len(xcBuf) > 0 {
+			aux = append(aux, sam.Aux(xc))
+		}
+
 		mismatchReadLocs := aln.mismatchReadLocs
 		mismatchLocs := aln.mismatchLocs
+		acBuf := make([]byte, 0, len(mismatchReadLocs)*8)
 		for i := range mismatchReadLocs {
-			readLoc := mismatchReadLocs[i]
-			refLoc := mismatchLocs[i]
-			ac_string.WriteString(strconv.FormatInt(int64(refLoc), 10))
-			ac_string.WriteString(",")
-			ac_string.WriteString(strconv.FormatInt(int64(readLoc), 10))
-			ac_string.WriteString(",1;")
+			acBuf = strconv.AppendInt(acBuf, int64(mismatchLocs[i]), 10)
+			acBuf = append(acBuf, ',')
+			acBuf = strconv.AppendInt(acBuf, int64(mismatchReadLocs[i]), 10)
+			acBuf = append(acBuf, ',', '1', ';')
 		}
-		ac := AuxifyString(auxAC, []byte(ac_string.String()))
-		aux = append(aux, sam.Aux(ac))
+		ac := AuxifyString(auxAC, acBuf)
+		if len(acBuf) > 0 {
+			aux = append(aux, sam.Aux(ac))
+		}
 	}
 	aux = append(aux, sam.Aux(as))
+
 	second_best_active_molecule := 0
 	if aln.mapq_data != nil && aln.mapq_data.second_best != nil && aln.mapq_data.second_best.active_molecule {
 		second_best_active_molecule = 1
 	}
 	xm := AuxifyString(auxXM, []byte(strconv.FormatInt(int64(second_best_active_molecule), 10)))
 	aux = append(aux, sam.Aux(xm))
+
 	active_molecule := "0"
 	if aln.active_molecule {
 		active_molecule = "1"
 	}
 	am := AuxifyString(auxAM, []byte(active_molecule))
 	aux = append(aux, sam.Aux(am))
+
 	tandem := 0
 	if aln.mapq_data != nil && aln.mapq_data.second_best != nil && aln.molecule_id == aln.mapq_data.second_best.molecule_id {
 		tandem = 1
 	}
-	xt := AuxifyInt("XT", tandem)
+	xt := AuxifyInt(auxXT, tandem)
 	aux = append(aux, sam.Aux(xt))
 
 	var secondaryAlignment *Alignment
@@ -213,63 +217,61 @@ func buildRecord(aln, primary *Alignment, debugTags *bool, contigs map[string]*s
 		secondaryAlignment = aln.primary
 	}
 	if secondaryAlignment != nil && secondaryAlignment.pos > -1 {
-		var strand string
 		cigarBytes := secondaryAlignment.cigar
+		strandByte := byte('+')
 		if secondaryAlignment.reversed {
-			strand = "-"
+			strandByte = '-'
 			cigarBytes = reverseCigar(cigarBytes)
-		} else {
-			strand = "+"
 		}
-		var cigar strings.Builder
+
+		cigarBuf := make([]byte, 0, len(cigarBytes)*3)
 		indelLength := 0
 		for cig := 0; cig < len(cigarBytes); cig += 2 {
-			cigChar := ""
+			var cigChar byte
 			if cigarBytes[cig] == 3 && aln.secondary != nil {
-				cigChar = "H"
+				cigChar = 'H'
 			} else {
-				cigChar = cigarCharacter[cigarBytes[cig]]
+				cigChar = cigarCharacter[cigarBytes[cig]][0]
 			}
 			if cigarBytes[cig] == 1 || cigarBytes[cig] == 2 {
 				indelLength += int(cigarBytes[cig+1])
 			}
-			cigar.WriteString(strconv.FormatInt(int64(cigarBytes[cig+1]), 10))
-			cigar.WriteString(cigChar)
-			//cigar += strconv.FormatInt(int64(cigarBytes[cig+1]), 10) + cigChar
+			cigarBuf = strconv.AppendInt(cigarBuf, int64(cigarBytes[cig+1]), 10)
+			cigarBuf = append(cigarBuf, cigChar)
 		}
-		var snd strings.Builder
-		snd.WriteString(secondaryAlignment.contig)
-		snd.WriteString(",")
-		snd.WriteString(strconv.FormatInt(int64(secondaryAlignment.pos), 10))
-		snd.WriteString(",")
-		snd.WriteString(strand)
-		snd.WriteString(",")
-		snd.WriteString(cigar.String())
-		snd.WriteString(",")
-		snd.WriteString(strconv.FormatInt(int64(secondaryAlignment.mapq), 10))
-		snd.WriteString(",")
-		snd.WriteString(strconv.FormatInt(int64(len(secondaryAlignment.mismatchLocs)+indelLength), 10))
-		snd.WriteString(";")
-		sa := AuxifyString(auxSA, []byte(snd.String()))
+
+		sndBuf := make([]byte, 0, len(secondaryAlignment.contig)+len(cigarBuf)+24)
+		sndBuf = append(sndBuf, secondaryAlignment.contig...)
+		sndBuf = append(sndBuf, ',')
+		sndBuf = strconv.AppendInt(sndBuf, int64(secondaryAlignment.pos), 10)
+		sndBuf = append(sndBuf, ',', strandByte, ',')
+		sndBuf = append(sndBuf, cigarBuf...)
+		sndBuf = append(sndBuf, ',')
+		sndBuf = strconv.AppendInt(sndBuf, int64(secondaryAlignment.mapq), 10)
+		sndBuf = append(sndBuf, ',')
+		sndBuf = strconv.AppendInt(sndBuf, int64(len(secondaryAlignment.mismatchLocs)+indelLength), 10)
+		sndBuf = append(sndBuf, ';')
+
+		sa := AuxifyString(auxSA, sndBuf)
 		aux = append(aux, sam.Aux(sa))
 	}
+
 	if *debugTags && aln.mapq_data != nil {
 		addAuxDebug(aln, primary, aux)
 	}
-	if len(barcode[0]) > 1 {
-		bx := AuxifyString(auxBX, *aln.barcode)
-		aux = append(aux, sam.Aux(bx))
-		vx := AuxifyInt("VX", 1)
-		aux = append(aux, sam.Aux(vx))
 
-		if aln.active_molecule {
-			md := AuxifyString(auxDM, []byte(strconv.FormatFloat(aln.molecule_difference, 'f', 6, 64)))
-			aux = append(aux, sam.Aux(md))
-		}
+	bx := AuxifyString(auxBX, *aln.barcode)
+	aux = append(aux, sam.Aux(bx))
+	vx := AuxifyInt(auxVX, 1)
+	aux = append(aux, sam.Aux(vx))
+
+	if aln.active_molecule {
+		md := AuxifyString(auxDM, []byte(strconv.FormatFloat(aln.molecule_difference, 'f', 6, 64)))
+		aux = append(aux, sam.Aux(md))
 	}
+
 	if *AddComments && len(*aln.comments) > 0 {
 		for field := range bytes.SplitSeq(*aln.comments, _TAB) {
-			//TODO THIS AINT WORKING
 			a, err := sam.ParseAux(field)
 			if err != nil {
 				// ignore malformed field

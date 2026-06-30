@@ -31,8 +31,8 @@ type FastQRecord struct {
 
 // A utility function to compare two slices
 // // Decide of two reads come from different barcodes
-func DifferentBarcode(a []byte, b []byte) bool {
-	return !bytes.Equal(a, b)
+func DifferentBarcode(a *[]byte, b *[]byte) bool {
+	return !bytes.Equal(*a, *b)
 }
 
 func Min(x, y int) int {
@@ -123,8 +123,11 @@ func ParseBarcodes(rec *fastx.Record) ([]byte, []byte, bool) {
 	rec.Desc = append(rec.Desc[:first[0]], rec.Desc[first[1]:]...)
 
 	// remove colons ':' to make it sam.Aux compliant.
-	_comments = bytes.ReplaceAll(bytes.TrimSpace(rec.Desc), auxCOLON, remCOLON)
-
+	//_comments = bytes.ReplaceAll(bytes.TrimSpace(rec.Desc), auxCOLON, remCOLON)
+	// whatever's left, trimmed and copied, becomes the comments
+	if trimmed := bytes.TrimSpace(rec.Desc); len(trimmed) > 0 {
+		_comments = bytes.Clone(trimmed)
+	}
 	return _barcode, _comments, _valid
 }
 
@@ -141,7 +144,7 @@ func (fqr *FastQReader) ReadBarcodeSet(space *[]FastQRecord) ([]FastQRecord, err
 		// Allocate some space, guessing at most 500k reads per barcode
 		record_array = make([]FastQRecord, 0, 500000)
 	} else {
-		/* Re-use (but truncate) space */
+		// Re-use (but truncate) space
 		record_array = (*space)[0:0]
 	}
 
@@ -176,12 +179,12 @@ func (fqr *FastQReader) ReadBarcodeSet(space *[]FastQRecord) ([]FastQRecord, err
 		}
 
 		// if barcode transitioned, record deferred to next call
-		if DifferentBarcode(record_array[0].Barcode, record_array[index].Barcode) {
+		if DifferentBarcode(&record_array[0].Barcode, &record_array[index].Barcode) {
 			fqr.Pending = new(FastQRecord)
 			*fqr.Pending = record_array[index]
 			new_barcode = true
 			break
-		} else if fqr.LastBarcode != nil && !DifferentBarcode(record_array[0].Barcode, fqr.LastBarcode) && index >= 200 {
+		} else if fqr.LastBarcode != nil && !DifferentBarcode(&record_array[0].Barcode, &fqr.LastBarcode) && index >= 200 {
 			new_barcode = false
 			log.Printf("abnormal break: %s", string(record_array[0].Barcode))
 			break
