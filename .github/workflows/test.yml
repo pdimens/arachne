@@ -38,6 +38,8 @@ jobs:
         run: pixi run build
       - name: Create test data
         run: test/data.py
+      - name: Fails on no samtools
+        run: ! bin/arachne prep tmp test/test.R{1,2}.fq.gz
       - name: Index reference
         run: bin/arachne index test/hap1.fa
       - name: Align default
