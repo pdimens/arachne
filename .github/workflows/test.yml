@@ -41,13 +41,7 @@ jobs:
       - name: Fails on no samtools
         run: |
           set +e
-          bin/arachne prep tmp test/test.R{1,2}.fq.gz
-          exit_code=$?
-          set -e
-          if [ $exit_code -ne 0 ]; then
-            exit 0
-          fi
-          exit 1
+          ! bin/arachne prep tmp test/test.R{1,2}.fq.gz
       - name: Index reference
         run: bin/arachne index test/hap1.fa
       - name: Align default
