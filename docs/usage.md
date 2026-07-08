@@ -16,7 +16,7 @@ convert FASTQ files to [Standard format](https://pdimens.github.io/lastq/) and s
 arachne prep [-t] PREFIX r1.fq r2.fq
 ```
 >>> `index`
-index the reference FASTA to be used for alignment (`bwa index` wrapper)
+index the reference FASTA to be used for alignment (just a wrapper for `bwa index`)
 ```bash
 arachne index ref.fa
 ```
@@ -30,25 +30,26 @@ arachne align [options] ref.fa r1.fq r2.fq
 ## prep
 The `arachne prep` command will convert your input FASTQ files into the format necessary for `arachne align`.
 That format requires data to be 1) sorted by barcode and 2) in [standard/lastq linked read format](https://pdimens.github.io/lastq/).
-Because they are unrelaible, records with invalid barcodes will be filtered out into separate FASTQ files so you can align them using
+Because their identities are unrelaible, records with invalid barcodes will be filtered out into separate FASTQ files so you can align them using
 another tool like `bwa`. This process will standardize the barcodes and temporarily convert FASTQ records with valid barcodes into
 unaligned SAM records for `samtools sort` to efficiently sort them by barcode. This conversion is lossless.
 
 ```bash usage
 arachne prep [-t/--threads] PREFIX FORWARD_FASTQ REVERSE_FASTQ
 ```
+This will create `PREFIX.arachne.R1.fq.gz`, `PREFIX.arachne.R2.fq.gz`, `PREFIX.invalid.R1.fq.gz`, `PREFIX.invalid.R1.fq.gz`.
+
 ```bash example
 arachne prep -t 6 sample1 sample1.R1.fq.gz sample1.R2.fq.gz
 ```
 
-This will create `PREFIX.arachne.R1.fq.gz`, `PREFIX.arachne.R2.fq.gz`, `PREFIX.invalid.R1.fq.gz`, `PREFIX.invalid.R1.fq.gz`.
 
 ### Standard format ([spec](https://pdimens.github.io/lastq/))
 1. "old" CASAVA forward/reverse identifier (i.e. `/1` and `/2`)
 2. barcodes encoded in `BX:Z` SAM tag (e.g. `BX:Z:32_11_58`)
 3. barcode validations encoded in `VX:i` tag
   - `VX:i:0` is invalid (barcode is bad and unreliable)
-  - `VX:i:1` is good (barcode is good)
+  - `VX:i:1` is valid (barcode is good and reliable)
 As an example, a "bad" (invalid) TELLseq barcode would contain an `N` nucleotide,
 giving the barcode an unreliable identity. Since haplotagging and stLFR chemistries are
 combinatorial, an invalid barcode segment (e.g., `C00` or `0`, respectively) would make
@@ -60,12 +61,11 @@ The `arachne index` command is provided for convenience. It's a very simple wrap
 ```bash usage
 arachne index file.fasta
 ```
+This will create `file.fasta.amb`, `file.fasta.ann`, `file.fasta.bwt`, `file.fasta.pac`, `file.fasta.sa`.
 
 ```bash example
 arachne index galapagos_tortoise.fasta
 ```
-
-This will create `file.fasta.amb`, `file.fasta.ann`, `file.fasta.bwt`, `file.fasta.pac`, `file.fasta.sa`.
 
 ## align
 Once your input FASTQ files are in barcode-sorted standard format and the reference fasta is indexed,
@@ -83,7 +83,7 @@ arachne align -t 24 -s MC_001 Rclamitans.fa MC_001.F.fq.gz MC_001.R.fq.gz > MC_0
 |Long {.whitespace-nowrap}  | Short {.whitespace-nowrap} | Default {.whitespace-nowrap}  | Description |
 |:----------|:----------|:----------|:----------|
 | `centromeres` | `c` |  | TSV file describing known centromeres [!badge variant="info" text="under construction"] |
-| `improper-pair-penalty` | `i` | 4.0 | Penalty for improper pair |
+| `improper-pair-penalty` | `i` | 4.0 | Penalty for improper read pair |
 | `infer-distance` | `d` | `50000` | Distance at which to consider reads with the same barcode to originate from different molecules [!badge variant="info" text="under construction"]|
 | `sample-id` | `s` | | Sample name [!badge variant="info" text="required"]|
 | `threads` | `t` | `4` | Threads to use |

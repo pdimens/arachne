@@ -19,13 +19,14 @@ and other works. Lariat relied on input FASTQ files with a rather peculiar varia
 Additionally, the Chromium 10X design did not preprocess the linked-read barcodes out of the sequence, hence the use of barcode
 "whitelists". 
 
-Well, 10X Genomics discontinued their linked-read technology in 2019 and Lariat was abandoned then as well. Since then, new linked-read methods emerged,
+10X Genomics discontinued their linked-read technology in 2019 and Lariat was abandoned then as well. Since then, new linked-read methods emerged,
 namely haplotagging, stLFR, and TELLseq. These new techniques use different chemistries, but most importantly, all of them
 remove the linked-read barcode from the sequence and use conventional FASTQ formats. Lariat still has tons of value, so
-the goal was to update it for current technologies. Arachne drops support for 10X-style data in favor of supporting haplotagging,
-stLFR, and TELLseq. In the effort of **ridding ourselves of unnecessary platform-specific linked-read data formats**, Arachne's caveat
-is that it expects the ['standard' linked-read data format](standardfmt.md), which is a future-proofed consistent format following the widely-used
-FASTQ and SAM specifications. Arachne provides a lossless converter that accepts haplotagging, stLFR, and TELLseq FASTQ data, so this isn't something you need to worry about.
+the goal was to update it for current technologies. To prevent platform lock-in and promote unified data standards, Arachne
+**does not directly support any specific linked-read FASTQ format**. Instead, it expects the ['standard' linked-read data format](standardfmt.md),
+which is a consistent future-proof format following the internationally recognized FASTQ and SAM specifications. Arachne provides a lossless converter that accepts
+haplotagging, stLFR, and TELLseq FASTQ data to faciliate these conversions. Our hope and intention is the ubiquitous adoption of this
+data format across all current and future linked-read chemistries.
 ===
 
 ## 1.0 release checklist:
