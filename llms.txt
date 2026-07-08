@@ -1,4 +1,4 @@
 ﻿#  | Arachne
 
-- [Install arachne](https://pdimens.github.io/arachne/install.md): Make sure you have a working Go installation (version >= 1.9.2). go version should return something like go version go1.9.2 linux/amd64.
+- [Install arachne](https://pdimens.github.io/arachne/install.md): The inclusion of --recursive is important to make sure bwa and jemalloc dependencies are cloned as well.
 - [Using arachne](https://pdimens.github.io/arachne/usage.md): Use --help or -h, or call arachne (or its subcommands) without arguments to call up the docstring.

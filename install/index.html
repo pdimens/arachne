@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark">
     <meta name="turbo-root" content="/arachne">
-    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="4.6.0.836167888534">
+    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="4.6.0.836836155447">
 
     <!-- See retype.com -->
     <meta name="generator" content="Retype 4.6.0">
@@ -13,7 +13,7 @@
     <!-- Primary Meta Tags -->
     <title>Install arachne | Arachne</title>
     <meta name="title" content="Install arachne | Arachne">
-    <meta name="description" content="Make sure you have a working Go installation (version >= 1.9.2). go version should return something like go version go1.9.2 linux/amd64.">
+    <meta name="description" content="The inclusion of --recursive is important to make sure bwa and jemalloc dependencies are cloned as well.">
 
     <!-- Canonical -->
     <link rel="canonical" href="https://pdimens.github.io/arachne/install/">
@@ -23,7 +23,7 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://pdimens.github.io/arachne/install/">
     <meta property="og:title" content="Install arachne | Arachne">
-    <meta property="og:description" content="Make sure you have a working Go installation (version >= 1.9.2). go version should return something like go version go1.9.2 linux/amd64.">
+    <meta property="og:description" content="The inclusion of --recursive is important to make sure bwa and jemalloc dependencies are cloned as well.">
     <meta property="og:site_name" content="">
     <meta property="og:locale" content="en_US">
 
@@ -31,7 +31,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:url" content="https://pdimens.github.io/arachne/install/">
     <meta name="twitter:title" content="Install arachne | Arachne">
-    <meta name="twitter:description" content="Make sure you have a working Go installation (version >= 1.9.2). go version should return something like go version go1.9.2 linux/amd64.">
+    <meta name="twitter:description" content="The inclusion of --recursive is important to make sure bwa and jemalloc dependencies are cloned as well.">
 
     <!-- Alternate Markdown -->
     <link rel="alternate" type="text/markdown" href="https://pdimens.github.io/arachne/install.md">
@@ -39,12 +39,12 @@
     <script data-cfasync="false">(function(){var cl=document.documentElement.classList,ls=localStorage.getItem("retype_scheme"),hd=cl.contains("dark"),hl=cl.contains("light"),wm=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches;if(ls==="dark"||(!ls&&wm&&!hd&&!hl)){cl.remove("light");cl.add("dark")}else if(ls==="light"||(!ls&&!wm&&!hd&&!hl)){cl.remove("dark");cl.add("light")}})();</script>
 
     <link id="retype-favicon" rel="icon" href="../static/favicon.png" />
-    <link href="../resources/css/retype.css?v=4.6.0.836167888534" rel="stylesheet">
+    <link href="../resources/css/retype.css?v=4.6.0.836836155447" rel="stylesheet">
 
-    <script data-cfasync="false" src="../resources/js/config.js?v=4.6.0.836167888534" data-turbo-eval="false" defer></script>
+    <script data-cfasync="false" src="../resources/js/config.js?v=4.6.0.836836155447" data-turbo-eval="false" defer></script>
     <script data-cfasync="false" src="../resources/js/retype.js?v=4.6.0" data-turbo-eval="false" defer></script>
-    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=4.6.0.836167888534" data-turbo-eval="false" defer></script>
-    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=4.6.0.836167888534" defer></script>
+    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=4.6.0.836836155447" data-turbo-eval="false" defer></script>
+    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=4.6.0.836836155447" defer></script>
 </head>
 <body>
     <div id="retype-app" class="relative text-base antialiased text-base-text bg-base-bg font-body">
@@ -231,35 +231,48 @@
 
                 <!-- Page content  -->
 <h1 id="install-arachne">Install arachne</h1>
-<div class="flex mb-6">
-    <div class="shrink-0 w-1.5 rounded-tl-lg rounded-bl-lg bg-callout-primary"></div>
-    <div class="flex w-full py-4 border border-l-0 rounded-tr-lg rounded-br-lg doc-callout bg-callout-base-bg border-callout-base-border" role="alert">
-        <div class="flex items-center ml-4 h-7">
-            <svg xmlns="http://www.w3.org/2000/svg" class="block text-callout-primary" width="22" height="22" viewBox="0 0 24 24" role="presentation">
-                <g fill="currentColor"><g>
-                    <path d="M12 1C5.93 1 1 5.93 1 12s4.93 11 11 11 11-4.93 11-11S18.07 1 12 1zm0 20c-4.96 0-9-4.04-9-9s4.04-9 9-9 9 4.04 9 9-4.04 9-9 9z"></path>
-                    <path d="M12 11c-.55 0-1 .45-1 1v4c0 .55.45 1 1 1s1-.45 1-1v-4c0-.55-.45-1-1-1zM12.01 7c-.56 0-1 .45-1 1s.45 1 1 1 1-.45 1-1-.45-1-1-1z"></path>
-                    <path fill="none" d="M0 0h24v24H0z"></path>
-                </g></g>
-            </svg>
-        </div>
-        <div class="pr-5 ml-3 w-full">
-            <h5>Note</h5>
-<p>Make sure you have a working Go installation (version &gt;= 1.9.2). <code translate="no" v-pre>go version</code> should return something like <code translate="no" v-pre>go version go1.9.2 linux/amd64</code>.</p>
-        </div>
-    </div>
-</div>
-<p>Clone the arachne repository</p>
-<div id="install-arachne-code-1" class="codeblock-wrapper"><doc-codeblock>
+<doc-steps>
+   <doc-step id="clone-the-arachne-repository" step-number="1">
+      <template #title>Clone the arachne repository</template>
+<div class="codeblock-wrapper"><doc-codeblock>
 <pre translate="no" class="language-bash"><code v-pre class="language-bash">git clone --recursive https://github.com/pdimens/arachne.git</code></pre>
 </doc-codeblock></div>
-<p>Go into the locally cloned repository and execute the makefile</p>
-<div id="install-arachne-code-2" class="codeblock-wrapper"><doc-codeblock>
+<p>The inclusion of <code translate="no" v-pre>--recursive</code> is important to make sure <code translate="no" v-pre>bwa</code> and <code translate="no" v-pre>jemalloc</code> dependencies are cloned as well.</p>
+   </doc-step>
+   <doc-step id="execute-the-makefile" step-number="2">
+      <template #title>Execute the makefile</template>
+<doc-panels expando>
+   <doc-panel id="direct-compilation">
+       <template #title>Direct compilation</template>
+<p>Direct compilation requires a few dependencies in your software environment:</p>
+<ul>
+<li>autoconf</li>
+<li>automake</li>
+<li>c-compiler</li>
+<li>go &gt;= 1.9.2</li>
+<li>zlib</li>
+</ul>
+<div class="codeblock-wrapper"><doc-codeblock>
 <pre translate="no" class="language-bash"><code v-pre class="language-bash">cd arachne
-make</code></pre>
+make clean; make</code></pre>
 </doc-codeblock></div>
-<p>The compiled and executable <code translate="no" v-pre>arachne</code> and <code translate="no" v-pre>bwa</code> binaries are now in <code translate="no" v-pre>bin/</code>, you can use them there or copy them into another path.
-A conda installation will be made available when the project mature&#x27;s to a stable release.</p>
+   </doc-panel>
+   <doc-panel id="build-with-pixi-alternative" collapsed>
+       <template #title>Build with pixi (alternative)</template>
+<p>For development portability, Arachne also provides a pixi environment with the build dependencies.
+Once arachne is compiled, the pixi environment is no longer needed. This approach assumes pixi is
+installed in your software environment. To use the pixi approach:</p>
+<div class="codeblock-wrapper"><doc-codeblock>
+<pre translate="no" class="language-bash"><code v-pre class="language-bash">cd arachne
+pixi run build</code></pre>
+</doc-codeblock></div>
+   </doc-panel>
+</doc-panels>
+   </doc-step>
+</doc-steps>
+<p>The compiled and executable <code translate="no" v-pre>arachne</code> and <code translate="no" v-pre>bwa</code> binaries are now in <code translate="no" v-pre>bin/</code>, you can use them there
+or copy them into another path. A conda installation will be made available
+when the project matures to a stable release.</p>
 
                 
                 <!-- Required only on API pages -->
