@@ -1,0 +1,31 @@
+name: Upload Release Tarball and Container
+on:
+  push:
+    tags:
+    - '*' # Push events of any tag created
+
+jobs:
+  build_tarball:
+    name: Upload Release Tarball
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      repository-projects: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          submodules: recursive
+      - name: Build project
+        # This builds the release tarball, stripped of unneccessary things
+        run: |
+          mkdir artifacts
+          tar --exclude="test" --exclude=".pixi" --exclude="pixi.*" --exclude="scratch" --exclude="pkg" --exclude="bin" --exclude="artifacts" --exclude=".git*" -zcvf artifacts/arachne.${{ github.ref_name }}.tar.gz .
+      - name: Create Release with Assets
+        uses: softprops/action-gh-release@v3
+        with:
+          files: ./artifacts/arachne.${{ github.ref_name }}.tar.gz
+          body_path: CHANGELOG.md
+          generate_release_notes: true
