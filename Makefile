@@ -8,7 +8,7 @@ all: arachne gobwa/bwa/libbwa.a gobwa/bwa/bwa
 arachne: gobwa/bwa/libbwa.a gobwa/bwa/bwa jemalloc/lib/libjemalloc_pic.a
 	@echo "Building arachne"
 	mkdir -p bin/
-	go build -o bin/$@
+	go build -ldflags "-X arachne/aligner.VERSION=$(VERSION)" -o bin/$@
 	cp gobwa/bwa/bwa bin/
 	chmod +x bin/arachne
 

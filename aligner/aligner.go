@@ -24,7 +24,7 @@ import (
 	"github.com/biogo/hts/sam"
 )
 
-var VERSION string = "1.0.0-dev"
+var VERSION string
 
 type ArachneArgs struct {
 	R1                    *string
