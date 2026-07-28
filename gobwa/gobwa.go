@@ -4,7 +4,7 @@
 
 package gobwa
 
-// #cgo LDFLAGS: -L${SRCDIR}/../jemalloc/lib -lbwa -lz -lm -ljemalloc_pic -lpthread -ldl
+// #cgo LDFLAGS: -lbwa -ljemalloc -lz -lm -lpthread -ldl
 // #include "bwa_bridge.h"
 // #include "bwa/bwamem.h"
 // #include "bwa/bwa.h"

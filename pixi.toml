@@ -6,12 +6,11 @@ platforms = ["linux-64"]
 version = "0.1"
 
 [dependencies]
-autoconf = "*"
 c-compiler = "*"
 go = "1.25.*"
 sysroot_linux-64 = "2.17.*"
 zlib = "*"
-automake = "*"
+jemalloc = "*"
 
 [tasks]
 build = "make clean; make"
