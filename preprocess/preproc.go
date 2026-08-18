@@ -171,7 +171,7 @@ func Preprocess(threads int, prefix, r1Path, r2Path string) error {
 			}
 			defer r1Writer.Close()
 
-			r2WritePath := prefix + "arachne.R2.fq.gz"
+			r2WritePath := prefix + ".arachne.R2.fq.gz"
 			r2Writer, err := xopen.Wopen(r2WritePath)
 			if err != nil {
 				errCh <- fmt.Errorf("opening %s: %w", r2WritePath, err)
