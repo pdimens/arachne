@@ -46,7 +46,8 @@ func HaplotagBX(rec *fastx.Record) bool {
 		rec.Desc = append(rec.Desc, MissingBarcode...)
 		return false
 	}
-	bc := rec.Desc[bloc[2]:bloc[3]]
+	//bc := rec.Desc[bloc[2]:bloc[3]]
+	bc := bytes.Clone(rec.Desc[bloc[2]:bloc[3]])
 	vx := byte('0')
 
 	vloc := StdVx.FindSubmatchIndex(rec.Desc)
