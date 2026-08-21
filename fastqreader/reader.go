@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"io"
 	"log"
-	"regexp"
 	"slices"
 
+	regexp "github.com/coregx/coregex"
 	"github.com/shenwei356/bio/seqio/fastx"
 )
 

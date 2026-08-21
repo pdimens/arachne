@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"sync"
 
 	"github.com/biogo/hts/bam"
@@ -39,7 +40,7 @@ func Preprocess(threads int, prefix, r1Path, r2Path string) error {
 	} else {
 		tempFilePrefix = filepath.Dir(prefix) + "." + RandString()
 	}
-	_threads := fmt.Sprintf("%d", threads-1)
+	_threads := strconv.Itoa(threads / 2)
 	samSort := exec.Command("samtools", "sort", "-@", _threads, "--no-PG", "-T", tempFilePrefix, "-u", "-t", "BX", "-")
 	sortIn, err := samSort.StdinPipe()
 	if err != nil {
@@ -71,14 +72,13 @@ func Preprocess(threads int, prefix, r1Path, r2Path string) error {
 
 	// ----- Write output FASTQ (Invalids) ------------------------
 	r1InvWritePath := prefix + ".invalid.R1.fq.gz"
-	r2InvWritePath := prefix + ".invalid.R2.fq.gz"
-
 	r1InvWriter, err := xopen.Wopen(r1InvWritePath)
 	if err != nil {
 		return fmt.Errorf("opening %s: %w", r1InvWritePath, err)
 	}
 	defer r1InvWriter.Close()
 
+	r2InvWritePath := prefix + ".invalid.R2.fq.gz"
 	r2InvWriter, err := xopen.Wopen(r2InvWritePath)
 	if err != nil {
 		return fmt.Errorf("opening %s: %w", r2InvWritePath, err)
@@ -89,12 +89,12 @@ func Preprocess(threads int, prefix, r1Path, r2Path string) error {
 	wg.Go(
 		func() {
 			defer sortIn.Close()
-			w := bufio.NewWriterSize(sortIn, 2<<20)
+			w := bufio.NewWriterSize(sortIn, 1<<20)
 			if _, err := w.WriteString(samHeader); err != nil {
 				errCh <- fmt.Errorf("writing SAM header: %w", err)
 				return
 			}
-			//errCh <- w.Flush()
+
 			var rec1, rec2 *fastx.Record
 			var err1, err2 error
 			var isValid bool
@@ -157,7 +157,7 @@ func Preprocess(threads int, prefix, r1Path, r2Path string) error {
 	//----- process sorted BAM records-----------------
 	wg.Go(
 		func() {
-			samReader, err := bam.NewReader(sortOut, 1)
+			samReader, err := bam.NewReader(sortOut, threads/2)
 			if err != nil {
 				errCh <- fmt.Errorf("creating BAM reader: %w", err)
 				return
@@ -195,11 +195,9 @@ func Preprocess(threads int, prefix, r1Path, r2Path string) error {
 				}
 			}
 		})
-	done := make(chan struct{})
 
 	wg.Wait()
 	close(errCh)
-	close(done)
 
 	if err := samSort.Wait(); err != nil {
 		return fmt.Errorf("samtools sort failed: %w", err)

@@ -3,8 +3,8 @@ package preprocess
 import (
 	"bytes"
 	"fmt"
-	"regexp"
 
+	regexp "github.com/coregx/coregex"
 	"github.com/shenwei356/bio/seqio/fastx"
 )
 
@@ -16,10 +16,12 @@ var StdBx = regexp.MustCompile(`BX:Z:(\S+)(?:\s|$)`)
 var StdVx = regexp.MustCompile(`VX:i:([01])(?:\s|$)`)
 var IlluminaOld = regexp.MustCompile(`/[12](?:\s|$)`)
 var IlluminaNew = regexp.MustCompile(`[12]:[YN]:\d+:[A-Za-z0-9]+(?:\s|$)`)
-var vxVal = []byte{'1'}
+
+// var vxVal = []byte{'1'}
 var BXTAG = []byte{'B', 'X', ':', 'Z', ':'}
 var VXTAG = []byte{'V', 'X', ':', 'i', ':'}
-var tabSep = []byte{'\t'}
+
+//var tabSep = []byte{'\t'}
 
 // Finds the BX and VX tags and removes the BX and VX tags
 // along with the CASAVA /1 or 1:N:0:ATAG identifier. Returns
