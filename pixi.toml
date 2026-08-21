@@ -15,6 +15,9 @@ jemalloc = "*"
 [tasks]
 build = "make clean; make"
 
+[activation.env]
+CGO_ENABLED = "1"
+
 [feature.test.dependencies]
 mimick = "3.*"
 
