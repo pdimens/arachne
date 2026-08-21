@@ -13,7 +13,7 @@ environments:
     - url: https://conda.anaconda.org/bioconda/
     packages:
       linux-64:
-      - conda: https://conda.anaconda.org/conda-forge/linux-64/_go_select-2.3.0-cgo.tar.bz2
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/_go_select-2.2.0-nocgo.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-20_gnu.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/binutils-2.46.1-default_h4852527_102.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/binutils_impl_linux-64-2.46.1-default_hfdba357_102.conda
@@ -23,12 +23,10 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gcc-14.3.0-hc6a0c74_20.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gcc_impl_linux-64-14.3.0-h054831b_20.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gcc_linux-64-14.3.0-h50e9bb6_28.conda
-      - conda: https://conda.anaconda.org/conda-forge/linux-64/go-1.25.11-h282a287_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/go-1.26.7-h1a1113d_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/jemalloc-5.3.0-h5888daf_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/ld_impl_linux-64-2.46.1-default_hbd61a6d_102.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libgcc-15.2.0-he0feb66_20.conda
-      - conda: https://conda.anaconda.org/conda-forge/linux-64/libgfortran-15.2.0-h69a702a_20.conda
-      - conda: https://conda.anaconda.org/conda-forge/linux-64/libgfortran5-15.2.0-h68bc16d_20.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libgomp-15.2.0-he0feb66_20.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libjemalloc-5.3.0-h5888daf_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libsanitizer-14.3.0-h91d2232_20.conda
@@ -48,7 +46,7 @@ environments:
     packages:
       linux-64:
       - conda: https://conda.anaconda.org/bioconda/noarch/mimick-3.1-pyh106432d_0.conda
-      - conda: https://conda.anaconda.org/conda-forge/linux-64/_go_select-2.3.0-cgo.tar.bz2
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/_go_select-2.2.0-nocgo.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-20_gnu.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/binutils-2.46.1-default_h4852527_102.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/binutils_impl_linux-64-2.46.1-default_hfdba357_102.conda
@@ -59,7 +57,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gcc-14.3.0-hc6a0c74_20.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gcc_impl_linux-64-14.3.0-h054831b_20.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gcc_linux-64-14.3.0-h50e9bb6_28.conda
-      - conda: https://conda.anaconda.org/conda-forge/linux-64/go-1.25.11-h282a287_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/go-1.26.7-h1a1113d_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/icu-78.3-h54a6638_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/jemalloc-5.3.0-h5888daf_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/juliaup-1.19.9-hdab8a38_0.conda
@@ -67,8 +65,6 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libexpat-2.8.1-hecca717_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libffi-3.5.2-h3435931_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libgcc-15.2.0-he0feb66_20.conda
-      - conda: https://conda.anaconda.org/conda-forge/linux-64/libgfortran-15.2.0-h69a702a_20.conda
-      - conda: https://conda.anaconda.org/conda-forge/linux-64/libgfortran5-15.2.0-h68bc16d_20.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libgomp-15.2.0-he0feb66_20.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libjemalloc-5.3.0-h5888daf_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/liblzma-5.8.3-hb03c661_0.conda
@@ -113,14 +109,14 @@ packages:
   license_family: GPL3
   size: 41123
   timestamp: 1780633097272
-- conda: https://conda.anaconda.org/conda-forge/linux-64/_go_select-2.3.0-cgo.tar.bz2
-  sha256: d86836d4f3094b4ac149dcdc55f1f12be6e84ed1206a4234404a024e49769832
-  md5: 76f94c0e00d08432e003a7b54a1adf53
+- conda: https://conda.anaconda.org/conda-forge/linux-64/_go_select-2.2.0-nocgo.tar.bz2
+  sha256: ca4a3553e5e97e63db3c6f327cf2ce25e4fb88288ef9743cef52887a2deb745f
+  md5: 172001043929ad2cdf1674b2d5e6e988
   license: BSD-3-Clause
   license_family: BSD
   run_exports: {}
-  size: 4875
-  timestamp: 1586504607438
+  size: 4870
+  timestamp: 1586504620877
 - conda: https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-20_gnu.conda
   build_number: 20
   sha256: 1dd3fffd892081df9726d7eb7e0dea6198962ba775bd88842135a4ddb4deb3c9
@@ -245,27 +241,16 @@ packages:
     - libgcc >=14
   size: 29378
   timestamp: 1785174996088
-- conda: https://conda.anaconda.org/conda-forge/linux-64/go-1.25.11-h282a287_0.conda
-  sha256: ed6689975be951325db23c797563cd5755052be61102023c1d873674639d97fb
-  md5: 1a1ea02db17f4aa0feb694ecb1de61bc
+- conda: https://conda.anaconda.org/conda-forge/linux-64/go-1.26.7-h1a1113d_0.conda
+  sha256: 0890f56f9eb5f0577b78855052fad80466f1470972e4f7692de8e619505630c0
+  md5: 4a9fc3bdf24b00e3ab1fe84b108ee202
   depends:
-  - __glibc >=2.17,<3.0.a0
-  - _go_select 2.3.0 cgo
-  - libgcc >=14
-  - libgfortran
-  - libgfortran5 >=14.3.0
-  - libstdcxx >=14
-  constrains:
-  - gcc_linux-64 14.*
-  - gxx_linux-64 14.*
-  - gfortran_linux-64 14.*
+  - _go_select 2.2.0 nocgo
   license: BSD-3-Clause
   license_family: BSD
-  run_exports:
-    strong:
-    - __glibc >=2.17
-  size: 49745877
-  timestamp: 1781547680915
+  run_exports: {}
+  size: 55048703
+  timestamp: 1787165062826
 - conda: https://conda.anaconda.org/conda-forge/linux-64/icu-78.3-h54a6638_2.conda
   sha256: d7c260b7e1cf22ce04d6ba8a86eabf4e6c50bc96a5c27fe2ecb32298af3e88eb
   md5: 4ef4b977bb216a3001a3334696a80850
@@ -361,31 +346,6 @@ packages:
   run_exports: {}
   size: 1041122
   timestamp: 1784923795784
-- conda: https://conda.anaconda.org/conda-forge/linux-64/libgfortran-15.2.0-h69a702a_20.conda
-  sha256: 76d81032e264b74f519cc26962d5eb39547e0785fc9d2957bbc12e7a91214412
-  md5: a450a08a63f940e9aa7b37692e71196a
-  depends:
-  - libgfortran5 15.2.0 h68bc16d_20
-  constrains:
-  - libgfortran-ng ==15.2.0=*_20
-  license: GPL-3.0-only WITH GCC-exception-3.1
-  license_family: GPL
-  run_exports: {}
-  size: 28103
-  timestamp: 1784923831860
-- conda: https://conda.anaconda.org/conda-forge/linux-64/libgfortran5-15.2.0-h68bc16d_20.conda
-  sha256: 95122f42566dc9a62b9615d2372b3f3c75fa7bd8bb1eda53aa7532ce60d545eb
-  md5: 4edbcbea1a8790a7d58e648523b69546
-  depends:
-  - __glibc >=2.17,<3.0.a0
-  - libgcc >=15.2.0
-  constrains:
-  - libgfortran 15.2.0
-  license: GPL-3.0-only WITH GCC-exception-3.1
-  license_family: GPL
-  run_exports: {}
-  size: 2483727
-  timestamp: 1784923810904
 - conda: https://conda.anaconda.org/conda-forge/linux-64/libgomp-15.2.0-he0feb66_20.conda
   sha256: 30b8ff1bf43871a17c9de99e56171ef54cfbe690ffa86681628db5a00af97cf7
   md5: 49321086c41bb58fc4b6cd8cbb74679d

@@ -7,7 +7,7 @@ version = "0.1"
 
 [dependencies]
 c-compiler = "*"
-go = "1.25.*"
+go = "1.26.*"
 sysroot_linux-64 = "2.17.*"
 zlib = "*"
 jemalloc = "*"
