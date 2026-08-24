@@ -93,29 +93,28 @@ func isPair(read1, read2 *Alignment) bool {
 	}
 	var forward, reverse *Alignment
 	if read1.reversed {
-		forward = read2
-		reverse = read1
+		forward, reverse = read2, read1
 	} else {
-		forward = read1
-		reverse = read2
+		forward, reverse = read1, read2
 	}
 	dist := reverse.pos - forward.pos
-	//TODO dont delete, trimming code to be turned on at later date // this is for if you have a reverse read exend further left than the forward read starts due to soft clipping and random bases matching the reference by chance.
-	// if dist < 0 && dist >= -35 {
-	// 	if reverse.cigar[0] == uint32(3) && len(reverse.cigar) > 2 && reverse.cigar[2] == 0 && int64(reverse.cigar[3]) > -dist {
-	// 		reverse.cigar[1] += uint32(-dist)
-	// 		reverse.cigar[3] -= uint32(-dist)
-	// 		reverse.pos += -dist
-	// 	}
-	// }
-	// 	cigar_end := len(forward.cigar)
-	// 	overhang := reverse.aend - forward.aend
-	// 	if overhang < 0 {
-	// 		if forward.cigar[cigar_end-2] == uint32(3) && cigar_end > 2 && int64(forward.cigar[cigar_end-3]) > -overhang {
-	// 			forward.cigar[cigar_end-1] += uint32(-overhang)
-	// 			forward.cigar[cigar_end-3] -= uint32(-overhang)
-	// 			forward.aend -= -overhang
-	// 		}
-	// 	}
+	//TODO dont delete, trimming code to be turned on at later date
+	// this is for if you have a reverse read exend further left than the forward read starts due to soft clipping and random bases matching the reference by chance.
+	//if dist < 0 && dist >= -35 {
+	//	if reverse.cigar[0] == uint32(3) && len(reverse.cigar) > 2 && reverse.cigar[2] == 0 && int64(reverse.cigar[3]) > -dist {
+	//		reverse.cigar[1] += uint32(-dist)
+	//		reverse.cigar[3] -= uint32(-dist)
+	//		reverse.pos += -dist
+	//	}
+	//}
+	//cigar_end := len(forward.cigar)
+	//overhang := reverse.aend - forward.aend
+	//if overhang < 0 {
+	//	if forward.cigar[cigar_end-2] == uint32(3) && cigar_end > 2 && int64(forward.cigar[cigar_end-3]) > -overhang {
+	//		forward.cigar[cigar_end-1] += uint32(-overhang)
+	//		forward.cigar[cigar_end-3] -= uint32(-overhang)
+	//		forward.aend -= -overhang
+	//	}
+	//}
 	return dist >= int64(-35) && dist < int64(750)
 }

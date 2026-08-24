@@ -80,9 +80,7 @@ func DoRFAForOneBarcode(work *WorkUnit,
 	if !worthRFA {
 		//estimateMapQualities(-1, alignments, nil, config.improper_penalty, stats)
 		estimateMapQualities(alignments, nil, config.improper_penalty)
-		if work.reads[0].Valid {
-			markDuplicates(alignments)
-		} // only check for dupes if the barcode is valid
+		markDuplicates(alignments)
 		CheckSplitReads(stashed_alignments, centromeres)
 		flushToChannel(alignments, out, contigs, debugtags)
 		ReturnBuffer(reads) // was inside BamThread after DoDumpToBam, move here
