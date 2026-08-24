@@ -20,9 +20,16 @@ func Preprocess(threads int, prefix, r1Path, r2Path string) error {
 	if err := os.MkdirAll(filepath.Dir(prefix), 0o755); err != nil {
 		return fmt.Errorf("creating output directory: %w", err)
 	}
-	// SAM header written as literal text; samtools sort receives SAM on stdin.
-	var samHeader string = "@HD	VN:1.6	SO:unsorted	GO:query\n@SQ	SN:*	LN:1"
+	// determine what kind of linked-read tech it is
+	processBC, err := CheckFastqFormat(r1Path)
+	if err != nil {
+		return fmt.Errorf("%w", err)
+	}
 
+	// SAM header written as literal text; samtools sort receives SAM on stdin.
+	var samHeader string = `@HD	VN:1.6	SO:unsorted	GO:query
+@SQ	SN:*	LN:1
+`
 	var wg sync.WaitGroup
 	errCh := make(chan error, 10)
 
@@ -63,6 +70,21 @@ func Preprocess(threads int, prefix, r1Path, r2Path string) error {
 	}
 	defer r2Reader.Close()
 
+	/*/ ----- Write output FASTQ (Invalids) ------------------------
+	r1InvWritePath := prefix + ".invalid.R1.fq.gz"
+	r1InvWriter, err := xopen.Wopen(r1InvWritePath)
+	if err != nil {
+		return fmt.Errorf("opening %s: %w", r1InvWritePath, err)
+	}
+	defer r1InvWriter.Close()
+
+	r2InvWritePath := prefix + ".invalid.R2.fq.gz"
+	r2InvWriter, err := xopen.Wopen(r2InvWritePath)
+	if err != nil {
+		return fmt.Errorf("opening %s: %w", r2InvWritePath, err)
+	}
+	defer r2InvWriter.Close()
+	*/
 	// ---- process reads -------------------
 	wg.Go(
 		func() {
@@ -75,6 +97,7 @@ func Preprocess(threads int, prefix, r1Path, r2Path string) error {
 
 			var rec1, rec2 *fastx.Record
 			var err1, err2 error
+			var isValid bool
 
 			for {
 				rec1, err1 = r1Reader.Read()
@@ -91,17 +114,37 @@ func Preprocess(threads int, prefix, r1Path, r2Path string) error {
 					break
 				}
 				if rec1 != nil {
-					// CONVERT TO SAM AND WRITE TO SORT
-					if err := Fq2Sam(rec1, fw, w); err != nil {
-						errCh <- err
-						return
-					}
+					// STANDARDIZE and return if valid
+					isValid = processBC(rec1)
+					//if !isValid {
+					//	// send to invalid write
+					//	if err := WriteFQ(r1InvWriter, rec1, _mark_forward); err != nil {
+					//		errCh <- err
+					//		return
+					//	}
+					//} else {
+						// CONVERT TO SAM AND WRITE TO SORT
+						if err := Fq2Sam(rec1, fw, w); err != nil {
+							errCh <- err
+							return
+						}
+						/}
 				}
 				if rec2 != nil {
-					// CONVERT TO SAM AND WRITE TO SORT
-					if err := Fq2Sam(rec2, rv, w); err != nil {
-						errCh <- err
-						return
+					// STANDARDIZE and return if valid
+					isValid = processBC(rec2)
+					//if !isValid {
+					//	// send to invalid write
+					//	if err := WriteFQ(r2InvWriter, rec2, _mark_reverse); err != nil {
+					//		errCh <- err
+					//		return
+					//	}
+					//} else {
+						// CONVERT TO SAM AND WRITE TO SORT
+						if err := Fq2Sam(rec2, rv, w); err != nil {
+							errCh <- err
+							return
+						}
 					}
 				}
 			}

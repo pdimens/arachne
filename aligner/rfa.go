@@ -69,14 +69,12 @@ func DoRFAForOneBarcode(work *WorkUnit,
 	//	positions := tagBestAlignments(alignments, -17)
 	positions := tagBestAlignments(alignments)
 
-	if len(barcode_reads) > 2 {
-		if *verbose {
-			fmt.Fprintf(os.Stderr, "working on barcode %s  num reads: %d  doing RFA: %v  unique_barcode %v\n",
-				string(barcode_reads[0].Barcode),
-				len(barcode_reads),
-				worthRFA,
-				work.unique_barcode)
-		}
+	if len(barcode_reads) > 2 && *verbose {
+		fmt.Fprintf(os.Stderr, "working on barcode %s  num reads: %d  doing RFA: %v  unique_barcode %v\n",
+			string(barcode_reads[0].Barcode),
+			len(barcode_reads),
+			worthRFA,
+			work.unique_barcode)
 	}
 
 	if !worthRFA {
@@ -119,16 +117,16 @@ func DoRFAForOneBarcode(work *WorkUnit,
 
 // Was the deconv format super necessary?
 
-// Determine if there are enough reads (3) to run RFA
-func worthRunningRFA(barcode_reads []fastqreader.FastQRecord, uniqueBarcode bool) bool {
-	if len(barcode_reads) == 0 || !uniqueBarcode {
+// Determine if there are enough fragments (3) to run RFA
+func worthRunningRFA(barcode_fragments []fastqreader.FastQRecord, uniqueBarcode bool) bool {
+	if len(barcode_fragments) == 0 || !uniqueBarcode {
 		return false
 	}
 	//bcParts := strings.Split(string(barcode_reads[0].Barcode), "-")
 	//if len(bcParts) < 2 {
 	//	return false
 	//}
-	if len(barcode_reads) < 3 {
+	if len(barcode_fragments) < 3 {
 		return false
 	}
 	return true

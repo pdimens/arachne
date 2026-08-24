@@ -109,9 +109,7 @@ func (r GoBwaReference) GetSeq(chrom string, start, end int64, reversed bool) []
 var twoBitToSeq = [4]byte{'A', 'C', 'G', 'T'}
 var twoBitToSeqComp = [4]byte{'T', 'G', 'C', 'A'}
 
-/*
- * Represents a candidate alignment
- */
+// Represents a candidate alignment
 type EasyAlignment struct {
 	Offset        int64
 	Alignment_end int64
@@ -140,7 +138,7 @@ func (a *Arena) Push(p uintptr) {
 }
 
 func (a *Arena) Free() {
-	for i := 0; i < len(a.Pointers); i++ {
+	for i := range a.Pointers {
 		C.free((unsafe.Pointer(a.Pointers[i])))
 	}
 	a.Pointers = a.Pointers[0:0]

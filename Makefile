@@ -8,7 +8,7 @@ all: arachne gobwa/bwa/libbwa.a gobwa/bwa/bwa
 arachne: gobwa/bwa/libbwa.a gobwa/bwa/bwa
 	@echo "Building arachne"
 	mkdir -p bin/
-	go build -ldflags "-X arachne/aligner.VERSION=$(VERSION)" -o bin/$@
+	go build -ldflags "-X arachne/aligner.VERSION=$(VERSION) -s -w" -o bin/$@
 	cp gobwa/bwa/bwa bin/
 	chmod +x bin/arachne
 

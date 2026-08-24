@@ -135,7 +135,7 @@ func ParseBarcodes(rec *fastx.Record) ([]byte, []byte, bool) {
 // "space" may be null or may be the result of a previous call to this function.
 // If present the array will be destructively re-used
 func (fqr *FastQReader) ReadBarcodeSet(space *[]FastQRecord) ([]FastQRecord, error, bool) {
-	new_barcode := false
+	var new_barcode bool
 	if fqr.DefferedError != nil {
 		return nil, fqr.DefferedError, false
 	}
@@ -148,7 +148,7 @@ func (fqr *FastQReader) ReadBarcodeSet(space *[]FastQRecord) ([]FastQRecord, err
 		record_array = (*space)[0:0]
 	}
 
-	var index = 0
+	var index int
 
 	// Is there a pending element from a previous call that needs to be put in the output?
 	if fqr.Pending != nil {
@@ -205,7 +205,7 @@ func (fqr *FastQReader) ReadBarcodeSet(space *[]FastQRecord) ([]FastQRecord, err
 	} else if fqr.DefferedError != io.EOF {
 		return record_array[0:end], nil, false
 	}
-	return record_array[0:end], nil, true
+	return record_array[0:end], nil, record_array[0].Valid // returns 'unique barcode' of whether it's valid or not
 }
 
 // Print function convenient for debugging

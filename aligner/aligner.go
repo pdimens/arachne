@@ -13,7 +13,6 @@ import (
 	"os"
 	"runtime"
 	"sort"
-	"strconv"
 	"sync"
 	"unsafe"
 
@@ -60,25 +59,6 @@ type ChainedHit struct {
 	aln       *gobwa.EasyAlignment
 	// trim_seq  *[]byte
 	// trim_qual *[]byte
-}
-
-func FindRead(alignments [][]*Alignment, molecules []*CandidateMolecule, qname string) {
-	for _, alignmentArray := range alignments {
-		for _, alignment := range alignmentArray {
-
-			if *alignment.read_name == qname && alignment.active {
-				fmt.Println("printing", alignment.read1)
-				alignment.Print()
-				fmt.Println("and its mate")
-				if alignment.mate_alignment != nil {
-					alignment.mate_alignment.Print()
-				}
-				if alignment.molecule_id != -1 {
-					fmt.Println(molecules[alignment.molecule_id].active_alignments.Len())
-				}
-			}
-		}
-	}
 }
 
 // types and functions to be able to sort a list of aligntments by position,
@@ -174,7 +154,6 @@ func Arachne(args ArachneArgs) {
 	}
 	settings := gobwa.GoBwaAllocSettings()
 	config := &RFAConfig{*improper_pair_penalty}
-	config.improper_penalty = float64(*improper_pair_penalty)
 
 	// ------- SAM output writer -------------------------
 	// chanCap sized to absorb worker bursts
@@ -191,8 +170,8 @@ func Arachne(args ArachneArgs) {
 	}
 
 	var w *bufio.Writer
-	stats := &RFAStats{}
-	stats.file = w
+	stats := &RFAStats{file: w}
+	//stats.file = w
 
 	// ── workers ─────────────────────────────────────────────────────────────
 	work_to_do := make(chan *WorkUnit, 2)
@@ -211,19 +190,21 @@ func Arachne(args ArachneArgs) {
 		buf := <-bufChan
 		*buf = (*buf)[:0]
 
-		records, err, full_barcode := fastq.ReadBarcodeSet(buf)
+		records, err, validBC := fastq.ReadBarcodeSet(buf)
 		if err != nil {
 			bufChan <- buf // return unused buffer
 			break
 		}
-		if !records[0].Valid {
-			if *verbose {
-				fmt.Printf("Detected invalid barcode (%v), skipping.\n", records[0].Barcode)
+		/*
+			if !records[0].Valid {
+				if *verbose {
+					fmt.Printf("Detected invalid barcode (%v), skipping.\n", records[0].Barcode)
+				}
+				bufChan <- buf // return unused buffer on skip too
+				continue
 			}
-			bufChan <- buf // return unused buffer on skip too
-			continue
-		}
-		work_to_do <- &WorkUnit{records, barcode_num, full_barcode, buf}
+		*/
+		work_to_do <- &WorkUnit{records, barcode_num, validBC, buf}
 	}
 
 	// ── teardown ────────────────────────────────────────────────────────────
@@ -274,20 +255,6 @@ func DeAlignCrappyReads(reads [][]*Alignment) {
 	}
 }
 
-/*
-TODO FLAG FOR REMOVAL IT'S UNUSED
-
-	func unbarcodeAlignments(alignments [][]*Alignment) {
-		for _, alignmentList := range alignments {
-			for _, alignment := range alignmentList {
-				if alignment.active {
-					barcode := []byte(strings.Split(string(*alignment.barcode), "-")[0])
-					alignment.barcode = &barcode
-				}
-			}
-		}
-	}
-*/
 func setMoleculeDifferences(candidate_molecules []*CandidateMolecule, setBad bool) {
 	for i := range candidate_molecules {
 		differences := 0
@@ -309,17 +276,17 @@ func setMoleculeDifferences(candidate_molecules []*CandidateMolecule, setBad boo
 }
 
 func psuedoCountAlignmentScore(aln *Alignment, log_molecule_penalty float64) float64 {
-	psuedoAlignmentLength := 25.0
+	//psuedoAlignmentLength := 25.0
 	//score := 0.0
-	//score -= 10.0                                                        //maximum soft clipping penalty
-	score := -10.0
-	score -= (float64(len(*aln.read_seq)) - psuedoAlignmentLength) * 0.5 // soft clipping length penalty for 25bp alignment
+	//score -= 10.0
+	score := -10.0                                      //maximum soft clipping penalty
+	score -= (float64(len(*aln.read_seq)) - 25.0) * 0.5 // soft clipping length penalty for 25bp alignment
 	score += log_molecule_penalty
 	return score
 }
 
 func scoreAlignment(aln *Alignment, mate *Alignment, log_molecule_penalty float64) float64 {
-	score := 0.0
+	var score float64
 	if aln != nil {
 		score += float64(aln.mismatches*-2.0 + aln.indels*-3.0)
 		if aln.soft_clipped > 0 {
@@ -351,7 +318,7 @@ func updateAlignmentsMoleculeStatus(alignments [][]*Alignment, candidate_molecul
 		setMoleculeDifferences(candidate_molecules, false)
 
 		// #1 update alignment probabilities based on whether they are in an active molecule or not
-		// here we take 2 sources of power. 1 is taht singletons are rare
+		// here we take 2 sources of power. 1 is that singletons are rare
 		for read_id, alignmentArray := range alignments {
 			for _, alignment := range alignmentArray {
 				is_molecule_active := false
@@ -413,7 +380,7 @@ func moleculeMapqProbabilitySums(candidate_molecules []*CandidateMolecule, log_u
 				}
 			}
 			sourceSinkChange, _ := fastScore(sourceMolecule, sinkMolecule, log_unpaired_probability)
-			moleculeMoveProbability := math.Pow(10, sourceSinkChange)
+			moleculeMoveProbability := math.Exp(sourceSinkChange * math.Ln10)
 			for _, alignment := range sourceAlignments {
 				if !alignment.active {
 					panic("setting molecule mapq for non active alignment")
@@ -425,10 +392,10 @@ func moleculeMapqProbabilitySums(candidate_molecules []*CandidateMolecule, log_u
 }
 
 func calculateLogMoleculePenalty(candidate_molecules []*CandidateMolecule, referenceLength float64) float64 {
-	dnaLength := 1000.0
 	if len(candidate_molecules) == 0 {
 		return 0.0
 	}
+	dnaLength := 1000.0
 	for i := range candidate_molecules {
 		mol := candidate_molecules[i]
 		if mol.active_molecule {
@@ -498,18 +465,13 @@ So the basic strategy here is two-fold
 
 Finally we take the min of the two approaches as the final mapq
 */
-func estimateMapQualities( //barcode int, //TODO remove, this isn't used
-	alignments [][]*Alignment,
-	candidate_molecules []*CandidateMolecule,
-	log_unpaired_probability float64,
-	//stats *RFAStats    //TODO remove, this isn't used
-) {
+func estimateMapQualities(alignments [][]*Alignment, candidate_molecules []*CandidateMolecule, log_unpaired_probability float64) {
 	read_copies_in_active_molecule := map[int]int{}     //TODO remove, book keeping
 	read_copies_not_in_active_molecule := map[int]int{} //TODO remove, book keeping
 	unique_molecules_active := map[int]map[int]bool{}
 	// mapq strategy 2: sum probabilities of full molecule moves
 	if *debugPrintMove {
-		fmt.Println("NOW TESTING MAPQS")
+		fmt.Fprintln(os.Stderr, "NOW TESTING MAPQS")
 	}
 	moleculeMapqProbabilitySums(candidate_molecules, log_unpaired_probability)
 
@@ -533,6 +495,17 @@ func estimateMapQualities( //barcode int, //TODO remove, this isn't used
 			}
 		}
 
+		// gather and record info about the second best pair alignment, folded
+		// into the same pass that computes best_score per alignment (both
+		// loops previously iterated identical alignment/mate pairs and both
+		// called scoreAlignment with the same args on every inactive pair)
+		second_best_proper_pair := false
+		second_best_raw_score := scores[0] //psuedoCountAlignmentScore
+		second_best_log_probability := -1000.0
+		second_best_molecule_reads := -1
+		var second_best_alignment *Alignment
+		second_best_molecule_confidence := -1.0
+
 		for _, alignment := range alignmentArray {
 			mateArray := alignments[alignment.mate_id]
 			best_score := -math.MaxFloat64
@@ -541,6 +514,18 @@ func estimateMapQualities( //barcode int, //TODO remove, this isn't used
 				if score > best_score {
 					best_score = score
 				}
+				if !alignment.active && score > second_best_log_probability {
+					second_best_log_probability = score
+					second_best_raw_score = scoreAlignment(alignment, mateAlignment, 0.0)
+					second_best_alignment = alignment
+					alignment.mate_alignment = mateAlignment
+					second_best_proper_pair = alignment.is_proper
+					if alignment.molecule_id != -1 {
+						alt_mol := candidate_molecules[alignment.molecule_id]
+						second_best_molecule_confidence = alt_mol.molecule_confidence
+						second_best_molecule_reads = alt_mol.active_alignments.Len()
+					}
+				}
 			}
 			if len(mateArray) == 0 {
 				best_score = scoreAlignment(alignment, nil, log_molecule_penalty)
@@ -548,35 +533,10 @@ func estimateMapQualities( //barcode int, //TODO remove, this isn't used
 			scores = append(scores, best_score)
 		}
 
-		// gather and record info about the second best pair alignment
-		second_best_proper_pair := false
-		second_best_raw_score := scores[0] //psuedoCountAlignmentScore
-		second_best_log_probability := -1000.0
-		second_best_molecule_reads := -1
-		var second_best_alignment *Alignment
-		second_best_molecule_confidence := -1.0
-		for _, alignment := range alignmentArray {
-			mateArray := alignments[alignment.mate_id]
-			for _, mateAlignment := range mateArray {
-				score := scoreAlignment(alignment, mateAlignment, log_molecule_penalty)
-				if !alignment.active {
-					if score > second_best_log_probability {
-						second_best_log_probability = score
-						second_best_raw_score = scoreAlignment(alignment, mateAlignment, 0.0)
-						second_best_alignment = alignment
-						alignment.mate_alignment = mateAlignment
-						second_best_proper_pair = alignment.is_proper
-						if alignment.molecule_id != -1 {
-							alt_mol := candidate_molecules[alignment.molecule_id]
-							second_best_molecule_confidence = alt_mol.molecule_confidence
-							second_best_molecule_reads = alt_mol.active_alignments.Len()
-						}
-					}
-				}
-			}
-		}
 		// store meta data for use in determining why a read got a certain mapq.
-		debug_strings := map[int]map[int]string{}
+		//debug_strings := map[int]map[int]string{}
+		arraylen := len(alignmentArray)
+		uniqmolactive := len(unique_molecules_active[read_id])
 		for _, alignment := range alignmentArray {
 			if alignment.active {
 				alignment.mapq_data.second_best = second_best_alignment
@@ -584,35 +544,35 @@ func estimateMapQualities( //barcode int, //TODO remove, this isn't used
 				alignment.mapq_data.second_best_proper_pair = second_best_proper_pair
 				alignment.mapq_data.second_best_molecule_confidence = second_best_molecule_confidence
 				alignment.mapq_data.second_best_molecule_reads = second_best_molecule_reads
-				alignment.mapq_data.copies = len(alignmentArray)
+				alignment.mapq_data.copies = arraylen
 				alignment.mapq_data.second_best_molecule_confidence = second_best_molecule_confidence
 				alignment.mapq_data.copies_in_active_molecules = read_copies_in_active_molecule[alignment.read_id]
 				alignment.mapq_data.copies_outside_active_molecules = read_copies_not_in_active_molecule[read_id]
-				alignment.mapq_data.unique_molecules_active = len(unique_molecules_active[read_id])
-				alignment.mapq_data.score = scoreAlignment(alignment, alignment.mate_alignment, 0.0) // for the purposes of the AS bam tag, want pair alignment score without molecule penalties
-				debugStrings(alignment, alignments, candidate_molecules, debug_strings, log_unpaired_probability)
+				alignment.mapq_data.unique_molecules_active = uniqmolactive
+				// for the purposes of the AS bam tag, want pair alignment score without molecule penalties
+				alignment.mapq_data.score = scoreAlignment(alignment, alignment.mate_alignment, 0.0)
+				//debugStrings(alignment, alignments, candidate_molecules, debug_strings, log_unpaired_probability)
 			}
 		}
 
 		//sort scores and limit analysis to top 15 scoring alignment pairs
-		//fmt.Println(scores)
 		sort.Float64s(scores)
-		for i := len(scores) - 1; i >= 0 && len(scores)-i <= 15; i-- {
-			total_probability += math.Pow(10, scores[i])
+		n := len(scores)
+		start := max(0, n-15)
+		for _, s := range scores[start:] {
+			total_probability += math.Exp(s * math.Ln10)
 		}
 
 		// calculate mapq
 		for _, alignment := range alignmentArray {
-
 			score := scoreAlignment(alignment, alignment.mate_alignment, log_molecule_penalty)
-			mapq := -10.0 * math.Log10(1.0-math.Pow(10.0, score)/total_probability)             // method 1: read probability normalization w/ molecule penalties
+			mapq := -10.0 * math.Log10(1.0-math.Exp(score*math.Ln10)/total_probability)
 			moleculeMapq := -10.0 * math.Log10(1.0-(1.0/alignment.sum_move_probability_change)) // method 2: molecule move probability normalization
-			mapq = math.Min(mapq, moleculeMapq)                                                 // take min of both techniques
-			mapq = math.Min(float64(60.0), mapq)                                                // cap at q60
-			centromereRegion, ok := centromeres[alignment.contig]
+			mapq = math.Min(math.Min(mapq, moleculeMapq), 60.0)                                 // cap at q60
+			// centromeres
 			start := -1
 			end := -1
-			if ok {
+			if centromereRegion, ok := centromeres[alignment.contig]; ok {
 				start = centromereRegion.start
 				end = centromereRegion.end
 			}
@@ -623,60 +583,6 @@ func estimateMapQualities( //barcode int, //TODO remove, this isn't used
 		}
 	}
 	checkMates(alignments)
-}
-
-func debugStrings(alignment *Alignment, alignments [][]*Alignment, candidate_molecules []*CandidateMolecule, debug_strings map[int]map[int]string, log_unpaired_probability float64) {
-	if *DEBUG {
-		alt_alignments := alignments[alignment.read_id]
-		for _, alignment_alt := range alt_alignments {
-			if alignment_alt.molecule_id != -1 {
-				chrom := alignment_alt.contig
-				start := candidate_molecules[alignment_alt.molecule_id].start
-				end := candidate_molecules[alignment_alt.molecule_id].stop
-				sinksource := 0
-				sourcesink := 0
-				molstring := ""
-				_, has := debug_strings[alignment.molecule_id]
-				if has {
-					_, has = debug_strings[alignment.molecule_id][alignment_alt.molecule_id]
-				}
-				if !has {
-					for _, read1 := range candidate_molecules[alignment.molecule_id].active_alignments.Iter() {
-						read := candidate_molecules[alignment_alt.molecule_id].best_alignment_for_read.Get(read1.read_id)
-						if read != nil {
-							sourcesink++
-						}
-					}
-					for _, rid := range candidate_molecules[alignment_alt.molecule_id].active_alignments.Iter() {
-						has := FixGetForTypeAlignment(candidate_molecules[alignment.molecule_id].best_alignment_for_read.Get(rid.read_id)) != nil
-
-						if has {
-							sinksource++
-						}
-					}
-
-					ST := strconv.FormatInt(int64(sourcesink), 10)
-					TS := strconv.FormatInt(int64(sinksource), 10)
-					sourcesinkchange, _ := fastScore(candidate_molecules[alignment.molecule_id], candidate_molecules[alignment_alt.molecule_id], log_unpaired_probability)
-					sinksourcechange, _ := fastScore(candidate_molecules[alignment_alt.molecule_id], candidate_molecules[alignment.molecule_id], log_unpaired_probability)
-					active := strconv.FormatInt(int64(candidate_molecules[alignment_alt.molecule_id].active_alignments.Len()), 10)
-					spots := strconv.FormatInt(int64(candidate_molecules[alignment_alt.molecule_id].best_alignment_for_read.Len()), 10)
-					STC := strconv.FormatInt(int64(sourcesinkchange), 10)
-					TSC := strconv.FormatInt(int64(sinksourcechange), 10)
-					molstring = chrom + ":" + strconv.FormatInt(start, 10) + "-" + strconv.FormatInt(end, 10) + ":alignments:" + active + ":spots:" + spots + ":mv_S->T:" + ST + ":" + STC + ":mv_T->S:" + TS + ":" + TSC + ","
-					_, has_key := debug_strings[alignment.molecule_id]
-					if !has_key {
-						debug_strings[alignment.molecule_id] = map[int]string{}
-					}
-					debug_strings[alignment.molecule_id][alignment_alt.molecule_id] = molstring
-				} else {
-					molstring = debug_strings[alignment.molecule_id][alignment_alt.molecule_id]
-				}
-				alignment.mapq_data.active_alignments_in_molecules += molstring
-
-			}
-		}
-	}
 }
 
 func setMoleculeConfidences(molecules []*CandidateMolecule) {
@@ -774,13 +680,13 @@ func fastScore(sourceMolecule, sinkMolecule *CandidateMolecule, log_unpaired_pro
 	toSet := []*Alignment{}
 	soft_clipped := 0
 	if *debugPrintMove {
-		fmt.Println("test move ", sourceMolecule.id, " to ", sinkMolecule.id, sourceMolecule.start, sinkMolecule.start, "current alignments", sourceMolecule.active_alignments.Len(), sinkMolecule.active_alignments.Len())
+		fmt.Fprintln(os.Stderr, "test move ", sourceMolecule.id, " to ", sinkMolecule.id, sourceMolecule.start, sinkMolecule.start, "current alignments", sourceMolecule.active_alignments.Len(), sinkMolecule.active_alignments.Len())
 	}
 	if *debugPrintMove {
-		fmt.Println("  source mol mismatch locs ", sourceMolecule.mismatchLocs)
+		fmt.Fprintln(os.Stderr, "  source mol mismatch locs ", sourceMolecule.mismatchLocs)
 	}
 	if *debugPrintMove {
-		fmt.Println("  sink mol mismatch locs ", sinkMolecule.mismatchLocs)
+		fmt.Fprintln(os.Stderr, "  sink mol mismatch locs ", sinkMolecule.mismatchLocs)
 	}
 	for _, sourceAlignment := range sourceMolecule.active_alignments.Iter() {
 		if sourceAlignment.soft_clipped > 0 {
@@ -804,9 +710,9 @@ func fastScore(sourceMolecule, sinkMolecule *CandidateMolecule, log_unpaired_pro
 			}
 			alignment_change += sinkAlignment.log_alignment_probability - sourceAlignment.log_alignment_probability
 			if *debugPrintMove {
-				fmt.Println("\talignment ", sourceAlignment.pos, " to ", sinkAlignment.pos, " change score ", sinkAlignment.updated_log_alignment_probability-sourceAlignment.updated_log_alignment_probability)
-				fmt.Println("\t\tsource mismatches ", sourceAlignment.mismatchLocs)
-				fmt.Println("\t\tsink mismatches ", sinkAlignment.mismatchLocs)
+				fmt.Fprintln(os.Stderr, "\talignment ", sourceAlignment.pos, " to ", sinkAlignment.pos, " change score ", sinkAlignment.updated_log_alignment_probability-sourceAlignment.updated_log_alignment_probability)
+				fmt.Fprintln(os.Stderr, "\t\tsource mismatches ", sourceAlignment.mismatchLocs)
+				fmt.Fprintln(os.Stderr, "\t\tsink mismatches ", sinkAlignment.mismatchLocs)
 			}
 
 			for _, mismatchLoc := range sourceAlignment.mismatchLocs {
@@ -820,7 +726,7 @@ func fastScore(sourceMolecule, sinkMolecule *CandidateMolecule, log_unpaired_pro
 				if numMismatch-sourceMismatchRemoveCount[mismatchLoc] == 0 {
 					//alignment_change += 2.0
 					if *debugPrintMove {
-						fmt.Println("\t\tmismatch in source alignment ", mismatchLoc, "being removed")
+						fmt.Fprintln(os.Stderr, "\t\tmismatch in source alignment ", mismatchLoc, "being removed")
 					}
 				}
 			}
@@ -830,21 +736,21 @@ func fastScore(sourceMolecule, sinkMolecule *CandidateMolecule, log_unpaired_pro
 				if numMismatch == 0 && toAdd == 0 {
 					//alignment_change -= 2.0
 					if *debugPrintMove {
-						fmt.Println("\t\tmismatch in sink alignment ", mismatchLoc, "being added")
+						fmt.Fprintln(os.Stderr, "\t\tmismatch in sink alignment ", mismatchLoc, "being added")
 					}
 				}
 				sinkMismatchAddCount[mismatchLoc]++
 			}
-			if source_has_mate_pair && !sink_has_mate_pair && sourceMolecule.id != sinkMolecule.id {
 
+			if source_has_mate_pair && !sink_has_mate_pair && sourceMolecule.id != sinkMolecule.id {
 				alignment_change += log_unpaired_probability / 2.0
 				if *debugPrintMove {
-					fmt.Println("\t\tsource was paired and sink isnt so adding ", log_unpaired_probability/2.0)
+					fmt.Fprintln(os.Stderr, "\t\tsource was paired and sink isnt so adding ", log_unpaired_probability/2.0)
 				}
 			} else if !source_has_mate_pair && sink_has_mate_pair && sourceMolecule.id != sinkMolecule.id {
 				alignment_change -= log_unpaired_probability / 2.0
 				if *debugPrintMove {
-					fmt.Println("\t\tsink is paired and source wasnt so adding ", -log_unpaired_probability/2.0)
+					fmt.Fprintln(os.Stderr, "\t\tsink is paired and source wasnt so adding ", -log_unpaired_probability/2.0)
 				}
 			}
 			num++
@@ -856,7 +762,7 @@ func fastScore(sourceMolecule, sinkMolecule *CandidateMolecule, log_unpaired_pro
 	if !source_active_after && source_active_before && sourceMolecule.id != sinkMolecule.id {
 		change -= float64(sourceMolecule.best_alignment_for_read.Len()) * -0.5
 		if *debugPrintMove {
-			fmt.Println(">>> source killed adding ", -float64(sourceMolecule.best_alignment_for_read.Len())*-0.5)
+			fmt.Fprintln(os.Stderr, ">>> source killed adding ", -float64(sourceMolecule.best_alignment_for_read.Len())*-0.5)
 		}
 	}
 	sink_active_before := isActiveMolecule(sinkMolecule, 0)
@@ -864,27 +770,27 @@ func fastScore(sourceMolecule, sinkMolecule *CandidateMolecule, log_unpaired_pro
 	if sink_active_after && !sink_active_before && sourceMolecule.id != sinkMolecule.id {
 		change += float64(sinkMolecule.best_alignment_for_read.Len()) * -0.5
 		if *debugPrintMove {
-			fmt.Println(">>> sink created adding ", float64(sinkMolecule.best_alignment_for_read.Len())*-0.5)
+			fmt.Fprintln(os.Stderr, ">>> sink created adding ", float64(sinkMolecule.best_alignment_for_read.Len())*-0.5)
 		}
 	}
 	if sourceMolecule.active_alignments.Len()-num == 0 && num > 0 && sourceMolecule.id != sinkMolecule.id {
 		change -= -3.0
 		if *debugPrintMove {
-			fmt.Println(">>>>>> adding 3")
+			fmt.Fprintln(os.Stderr, ">>>>>> adding 3")
 		}
 	}
 	if sinkMolecule.active_alignments.Len() == 0 && num > 0 && sourceMolecule.id != sinkMolecule.id {
 		change += -3.0
 		if *debugPrintMove {
-			fmt.Println(">>>>>> adding -3")
+			fmt.Fprintln(os.Stderr, ">>>>>> adding -3")
 		}
 	}
 	change += alignment_change
 	if *debugPrintMove {
-		fmt.Println("\t======= final alignment change ", alignment_change)
+		fmt.Fprintln(os.Stderr, "\t======= final alignment change ", alignment_change)
 	}
 	if *debugPrintMove {
-		fmt.Println("&&&&&&& final change ", change)
+		fmt.Fprintln(os.Stderr, "&&&&&&& final change ", change)
 	}
 	return change, Move{source: sourceMolecule, sink: sinkMolecule, toDelete: toDelete, toSet: toSet, num_moved: num, score_change: change, alignment_change: alignment_change}
 }
