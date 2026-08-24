@@ -82,7 +82,9 @@ func DoRFAForOneBarcode(work *WorkUnit,
 	if !worthRFA {
 		//estimateMapQualities(-1, alignments, nil, config.improper_penalty, stats)
 		estimateMapQualities(alignments, nil, config.improper_penalty)
-		markDuplicates(alignments)
+		if work.reads[0].Valid {
+			markDuplicates(alignments)
+		} // only check for dupes if the barcode is valid
 		CheckSplitReads(stashed_alignments, centromeres)
 		flushToChannel(alignments, out, contigs, debugtags)
 		ReturnBuffer(reads) // was inside BamThread after DoDumpToBam, move here
@@ -117,7 +119,7 @@ func DoRFAForOneBarcode(work *WorkUnit,
 
 // Was the deconv format super necessary?
 
-// Determine if there are enough reads (5) to run RFA
+// Determine if there are enough reads (3) to run RFA
 func worthRunningRFA(barcode_reads []fastqreader.FastQRecord, uniqueBarcode bool) bool {
 	if len(barcode_reads) == 0 || !uniqueBarcode {
 		return false
@@ -126,7 +128,7 @@ func worthRunningRFA(barcode_reads []fastqreader.FastQRecord, uniqueBarcode bool
 	//if len(bcParts) < 2 {
 	//	return false
 	//}
-	if len(barcode_reads) < 5 {
+	if len(barcode_reads) < 3 {
 		return false
 	}
 	return true
