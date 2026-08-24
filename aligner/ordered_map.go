@@ -3,19 +3,19 @@ package aligner
 type OrderedMap struct {
 	index         map[int]int //index of a key k
 	reverse_index []int       //key that lives at an index i
-	store         []interface{}
+	store         []any
 }
 
 func NewOrderedMap() *OrderedMap {
 	om := &OrderedMap{
 		index:         make(map[int]int),
 		reverse_index: []int{},
-		store:         make([]interface{}, 0),
+		store:         make([]any, 0),
 	}
 	return om
 }
 
-func (om *OrderedMap) Get(key int) interface{} {
+func (om *OrderedMap) Get(key int) any {
 	toRet, ok := om.index[key]
 	if ok {
 		return om.store[toRet]
@@ -23,7 +23,7 @@ func (om *OrderedMap) Get(key int) interface{} {
 	return nil
 }
 
-func (om *OrderedMap) Set(key int, val interface{}) {
+func (om *OrderedMap) Set(key int, val any) {
 	i, ok := om.index[key]
 	if ok {
 		om.store[i] = val
@@ -48,28 +48,28 @@ func (om *OrderedMap) Delete(key int) {
 	}
 }
 
-func FixGetForTypeAlignment(val interface{}) *Alignment {
+func FixGetForTypeAlignment(val any) *Alignment {
 	if val == nil {
 		return nil
 	}
 	return val.(*Alignment)
 }
 
-func FixGetForTypeOrderedMap(val interface{}) *OrderedMap {
+func FixGetForTypeOrderedMap(val any) *OrderedMap {
 	if val == nil {
 		return nil
 	}
 	return val.(*OrderedMap)
 }
 
-func FixGetForTypeOrderedAlignmentMap(val interface{}) *OrderedAlignmentMap {
+func FixGetForTypeOrderedAlignmentMap(val any) *OrderedAlignmentMap {
 	if val == nil {
 		return nil
 	}
 	return val.(*OrderedAlignmentMap)
 }
 
-func (om *OrderedMap) Iter() []interface{} {
+func (om *OrderedMap) Iter() []any {
 	return om.store
 }
 
