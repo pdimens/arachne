@@ -71,7 +71,9 @@ func buildRecord(aln, primary *Alignment, debugTags *bool, contigs map[string]*s
 		if primary.mate_alignment.pos == -1 {
 			rec.MateRef = nil
 			rec.TempLen = 0
-		} else if aln == primary {
+		} else if aln == primary && aln.pos != -1 {
+			// aln.pos == -1 (unmapped, possibly just demoted above) would make
+			// mate.aend - aln.pos equal the mate's coordinate on the contig.
 			if aln.contig == aln.mate_alignment.contig && (primary.is_proper || primary.mate_alignment.score-17 >= 19) {
 				if aln.reversed {
 					rec.TempLen = -int(aln.aend - aln.mate_alignment.pos)
