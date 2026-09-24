@@ -47,6 +47,14 @@ var alignCmd = &cobra.Command{
 	RunE: arachneAlign,
 }
 
+// normalizeImproperPairPenalty ensures the improper-pair penalty is always
+// applied as a penalty, never a bonus. aligner.scoreAlignment() *adds* this
+// value to the pair score, so it must be <= 0 regardless of the sign the
+// user passed on the command line.
+func normalizeImproperPairPenalty(v float64) float64 {
+	return -math.Abs(v)
+}
+
 func init() {
 	rootCmd.AddCommand(alignCmd)
 
@@ -97,9 +105,7 @@ func arachneAlign(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	// scoreAlignment() *adds* this value to the pair score, so it must be <= 0.
-	// A positive value would reward improper pairs instead of penalizing them.
-	improperPairPenalty = -math.Abs(improperPairPenalty)
+	improperPairPenalty = normalizeImproperPairPenalty(improperPairPenalty)
 
 	comments, err := cmd.Flags().GetBool("comments")
 	if err != nil {
