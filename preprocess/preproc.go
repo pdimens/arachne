@@ -21,7 +21,7 @@ func Preprocess(threads int, prefix, r1Path, r2Path string) error {
 		return fmt.Errorf("creating output directory: %w", err)
 	}
 	// SAM header written as literal text; samtools sort receives SAM on stdin.
-	var samHeader string = "@HD	VN:1.6	SO:unsorted	GO:query\n@SQ	SN:*	LN:1"
+	var samHeader string = "@HD	VN:1.6	SO:unsorted	GO:query\n@SQ	SN:*	LN:1\n"
 
 	var wg sync.WaitGroup
 	errCh := make(chan error, 10)
@@ -114,6 +114,8 @@ func Preprocess(threads int, prefix, r1Path, r2Path string) error {
 	//----- process sorted BAM records-----------------
 	wg.Go(
 		func() {
+			// on any early return keep draining samtools so it (and the writer goroutine) can't block on a full pipe
+			defer io.Copy(io.Discard, sortOut)
 			samReader, err := bam.NewReader(sortOut, threads/2)
 			if err != nil {
 				errCh <- fmt.Errorf("creating BAM reader: %w", err)
@@ -125,6 +127,7 @@ func Preprocess(threads int, prefix, r1Path, r2Path string) error {
 			r1Writer, err := xopen.Wopen(r1WritePath)
 			if err != nil {
 				errCh <- fmt.Errorf("opening %s: %w", r1WritePath, err)
+				return
 			}
 			defer r1Writer.Close()
 
@@ -132,6 +135,7 @@ func Preprocess(threads int, prefix, r1Path, r2Path string) error {
 			r2Writer, err := xopen.Wopen(r2WritePath)
 			if err != nil {
 				errCh <- fmt.Errorf("opening %s: %w", r2WritePath, err)
+				return
 			}
 			defer r2Writer.Close()
 
