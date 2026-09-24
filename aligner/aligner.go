@@ -993,6 +993,16 @@ func tagBestAlignments(alignments [][]*Alignment) [][]*Alignment {
 	return positions
 }
 
+// reverseStrandMismatchRefPos converts a mismatch found at refSeqOffset+match
+// within a reverse-strand alignment's (reverse-complemented) reference slice
+// into the corresponding forward-strand reference coordinate.
+//
+// refEnd is the exclusive end of the reference slice, so refSeq[i]
+// corresponds to forward coordinate refEnd-1-i.
+func reverseStrandMismatchRefPos(refEnd int64, refSeqOffset, match int) int {
+	return int(refEnd) - 1 - (refSeqOffset + match)
+}
+
 // returns a map from read id to a map of
 func GetAlignments(ref *gobwa.GoBwaReference, settings *gobwa.GoBwaSettings, barcode_chains [][]ChainedHit, delta int, arena *gobwa.Arena) ([][]*Alignment, [][]*Alignment) {
 
@@ -1054,7 +1064,7 @@ func GetAlignments(ref *gobwa.GoBwaReference, settings *gobwa.GoBwaSettings, bar
 						}
 						if refSeqOffset+match < len(refSeq) && readOffset+match < len(readSeq) && refSeq[refSeqOffset+match] != readSeq[readOffset+match] {
 							if alignment.Reversed {
-								mismatchLocs = append(mismatchLocs, int(refEnd)-(refSeqOffset+match))
+								mismatchLocs = append(mismatchLocs, reverseStrandMismatchRefPos(refEnd, refSeqOffset, match))
 							} else {
 								mismatchLocs = append(mismatchLocs, refSeqOffset+int(refStart)+match)
 							}
