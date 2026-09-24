@@ -4,6 +4,7 @@ package cmd
 import (
 	"arachne/aligner"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"time"
@@ -96,9 +97,9 @@ func arachneAlign(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	if improperPairPenalty < 0.0 {
-		improperPairPenalty *= -1.0
-	}
+	// scoreAlignment() *adds* this value to the pair score, so it must be <= 0.
+	// A positive value would reward improper pairs instead of penalizing them.
+	improperPairPenalty = -math.Abs(improperPairPenalty)
 
 	comments, err := cmd.Flags().GetBool("comments")
 	if err != nil {
