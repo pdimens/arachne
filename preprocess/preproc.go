@@ -150,9 +150,13 @@ func Preprocess(threads int, prefix, r1Path, r2Path string) error {
 					return
 				}
 				if rec.Flags&sam.Read1 != 0 {
-					Sam2FQ(r1Writer, rec, _mark_forward)
+					err = Sam2FQ(r1Writer, rec, _mark_forward)
 				} else {
-					Sam2FQ(r2Writer, rec, _mark_reverse)
+					err = Sam2FQ(r2Writer, rec, _mark_reverse)
+				}
+				if err != nil {
+					errCh <- fmt.Errorf("writing FASTQ output: %w", err)
+					return
 				}
 			}
 		})

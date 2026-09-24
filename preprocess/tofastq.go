@@ -2,7 +2,6 @@ package preprocess
 
 import (
 	"github.com/biogo/hts/sam"
-	"github.com/shenwei356/bio/seqio/fastx"
 	"github.com/shenwei356/xopen"
 )
 
@@ -14,39 +13,41 @@ const _mark_plus byte = '+'
 var _mark_forward = []byte{'/', '1'}
 var _mark_reverse = []byte{'/', '2'}
 
-// Write a fastx.Record to an open xopen.Writer. Provide the proper
-// /1 or /2 as a []byte for fr.
-func WriteFQ(outfh *xopen.Writer, record *fastx.Record, fr []byte) error {
-	var err error
-	err = outfh.WriteByte(_mark_prefix)
-	_, err = outfh.Write(record.ID)
-	_, err = outfh.Write(fr)
-	err = outfh.WriteByte(_mark_tab)
-	_, err = outfh.Write(record.Desc)
-	err = outfh.WriteByte(_mark_newline)
-	_, err = outfh.Write(record.Seq.Seq)
-	err = outfh.WriteByte(_mark_newline)
-	err = outfh.WriteByte(_mark_plus)
-	err = outfh.WriteByte(_mark_newline)
-	_, err = outfh.Write(record.Seq.Qual)
-	err = outfh.WriteByte(_mark_newline)
-	return err
-}
-
-// Write a SAM record as a FASTQ one.
+// Write a SAM record as a FASTQ one. Returns the first write error
+// encountered, if any; once a write fails, no further writes are attempted.
 func Sam2FQ(outfh *xopen.Writer, record *sam.Record, fr []byte) error {
-	err := outfh.WriteByte(_mark_prefix)
-	outfh.WriteString(record.Name)
-	outfh.Write(fr)
-	for _, aux := range record.AuxFields {
-		outfh.WriteByte(_mark_tab)
-		outfh.WriteString(aux.String())
+	var err error
+	write := func(b []byte) {
+		if err != nil {
+			return
+		}
+		_, err = outfh.Write(b)
 	}
-	outfh.WriteByte(_mark_newline)
-	outfh.Write(record.Seq.Expand())
-	outfh.WriteByte(_mark_newline)
-	outfh.WriteByte(_mark_plus)
-	outfh.WriteByte(_mark_newline)
+	writeByte := func(b byte) {
+		if err != nil {
+			return
+		}
+		err = outfh.WriteByte(b)
+	}
+	writeString := func(s string) {
+		if err != nil {
+			return
+		}
+		_, err = outfh.WriteString(s)
+	}
+
+	writeByte(_mark_prefix)
+	writeString(record.Name)
+	write(fr)
+	for _, aux := range record.AuxFields {
+		writeByte(_mark_tab)
+		writeString(aux.String())
+	}
+	writeByte(_mark_newline)
+	write(record.Seq.Expand())
+	writeByte(_mark_newline)
+	writeByte(_mark_plus)
+	writeByte(_mark_newline)
 	for _, q := range record.Qual {
 		// Convert the raw Phred score (e.g., 40) to its ASCII character (e.g., 'I') by adding the Phred+33 offset.
 		asciiChar := byte(q) + 33
@@ -56,8 +57,8 @@ func Sam2FQ(outfh *xopen.Writer, record *sam.Record, fr []byte) error {
 		} else if asciiChar > 126 {
 			asciiChar = 126
 		}
-		err = outfh.WriteByte(asciiChar)
+		writeByte(asciiChar)
 	}
-	outfh.WriteByte(_mark_newline)
+	writeByte(_mark_newline)
 	return err
 }
