@@ -36,6 +36,10 @@ jobs:
           activate-environment: false
       - name: Build arachne
         run: pixi run build
+      - name: Run Go unit tests
+        run: |
+          export CGO_LDFLAGS="-L$(pwd)/gobwa/bwa"
+          pixi run go test ./...
       - name: Create test data
         run: test/data.py
       - name: Fails on no samtools
