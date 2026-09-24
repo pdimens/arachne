@@ -23,6 +23,12 @@ func markDuplicates(alignments [][]*Alignment) {
 			if !alignment.active {
 				continue
 			}
+			// Unmapped reads (no BWA hit at all) all share pos=-1 and
+			// contig="", so treating them as duplicate-eligible would mark
+			// unrelated unmapped reads as duplicates of one another.
+			if alignment.pos == -1 {
+				continue
+			}
 			readTuple := readDupTuple{
 				read1:      alignment.read1,
 				reversed:   alignment.reversed,
