@@ -118,3 +118,24 @@ func isPair(read1, read2 *Alignment) bool {
 	//}
 	return dist >= int64(-35) && dist < int64(750)
 }
+
+// refreshActiveMatePairing keeps mate_alignment and is_proper in sync with
+// which alignments are currently active for a read and its mate.
+//
+// RFA (molecule inference) can move a read to a different alignment
+// (acceptMove, see rfa.go) without touching either field on the alignment
+// it moves to, so both must be recomputed here against whichever alignment
+// is now active rather than trusting the pairing recorded when
+// tagBestAlignments originally chose a read's best alignment. isPair is
+// symmetric, so both alignments always end up with the same is_proper
+// value. A no-op unless both alignments are active.
+func refreshActiveMatePairing(alignment, mateAlignment *Alignment) {
+	if !alignment.active || !mateAlignment.active {
+		return
+	}
+	alignment.mate_alignment = mateAlignment
+	mateAlignment.mate_alignment = alignment
+	proper := isPair(alignment, mateAlignment)
+	alignment.is_proper = proper
+	mateAlignment.is_proper = proper
+}

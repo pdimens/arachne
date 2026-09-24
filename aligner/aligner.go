@@ -488,10 +488,7 @@ func estimateMapQualities(alignments [][]*Alignment, candidate_molecules []*Cand
 		for _, alignment := range alignmentArray {
 			mateArray := alignments[alignment.mate_id]
 			for _, mateAlignment := range mateArray {
-				if alignment.active && mateAlignment.active {
-					alignment.mate_alignment = mateAlignment
-					mateAlignment.mate_alignment = alignment
-				}
+				refreshActiveMatePairing(alignment, mateAlignment)
 			}
 		}
 
