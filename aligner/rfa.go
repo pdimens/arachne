@@ -52,16 +52,15 @@ func DoRFAForOneBarcode(work *WorkUnit,
 	contigs map[string]*sam.Reference,
 	debugtags *bool,
 	reads []fastqreader.FastQRecord) {
-	var worthRFA bool
 	//TODO STATS ARENT USED ANYWHERE?
 	stats.total = 0
 	stats.mapq = 0
 	//barcode_num := work.barcodenum
 	barcode_reads := work.reads
 	arena := gobwa.NewArena()
-	if !work.reads[0].Valid {
-		worthRFA = worthRunningRFA(barcode_reads, work.unique_barcode)
-	}
+	// worthRunningRFA already requires a valid (unique) barcode and >= 3 read pairs.
+	// Previously this was wrapped in `if !Valid`, which made it always false.
+	worthRFA := worthRunningRFA(barcode_reads, work.unique_barcode)
 	barcode_chains, barcode := GetChains(ref, settings, barcode_reads, arena, 25)
 	alignments, stashed_alignments := GetAlignments(ref, settings, barcode_chains, 17, arena)
 	//stashed_alignments = StashAlignments(alignments);
