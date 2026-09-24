@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark">
     <meta name="turbo-root" content="/arachne">
-    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="4.6.0.836836571354">
+    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="4.6.0.843588360029">
 
     <!-- See retype.com -->
     <meta name="generator" content="Retype 4.6.0">
@@ -39,12 +39,12 @@
     <script data-cfasync="false">(function(){var cl=document.documentElement.classList,ls=localStorage.getItem("retype_scheme"),hd=cl.contains("dark"),hl=cl.contains("light"),wm=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches;if(ls==="dark"||(!ls&&wm&&!hd&&!hl)){cl.remove("light");cl.add("dark")}else if(ls==="light"||(!ls&&!wm&&!hd&&!hl)){cl.remove("dark");cl.add("light")}})();</script>
 
     <link id="retype-favicon" rel="icon" href="../static/favicon.png" />
-    <link href="../resources/css/retype.css?v=4.6.0.836836571354" rel="stylesheet">
+    <link href="../resources/css/retype.css?v=4.6.0.843588360029" rel="stylesheet">
 
-    <script data-cfasync="false" src="../resources/js/config.js?v=4.6.0.836836571354" data-turbo-eval="false" defer></script>
+    <script data-cfasync="false" src="../resources/js/config.js?v=4.6.0.843588360029" data-turbo-eval="false" defer></script>
     <script data-cfasync="false" src="../resources/js/retype.js?v=4.6.0" data-turbo-eval="false" defer></script>
-    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=4.6.0.836836571354" data-turbo-eval="false" defer></script>
-    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=4.6.0.836836571354" defer></script>
+    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=4.6.0.843588360029" data-turbo-eval="false" defer></script>
+    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=4.6.0.843588360029" defer></script>
 </head>
 <body>
     <div id="retype-app" class="relative text-base antialiased text-base-text bg-base-bg font-body">
@@ -315,7 +315,7 @@ you are ready to align your sample onto the reference. The command arguments fol
 <retype-table copy-text="|Long| Short| Default| Description |
 |:----------|:----------|:----------|:----------|
 | `centromeres` | `c` |  | TSV file describing known centromeres [!badge variant=&quot;info&quot; text=&quot;under construction&quot;] |
-| `improper-pair-penalty` | `i` | 4.0 | Penalty for improper read pair |
+| `improper-pair-penalty` | `i` | 4.0 | Penalty for improper read pair (magnitude; always applied as a penalty regardless of sign) |
 | `infer-distance` | `d` | `50000` | Distance at which to consider reads with the same barcode to originate from different molecules [!badge variant=&quot;info&quot; text=&quot;under construction&quot;]|
 | `sample-id` | `s` | | Sample name [!badge variant=&quot;info&quot; text=&quot;required&quot;]|
 | `threads` | `t` | `4` | Threads to use |
@@ -343,7 +343,7 @@ you are ready to align your sample onto the reference. The command arguments fol
 <td style="text-align: left;" class="whitespace-nowrap"><code translate="no" v-pre>improper-pair-penalty</code></td>
 <td style="text-align: left;" class="whitespace-nowrap"><code translate="no" v-pre>i</code></td>
 <td style="text-align: left;" class="whitespace-nowrap">4.0</td>
-<td style="text-align: left;">Penalty for improper read pair</td>
+<td style="text-align: left;">Penalty for improper read pair (magnitude; always applied as a penalty regardless of sign)</td>
 </tr>
 <tr>
 <td style="text-align: left;" class="whitespace-nowrap"><code translate="no" v-pre>infer-distance</code></td>
