@@ -1054,7 +1054,8 @@ func GetAlignments(ref *gobwa.GoBwaReference, settings *gobwa.GoBwaSettings, bar
 						}
 						if refSeqOffset+match < len(refSeq) && readOffset+match < len(readSeq) && refSeq[refSeqOffset+match] != readSeq[readOffset+match] {
 							if alignment.Reversed {
-								mismatchLocs = append(mismatchLocs, int(refEnd)-(refSeqOffset+match))
+								// refEnd is exclusive, refSeq is reverse-complemented: refSeq[i] is ref[refEnd-1-i]
+								mismatchLocs = append(mismatchLocs, int(refEnd)-1-(refSeqOffset+match))
 							} else {
 								mismatchLocs = append(mismatchLocs, refSeqOffset+int(refStart)+match)
 							}
