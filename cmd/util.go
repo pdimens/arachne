@@ -23,6 +23,9 @@ func fileExists(filename string) error {
 	if os.IsNotExist(err) {
 		return fmt.Errorf("\033[33;1m%s\033[0m does not exist", filename)
 	}
+	if err != nil {
+		return fmt.Errorf("\033[33;1m%s\033[0m: %w", filename, err)
+	}
 	if info.IsDir() {
 		return fmt.Errorf("\033[33;1m%s\033[0m is a directory", filename)
 	}
