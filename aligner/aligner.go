@@ -1125,7 +1125,7 @@ func GetAlignments(ref *gobwa.GoBwaReference, settings *gobwa.GoBwaSettings, bar
 				read_id:                     chain.read_id,
 				mate_id:                     chain.mate_id,
 				reversed:                    alignment.Reversed,
-				read_group:                  &chain.fastq.ReadGroupId,
+				read_group:                  sample_id, // matches the @RG ID written by buildHeader
 				sum_move_probability_change: 1.0,
 				molecule_confidence:         0.00001875, //0.00075 * 0.025
 				duplicate:                   false,

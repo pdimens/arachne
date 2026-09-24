@@ -12,7 +12,7 @@ func fixCigar(in []uint32) []uint32 {
 	var out = make([]uint32, len(in))
 	for i := 0; i < len(in)/2; i++ {
 		idx := i * 2
-		if int(in[idx]) > len(cigartable) {
+		if int(in[idx]) >= len(cigartable) {
 			log.Printf("BAMOP: %v", in[idx])
 			panic("ILLEGAL CIGAR OP")
 		}
@@ -228,7 +228,7 @@ func buildRecord(aln, primary *Alignment, debugTags *bool, contigs map[string]*s
 		sndBuf := make([]byte, 0, len(secondaryAlignment.contig)+len(cigarBuf)+24)
 		sndBuf = append(sndBuf, secondaryAlignment.contig...)
 		sndBuf = append(sndBuf, ',')
-		sndBuf = strconv.AppendInt(sndBuf, int64(secondaryAlignment.pos), 10)
+		sndBuf = strconv.AppendInt(sndBuf, int64(secondaryAlignment.pos)+1, 10) // SA POS is 1-based
 		sndBuf = append(sndBuf, ',', strandByte, ',')
 		sndBuf = append(sndBuf, cigarBuf...)
 		sndBuf = append(sndBuf, ',')
