@@ -123,7 +123,7 @@ func GetSplitAlignment(primary *Alignment, alignments []*Alignment, centromeres 
 		start = centromereRegion.start
 		end = centromereRegion.end
 	}
-	if c.pos > int64(start) && c.pos <= int64(end) {
+	if c.pos >= int64(start) && c.pos < int64(end) {
 		mapq = 0.0
 	}
 

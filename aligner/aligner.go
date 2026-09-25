@@ -573,7 +573,7 @@ func estimateMapQualities(alignments [][]*Alignment, candidate_molecules []*Cand
 				start = centromereRegion.start
 				end = centromereRegion.end
 			}
-			if alignment.pos > int64(start) && alignment.pos <= int64(end) {
+			if alignment.pos >= int64(start) && alignment.pos < int64(end) {
 				mapq = 0.0
 			}
 			alignment.mapq = int(mapq)
