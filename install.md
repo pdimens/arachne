@@ -38,8 +38,6 @@ pixi run build
 ```
 ===
 
+This results in the compiled executable binaries `bin/arachne` and `bin/bwa`. You can use them there
+or copy them into another path.
 >>>
-
-The compiled and executable `arachne` and `bwa` binaries are now in `bin/`, you can use them there
-or copy them into another path. A conda installation will be made available
-when the project matures to a stable release.
