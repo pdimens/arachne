@@ -20,7 +20,7 @@ var alignCmd = &cobra.Command{
 	Long: "Align (short-read) linked-read sequences to a reference. " +
 		"Inputs must be in 'standard' format (use \033[4;34mdjinn\033[0m) and sorted by barcode (use \033[4;34marachne prep\033[0m). " +
 		"Output is uncompressed BAM.\n\n" +
-		"A --centromeres file takes is tab-delimited BED format <chrname> <start> <stop>. Sequences that align to centromeric regions will have " +
+		"A --centromeres file is tab-delimited BED format <chrname> <start> <stop>. Sequences that align to centromeric regions will have " +
 		"their MAPQ set to 0, as mapping to centromeric regions is unreliable.\n" +
 		"Documentation: https://pdimens.github.io/arachne",
 	DisableFlagsInUseLine: true,
@@ -64,7 +64,7 @@ func init() {
 	alignCmd.Flags().StringP("centromeres", "c", "", "BED file describing known centromeres (optional, see --help)")
 	alignCmd.Flags().BoolP("comments", "C", false, "Append comments (non-BX/VX) to SAM output")
 	alignCmd.Flags().Float64P("improper-pair-penalty", "i", 4.0, "Penalty for improper pair")
-	alignCmd.Flags().Int64P("infer-distance", "d", 50000, "Distance at which to consider reads with the same barcode to originate from different molecules")
+	alignCmd.Flags().Int64P("infer-distance", "d", 50000, "Distance at which to consider reads with the same barcode to be from different molecules")
 	alignCmd.Flags().StringP("sample-id", "s", "", "Sample name (required)")
 	if err := alignCmd.MarkFlagRequired("sample-id"); err != nil {
 		panic(err)

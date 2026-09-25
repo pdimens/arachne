@@ -17,6 +17,7 @@ build = "make clean; make"
 
 [activation.env]
 CGO_ENABLED = "1"
+CC = "gcc"
 
 [feature.test.dependencies]
 mimick = "3.*"
