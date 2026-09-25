@@ -566,14 +566,7 @@ func estimateMapQualities(alignments [][]*Alignment, candidate_molecules []*Cand
 			mapq := -10.0 * math.Log10(1.0-math.Exp(score*math.Ln10)/total_probability)
 			moleculeMapq := -10.0 * math.Log10(1.0-(1.0/alignment.sum_move_probability_change)) // method 2: molecule move probability normalization
 			mapq = math.Min(math.Min(mapq, moleculeMapq), 60.0)                                 // cap at q60
-			// centromeres
-			start := -1
-			end := -1
-			if centromereRegion, ok := centromeres[alignment.contig]; ok {
-				start = centromereRegion.start
-				end = centromereRegion.end
-			}
-			if alignment.pos >= int64(start) && alignment.pos < int64(end) {
+			if inCentromere(centromeres, alignment.contig, alignment.pos) {
 				mapq = 0.0
 			}
 			alignment.mapq = int(mapq)
