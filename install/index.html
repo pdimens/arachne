@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark">
     <meta name="turbo-root" content="/arachne">
-    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="4.6.0.843667425339">
+    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="4.6.0.843676006640">
 
     <!-- See retype.com -->
     <meta name="generator" content="Retype 4.6.0">
@@ -13,7 +13,7 @@
     <!-- Primary Meta Tags -->
     <title>Install arachne | Arachne</title>
     <meta name="title" content="Install arachne | Arachne">
-    <meta name="description" content="The inclusion of --recursive is important to make sure bwa and jemalloc dependencies are cloned as well.">
+    <meta name="description" content="This assumes an environment has already been created with conda create">
 
     <!-- Canonical -->
     <link rel="canonical" href="https://pdimens.github.io/arachne/install/">
@@ -23,7 +23,7 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://pdimens.github.io/arachne/install/">
     <meta property="og:title" content="Install arachne | Arachne">
-    <meta property="og:description" content="The inclusion of --recursive is important to make sure bwa and jemalloc dependencies are cloned as well.">
+    <meta property="og:description" content="This assumes an environment has already been created with conda create">
     <meta property="og:site_name" content="">
     <meta property="og:locale" content="en_US">
 
@@ -31,7 +31,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:url" content="https://pdimens.github.io/arachne/install/">
     <meta name="twitter:title" content="Install arachne | Arachne">
-    <meta name="twitter:description" content="The inclusion of --recursive is important to make sure bwa and jemalloc dependencies are cloned as well.">
+    <meta name="twitter:description" content="This assumes an environment has already been created with conda create">
 
     <!-- Alternate Markdown -->
     <link rel="alternate" type="text/markdown" href="https://pdimens.github.io/arachne/install.md">
@@ -39,12 +39,12 @@
     <script data-cfasync="false">(function(){var cl=document.documentElement.classList,ls=localStorage.getItem("retype_scheme"),hd=cl.contains("dark"),hl=cl.contains("light"),wm=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches;if(ls==="dark"||(!ls&&wm&&!hd&&!hl)){cl.remove("light");cl.add("dark")}else if(ls==="light"||(!ls&&!wm&&!hd&&!hl)){cl.remove("dark");cl.add("light")}})();</script>
 
     <link id="retype-favicon" rel="icon" href="../static/favicon.png" />
-    <link href="../resources/css/retype.css?v=4.6.0.843667425339" rel="stylesheet">
+    <link href="../resources/css/retype.css?v=4.6.0.843676006640" rel="stylesheet">
 
-    <script data-cfasync="false" src="../resources/js/config.js?v=4.6.0.843667425339" data-turbo-eval="false" defer></script>
+    <script data-cfasync="false" src="../resources/js/config.js?v=4.6.0.843676006640" data-turbo-eval="false" defer></script>
     <script data-cfasync="false" src="../resources/js/retype.js?v=4.6.0" data-turbo-eval="false" defer></script>
-    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=4.6.0.843667425339" data-turbo-eval="false" defer></script>
-    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=4.6.0.843667425339" defer></script>
+    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=4.6.0.843676006640" data-turbo-eval="false" defer></script>
+    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=4.6.0.843676006640" defer></script>
 </head>
 <body>
     <div id="retype-app" class="relative text-base antialiased text-base-text bg-base-bg font-body">
@@ -231,13 +231,27 @@
 
                 <!-- Page content  -->
 <h1 id="install-arachne">Install arachne</h1>
+<h2 id="with-conda">With <code translate="no" v-pre>conda</code>:</h2>
+<p>This assumes an environment has already been created with <code translate="no" v-pre>conda create</code></p>
+<blockquote>
+<p>for <code translate="no" v-pre>mamba</code>: just swap <code translate="no" v-pre>conda</code> with <code translate="no" v-pre>mamba</code></p>
+</blockquote>
+<div id="with-conda-code-1" class="codeblock-wrapper"><doc-codeblock>
+<pre translate="no" class="language-bash"><code v-pre class="language-bash">conda install -c bioconda -c conda-forge bioconda::arachne</code></pre>
+</doc-codeblock></div>
+<h2 id="with-pixi">With <code translate="no" v-pre>pixi</code></h2>
+<p>This assumes a pixi project was already created with <code translate="no" v-pre>pixi init</code> and has the <code translate="no" v-pre>conda-forge</code> and <code translate="no" v-pre>bioconda</code> channels added</p>
+<div id="with-pixi-code-1" class="codeblock-wrapper"><doc-codeblock>
+<pre translate="no" class="language-bash"><code v-pre class="language-bash">pixi add arachne</code></pre>
+</doc-codeblock></div>
+<h2 id="manually-compile">Manually Compile</h2>
 <doc-steps>
    <doc-step id="clone-the-arachne-repository" step-number="1">
       <template #title>Clone the arachne repository</template>
 <div class="codeblock-wrapper"><doc-codeblock>
 <pre translate="no" class="language-bash"><code v-pre class="language-bash">git clone --recursive https://github.com/pdimens/arachne.git</code></pre>
 </doc-codeblock></div>
-<p>The inclusion of <code translate="no" v-pre>--recursive</code> is important to make sure <code translate="no" v-pre>bwa</code> and <code translate="no" v-pre>jemalloc</code> dependencies are cloned as well.</p>
+<p>The inclusion of <code translate="no" v-pre>--recursive</code> is important to make sure the <code translate="no" v-pre>bwa</code> dependency is cloned as well.</p>
    </doc-step>
    <doc-step id="execute-the-makefile" step-number="2">
       <template #title>Execute the makefile</template>
@@ -246,11 +260,8 @@
        <template #title>Direct compilation</template>
 <p>Direct compilation requires a few dependencies in your software environment:</p>
 <ul>
-<li>autoconf</li>
-<li>automake</li>
-<li>c-compiler</li>
-<li>go &gt;= 1.9.2</li>
-<li>zlib</li>
+<li>Go</li>
+<li>jemalloc</li>
 </ul>
 <div class="codeblock-wrapper"><doc-codeblock>
 <pre translate="no" class="language-bash"><code v-pre class="language-bash">cd arachne

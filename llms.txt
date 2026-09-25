@@ -1,4 +1,4 @@
 ﻿#  | Arachne
 
-- [Install arachne](https://pdimens.github.io/arachne/install.md): The inclusion of --recursive is important to make sure bwa and jemalloc dependencies are cloned as well.
+- [Install arachne](https://pdimens.github.io/arachne/install.md): This assumes an environment has already been created with conda create
 - [Using arachne](https://pdimens.github.io/arachne/usage.md): Use --help or -h, or call arachne (or its subcommands) without arguments to call up the docstring.

@@ -1,17 +1,28 @@
+## With `conda`:
+This assumes an environment has already been created with `conda create`
+> for `mamba`: just swap `conda` with `mamba`
+```bash
+conda install -c bioconda -c conda-forge bioconda::arachne
+```
+
+## With `pixi`
+This assumes a pixi project was already created with `pixi init` and has the `conda-forge` and `bioconda` channels added
+```bash
+pixi add arachne
+```
+
+## Manually Compile
 >>> Clone the arachne repository
 ```bash
 git clone --recursive https://github.com/pdimens/arachne.git
 ```
-The inclusion of `--recursive` is important to make sure `bwa` and `jemalloc` dependencies are cloned as well. 
+The inclusion of `--recursive` is important to make sure the `bwa` dependency is cloned as well. 
 
 >>> Execute the makefile
 === Direct compilation
 Direct compilation requires a few dependencies in your software environment:
-- autoconf
-- automake
-- c-compiler
-- go >= 1.9.2
-- zlib
+- Go
+- jemalloc
 
 ```bash
 cd arachne
