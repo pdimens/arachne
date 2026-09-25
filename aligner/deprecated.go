@@ -1,5 +1,7 @@
 package aligner
 
+/*
+
 import (
 	"fmt"
 	"strings"

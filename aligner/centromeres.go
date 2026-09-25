@@ -22,19 +22,31 @@ func loadCentromeres(filename *string) map[string]Region {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
-		if strings.HasPrefix(line, "CEN") {
+		switch {
+		case line == "":
+			continue
+		case strings.HasPrefix(line, "track"):
+			continue
+		case strings.HasPrefix(line, "browser"):
+			continue
+		case strings.HasPrefix(line, "#"):
+			continue
+		default:
 			tokens := strings.Split(line, "\t")
-			if len(tokens) < 4 {
+			if len(tokens) < 3 {
 				continue
 			}
-			chrom := tokens[1]
-			start, err := strconv.Atoi(tokens[2])
+			chrom := tokens[0]
+			start, err := strconv.Atoi(tokens[1])
 			if err != nil {
 				continue
 			}
-			end, err := strconv.Atoi(tokens[3])
+			end, err := strconv.Atoi(tokens[2])
 			if err != nil {
 				continue
+			}
+			if start > end {
+				log.Fatalf("A row in the centromeres file has start > end:\n%v\t%v\t%v", chrom, start, end)
 			}
 			toRet[chrom] = Region{start: start, end: end}
 		}

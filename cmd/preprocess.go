@@ -13,12 +13,13 @@ import (
 // preCmd represents the preprocess command
 var prep = &cobra.Command{
 	Use:     "prep [-t] PREFIX R1.fq R2.fq",
-	Short:   "Format FASTQ files for alignment \033[94;1m[start here]\033[0m",
+	Short:   "Sort FASTQ files by BX barcode",
 	Example: "prep -t 12 sample1 smp1.R1.fq.gz smp1.R2.fq.gz",
 	Long: "Sorts a pair of \"standard\"-format (\033[94;1mBX:Z\033[0m and \033[94;1mVX:i\033[0m tags) linked-read FASTQ files " +
-		"by barcode, as required by the arachne aligner. Input must already be in standard format; " +
-		"use \033[94;1mdjinn\033[0m to convert haplotagging, stLFR, or TELLseq FASTQ data first. " +
-		"\033[4;32mRequires samtools to be available in your PATH.\033[0m",
+		"by barcode, as required by the arachne aligner. " +
+		"Use \033[94;1mdjinn\033[0m to convert haplotagging, stLFR, or TELLseq FASTQ into standard format if necessary. " +
+		"Output is PREFIX.arachne.R[1|2].fq.gz. " +
+		"\033[4;32mRequires samtools to be available on your PATH\033[0m.",
 	DisableFlagsInUseLine: true,
 	SilenceUsage:          true,
 	Args: func(cmd *cobra.Command, args []string) error {

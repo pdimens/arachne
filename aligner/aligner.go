@@ -130,7 +130,7 @@ func Arachne(args ArachneArgs) {
 	threads = args.Threads
 	debugTags = args.DebugTags
 	reference = args.Reference
-	centromeres = loadCentromeres(args.Centromeres)
+	centromeres loadCentromeres(args.Centromeres)
 	inferDistance = args.InferDistance
 	AddComments = args.Comments
 	verbose = args.Verbose

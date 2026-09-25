@@ -14,7 +14,8 @@ var rootCmd = &cobra.Command{
 	Version: aligner.VERSION,
 	Short:   "A linked-read sequence aligner",
 	Long: "Arachne linked-read aligner\n\nArachne is a successor to 10X Genomics' Lariat aligner that " +
-		"is compatible with all current linked-read technologies (e.g. haplotagging, stLFR, TELLseq), provided they are preprocessed correctly.",
+		"is compatible with all linked-read technologies (e.g. haplotagging, stLFR, TELLseq), provided they are in standard linked-read format. " +
+		"If input FASTQ are not sorted by BX-tagged barcode, start with \033[94;1marachne prep\033[0m, otherwise skip to \033[94;1mindex\033[0m then \033[94;1malign\033[0m.",
 }
 
 func init() {

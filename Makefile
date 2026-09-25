@@ -1,7 +1,6 @@
 export CGO_LDFLAGS = -L$(shell pwd)/gobwa/bwa
-#export GOPATH=$(shell pwd)
 
-VERSION=0.1
+VERSION=0.2
 
 all: arachne gobwa/bwa/libbwa.a gobwa/bwa/bwa
 
@@ -16,15 +15,7 @@ gobwa/bwa/libbwa.a gobwa/bwa/bwa &:
 	@echo "Building BWA"
 	$(MAKE) -j 4 -C gobwa/bwa libbwa.a bwa
 
-#jemalloc/Makefile:
-#	cd jemalloc && ./autogen.sh && \
-#	./configure --disable-shared --enable-static
-
-#jemalloc/lib/libjemalloc_pic.a: jemalloc/Makefile
-#	$(MAKE) -j 4 -C jemalloc build_lib_static
-
 clean:
 	@echo "Cleaning Build"
 	rm -Rf bin/
 	$(MAKE) -j 4 -C gobwa/bwa clean
-#	$(MAKE) -j 4 -C jemalloc distclean

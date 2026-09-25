@@ -16,16 +16,18 @@ import (
 var alignCmd = &cobra.Command{
 	Short:   "Align linked-read sequences to a reference",
 	Use:     "align [flags] --sample-id REF.fa R1.fq R2.fq",
-	Example: "arachne align -t 12 --sample-id sample1 ref.fa smp1.R1.fq.gz smp1.R2.fq.gz > smp1.sam",
-	Long: "Align (short-read) linked-read sequences to a reference. Use \033[4;34marachne prep\033[0m to format " +
-		"input FASTQ files for the aligner. Inputs must be sorted by barcode and in \"standard\" format, and can be Gzipped. " +
-		"See the documentation for more information: https://pdimens.github.io/arachne",
+	Example: "arachne align -t 12 --sample-id sample1 ref.fa smp1.R1.fq.gz smp1.R2.fq.gz > smp1.bam",
+	Long: "Align (short-read) linked-read sequences to a reference. " +
+		"Inputs must be in 'standard' format (use \033[4;34mdjinn\033[0m) and sorted by barcode (use \033[4;34marachne prep\033[0m). " +
+		"Output is uncompressed BAM.\n\n" +
+		"A --centromeres file takes is tab-delimited BED format <chrname> <start> <stop>. Sequences that align to centromeric regions will have " +
+		"their MAPQ set to 0, as mapping to centromeric regions is unreliable.\n" +
+		"Documentation: https://pdimens.github.io/arachne",
 	DisableFlagsInUseLine: true,
 	SilenceUsage:          true,
 	Args: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			fmt.Printf("%s", cmd.UsageString())
-			return fmt.Errorf("please provide inputs")
 		}
 		if err := cobra.ExactArgs(3)(cmd, args); err != nil {
 			return err
@@ -59,8 +61,8 @@ func init() {
 	rootCmd.AddCommand(alignCmd)
 
 	//---Command line arguments-------------
-	alignCmd.Flags().StringP("centromeres", "c", "", "TSV file describing known centromeres as CEN<chrname> <chrname> <start> <stop>")
-	alignCmd.Flags().BoolP("comments", "C", false, "Append comments to SAM output")
+	alignCmd.Flags().StringP("centromeres", "c", "", "BED file describing known centromeres (optional, see --help)")
+	alignCmd.Flags().BoolP("comments", "C", false, "Append comments (non-BX/VX) to SAM output")
 	alignCmd.Flags().Float64P("improper-pair-penalty", "i", 4.0, "Penalty for improper pair")
 	alignCmd.Flags().Int64P("infer-distance", "d", 50000, "Distance at which to consider reads with the same barcode to originate from different molecules")
 	alignCmd.Flags().StringP("sample-id", "s", "", "Sample name (required)")
