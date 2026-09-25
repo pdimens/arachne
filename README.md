@@ -96,7 +96,7 @@ For completeness, the 'standard' linked-read FASTQ format follows:
 ### Standard Records
 #### format
 ```
-@SEQID/1 BX:Z:BARCODE VX:i:0/1
+@SEQID/1 BX:Z:BARCODE VX:i:0
 ATGCGTA.......................
 +
 FFFFIII.......................
