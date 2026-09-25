@@ -17,7 +17,7 @@ theme:
     image-rounded: 0.75rem
     nav-item-text-stack: "#1e66f5"
 branding:
-  label: 0.1
+  label: 0.2
   logo: static/logo.png
   logoDark: static/logo_dark.png
   logoAlign: left
@@ -37,9 +37,9 @@ links:
     link: https://www.genomicsinnovation.cornell.edu/
     icon: https://raw.githubusercontent.com/pdimens/harpy/refs/heads/main/docs/static/biotech.png
     target: blank
-  - text: LASTQ Standard
-    link: https://pdimens.github.io/lastq/
-    icon: https://pdimens.github.io/lastq/img/logo.png
+  - text: BLink-Seq
+    link: https://blinkseq.github.io/
+    icon: https://blinkseq.github.io/_astro/logo.DGThwx8R_1NHPA4.webp
     target: blank
   - text: Source
     link: https://github.com/pdimens/arachne
@@ -55,7 +55,6 @@ exclude:
   - "fastqreader"
   - "fqsort"
   - "gobwa/"
-  - "jemalloc/"
   - "optimizer/"
   - "preprocess/"
   - "test/"
