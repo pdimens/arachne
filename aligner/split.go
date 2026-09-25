@@ -116,14 +116,7 @@ func GetSplitAlignment(primary *Alignment, alignments []*Alignment, centromeres 
 		mapq = float64(candidates[0].score)
 	}
 
-	centromereRegion, ok := centromeres[c.contig]
-	start := -1
-	end := -1
-	if ok {
-		start = centromereRegion.start
-		end = centromereRegion.end
-	}
-	if c.pos >= int64(start) && c.pos < int64(end) {
+	if inCentromere(centromeres, c.contig, c.pos) {
 		mapq = 0.0
 	}
 

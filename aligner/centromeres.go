@@ -56,3 +56,14 @@ func loadCentromeres(filename *string) map[string]Region {
 	}
 	return toRet
 }
+
+// inCentromere reports whether pos falls within contig's known centromere
+// region. Regions use standard BED half-open semantics: inclusive start,
+// exclusive end. Returns false if contig has no centromere entry.
+func inCentromere(centromeres map[string]Region, contig string, pos int64) bool {
+	region, ok := centromeres[contig]
+	if !ok {
+		return false
+	}
+	return pos >= int64(region.start) && pos < int64(region.end)
+}
