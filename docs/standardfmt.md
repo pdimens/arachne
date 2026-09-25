@@ -1,5 +1,5 @@
 ---
 label: Standard Data Format
 icon: git-merge-queue
-redirect: https://pdimens.github.io/lastq/
+redirect: https://blinkseq.github.io/lastq/
 ---

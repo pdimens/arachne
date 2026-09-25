@@ -106,7 +106,7 @@ Poccidentalis_chr1 0 180000
 ```
 
 ### infer-distance
-The `infer-distance` option controls the alignment distance-based deconvolution, as described [here](https://pdimens.github.io/harpy/getting_started/linked_read_data/#barcode-thresholds).
+The `infer-distance` option controls the alignment distance-based deconvolution, as described [here](https://blinkseq.github.io/linkedreads/clashing/#barcode-thresholds).
 I still need to investigate exactly what's happening under the hood.
 
 ### sample-id
