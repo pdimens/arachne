@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark">
     <meta name="turbo-root" content="/arachne">
-    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="4.6.0.843676523460">
+    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="4.6.0.844178521790">
 
     <!-- See retype.com -->
     <meta name="generator" content="Retype 4.6.0">
@@ -39,12 +39,12 @@
     <script data-cfasync="false">(function(){var cl=document.documentElement.classList,ls=localStorage.getItem("retype_scheme"),hd=cl.contains("dark"),hl=cl.contains("light"),wm=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches;if(ls==="dark"||(!ls&&wm&&!hd&&!hl)){cl.remove("light");cl.add("dark")}else if(ls==="light"||(!ls&&!wm&&!hd&&!hl)){cl.remove("dark");cl.add("light")}})();</script>
 
     <link id="retype-favicon" rel="icon" href="../static/favicon.png" />
-    <link href="../resources/css/retype.css?v=4.6.0.843676523460" rel="stylesheet">
+    <link href="../resources/css/retype.css?v=4.6.0.844178521790" rel="stylesheet">
 
-    <script data-cfasync="false" src="../resources/js/config.js?v=4.6.0.843676523460" data-turbo-eval="false" defer></script>
+    <script data-cfasync="false" src="../resources/js/config.js?v=4.6.0.844178521790" data-turbo-eval="false" defer></script>
     <script data-cfasync="false" src="../resources/js/retype.js?v=4.6.0" data-turbo-eval="false" defer></script>
-    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=4.6.0.843676523460" data-turbo-eval="false" defer></script>
-    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=4.6.0.843676523460" defer></script>
+    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=4.6.0.844178521790" data-turbo-eval="false" defer></script>
+    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=4.6.0.844178521790" defer></script>
 </head>
 <body>
     <div id="retype-app" class="relative text-base antialiased text-base-text bg-base-bg font-body">
@@ -331,6 +331,7 @@ you are ready to align your sample onto the reference. The command arguments fol
 | `--centromeres` | `-c` |  | BED file describing known centromeres |
 | `--improper-pair-penalty` | `-i` | 4.0 | Penalty for improper read pair (magnitude; always applied as a penalty regardless of sign) |
 | `--infer-distance` | `-d` | `50000` | Distance at which to consider reads with the same barcode to originate from different molecules [!badge variant=&quot;info&quot; text=&quot;under construction&quot;]|
+| `--no-unmapped` | `-u` | false | Exclude unmapped reads from output |
 | `--sample-id` | `-s` | | Sample name [!badge variant=&quot;info&quot; text=&quot;required&quot;]|
 | `--threads` | `-t` | `4` | Threads to use |
 | `--verbose` | `-v` | false | Verbose output |">
@@ -364,6 +365,12 @@ you are ready to align your sample onto the reference. The command arguments fol
 <td style="text-align: left;">Distance at which to consider reads with the same barcode to originate from different molecules <span class="no-link inline-flex align-middle items-center justify-center font-medium leading-none whitespace-nowrap text-badge-info-text bg-badge-info border border-badge-info-border h-6 px-2 text-xs rounded-md">
     <span>under construction</span>
 </span></td>
+</tr>
+<tr>
+<td style="text-align: left;" class="whitespace-nowrap"><code translate="no" v-pre>--no-unmapped</code></td>
+<td style="text-align: left;" class="whitespace-nowrap"><code translate="no" v-pre>-u</code></td>
+<td style="text-align: left;" class="whitespace-nowrap">false</td>
+<td style="text-align: left;">Exclude unmapped reads from output</td>
 </tr>
 <tr>
 <td style="text-align: left;" class="whitespace-nowrap"><code translate="no" v-pre>--sample-id</code></td>
