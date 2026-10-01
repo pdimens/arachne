@@ -284,7 +284,7 @@ func flushToChannel(alignments [][]*Alignment, out chan *sam.Record, contigs map
 				// the record actually gets sent to the output channel.
 				read_output = true
 				rec := buildRecord(alignment, alignment, debugTags, contigs)
-				if *keepUnmapped || rec.Flags&sam.Unmapped == 0 {
+				if !*noUnmapped || rec.Flags&sam.Unmapped == 0 {
 					out <- rec
 					if alignment.secondary != nil {
 						out <- buildRecord(alignment.secondary, alignment, debugTags, contigs)

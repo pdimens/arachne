@@ -41,7 +41,7 @@ type ArachneArgs struct {
 	Centromeres       *string
 	Verbose           *bool
 	Comments          *bool
-	KeepUnmapped      *bool
+	NoUnmapped        *bool
 }
 
 type ChainedHit struct {
@@ -120,7 +120,7 @@ var centromeres map[string]Region
 var verbose *bool
 var inferDistance *int64
 var AddComments *bool
-var keepUnmapped *bool
+var noUnmapped *bool
 
 // this is the actual arachne program
 func Arachne(args ArachneArgs) {
@@ -135,7 +135,7 @@ func Arachne(args ArachneArgs) {
 	centromeres = loadCentromeres(args.Centromeres)
 	inferDistance = args.InferDistance
 	AddComments = args.Comments
-	keepUnmapped = args.KeepUnmapped
+	noUnmapped = args.NoUnmapped
 	verbose = args.Verbose
 	// unused
 	DEBUG = args.DEBUG

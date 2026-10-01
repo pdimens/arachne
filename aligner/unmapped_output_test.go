@@ -102,12 +102,12 @@ func drainRecords(out chan *sam.Record) []*sam.Record {
 	return recs
 }
 
-// Regression test for the --keep-unmapped flag: when false, flushToChannel
+// Regression test for the --no-unmapped flag: when true, flushToChannel
 // must not send unmapped (SAM flag 0x4) records to the output channel, but
 // must still process them without tripping the "read_id has no active
 // alignment" invariant panic (that check must track whether the active
 // alignment was *found*, not whether it was emitted).
-func TestFlushToChannelRespectsKeepUnmapped(t *testing.T) {
+func TestFlushToChannelRespectsNoUnmapped(t *testing.T) {
 	addComments := false
 	AddComments = &addComments
 	debugTags := false
@@ -117,9 +117,9 @@ func TestFlushToChannelRespectsKeepUnmapped(t *testing.T) {
 	unmapped := newFlushTestAlignment("read2", "", -1)
 	alignments := [][]*Alignment{{mapped}, {unmapped}}
 
-	t.Run("keepUnmapped=true includes both", func(t *testing.T) {
-		keep := true
-		keepUnmapped = &keep
+	t.Run("noUnmapped=false (default) includes both", func(t *testing.T) {
+		exclude := false
+		noUnmapped = &exclude
 		out := make(chan *sam.Record, 10)
 		flushToChannel(alignments, out, contigs, &debugTags)
 		recs := drainRecords(out)
@@ -128,9 +128,9 @@ func TestFlushToChannelRespectsKeepUnmapped(t *testing.T) {
 		}
 	})
 
-	t.Run("keepUnmapped=false excludes the unmapped record only", func(t *testing.T) {
-		keep := false
-		keepUnmapped = &keep
+	t.Run("noUnmapped=true excludes the unmapped record only", func(t *testing.T) {
+		exclude := true
+		noUnmapped = &exclude
 		out := make(chan *sam.Record, 10)
 		flushToChannel(alignments, out, contigs, &debugTags) // must not panic
 		recs := drainRecords(out)
