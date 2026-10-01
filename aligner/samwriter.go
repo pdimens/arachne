@@ -279,11 +279,17 @@ func flushToChannel(alignments [][]*Alignment, out chan *sam.Record, contigs map
 		read_output := false
 		for _, alignment := range alignmentArray {
 			if alignment.active {
-				out <- buildRecord(alignment, alignment, debugTags, contigs)
-				if alignment.secondary != nil {
-					out <- buildRecord(alignment.secondary, alignment, debugTags, contigs)
-				}
+				// read_output tracks that this read_id's active alignment
+				// was found (the invariant below), independent of whether
+				// the record actually gets sent to the output channel.
 				read_output = true
+				rec := buildRecord(alignment, alignment, debugTags, contigs)
+				if !*noUnmapped || rec.Flags&sam.Unmapped == 0 {
+					out <- rec
+					if alignment.secondary != nil {
+						out <- buildRecord(alignment.secondary, alignment, debugTags, contigs)
+					}
+				}
 			}
 		}
 		if !read_output {
