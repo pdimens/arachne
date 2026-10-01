@@ -88,6 +88,7 @@ arachne align -t 24 -s MC_001 Rclamitans.fa MC_001.F.fq.gz MC_001.R.fq.gz > MC_0
 | `--centromeres` | `-c` |  | BED file describing known centromeres |
 | `--improper-pair-penalty` | `-i` | 4.0 | Penalty for improper read pair (magnitude; always applied as a penalty regardless of sign) |
 | `--infer-distance` | `-d` | `50000` | Distance at which to consider reads with the same barcode to originate from different molecules [!badge variant="info" text="under construction"]|
+| `--keep-unmapped` | `-u` | `true` | Include unmapped reads in output |
 | `--sample-id` | `-s` | | Sample name [!badge variant="info" text="required"]|
 | `--threads` | `-t` | `4` | Threads to use |
 | `--verbose` | `-v` | false | Verbose output |

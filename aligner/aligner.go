@@ -41,6 +41,7 @@ type ArachneArgs struct {
 	Centromeres       *string
 	Verbose           *bool
 	Comments          *bool
+	KeepUnmapped      *bool
 }
 
 type ChainedHit struct {
@@ -119,6 +120,7 @@ var centromeres map[string]Region
 var verbose *bool
 var inferDistance *int64
 var AddComments *bool
+var keepUnmapped *bool
 
 // this is the actual arachne program
 func Arachne(args ArachneArgs) {
@@ -133,6 +135,7 @@ func Arachne(args ArachneArgs) {
 	centromeres = loadCentromeres(args.Centromeres)
 	inferDistance = args.InferDistance
 	AddComments = args.Comments
+	keepUnmapped = args.KeepUnmapped
 	verbose = args.Verbose
 	// unused
 	DEBUG = args.DEBUG
@@ -948,13 +951,20 @@ func tagBestAlignments(alignments [][]*Alignment) [][]*Alignment {
 					bestAlignment = alignment
 				}
 			}
-			index, has_chrom := contigs[alignment.contig]
+			// Unmapped alignments (no BWA hit at all) carry no real genomic
+			// position, so they must never enter molecule inference/RFA:
+			// including them would cluster them under a bogus contig=""
+			// "molecule" and let the optimizer try to move them around
+			// based on position math that doesn't apply.
+			if alignment.pos != -1 {
+				index, has_chrom := contigs[alignment.contig]
 
-			if has_chrom {
-				positions[index] = append(positions[index], alignment)
-			} else {
-				contigs[alignment.contig] = len(positions)
-				positions = append(positions, []*Alignment{alignment})
+				if has_chrom {
+					positions[index] = append(positions[index], alignment)
+				} else {
+					contigs[alignment.contig] = len(positions)
+					positions = append(positions, []*Alignment{alignment})
+				}
 			}
 		}
 		if !touched {

@@ -65,6 +65,7 @@ func init() {
 	alignCmd.Flags().BoolP("comments", "C", false, "Append comments (non-BX/VX) to SAM output")
 	alignCmd.Flags().Float64P("improper-pair-penalty", "i", 4.0, "Penalty for improper pair")
 	alignCmd.Flags().Int64P("infer-distance", "d", 50000, "Distance at which to consider reads with the same barcode to be from different molecules")
+	alignCmd.Flags().BoolP("keep-unmapped", "u", true, "Include unmapped reads in output")
 	alignCmd.Flags().StringP("sample-id", "s", "", "Sample name (required)")
 	if err := alignCmd.MarkFlagRequired("sample-id"); err != nil {
 		panic(err)
@@ -118,6 +119,11 @@ func arachneAlign(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
+	keepUnmapped, err := cmd.Flags().GetBool("keep-unmapped")
+	if err != nil {
+		return err
+	}
 	//--- Setup config and run --------------------
 	config := aligner.ArachneArgs{
 		Reference:             &args[0],
@@ -133,6 +139,7 @@ func arachneAlign(cmd *cobra.Command, args []string) error {
 		Centromeres:           &centromeres,
 		Verbose:               &verbose,
 		Comments:              &comments,
+		KeepUnmapped:          &keepUnmapped,
 	}
 	start := time.Now()
 	fmt.Fprintf(os.Stderr, "🕷️  Starting arachne. Version: %s\n", aligner.VERSION)
