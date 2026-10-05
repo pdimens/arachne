@@ -7,6 +7,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"runtime"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -44,6 +45,44 @@ var alignCmd = &cobra.Command{
 				return fmt.Errorf("missing reference index file: %s\nPlease index reference with \033[94;1marachne index\033[0m or (\033[94;1mbwa index\033[0m)", filepath.Base(args[0])+i)
 			}
 		}
+		if _, err := cmd.Flags().GetString("sample-id"); err != nil {
+			return err
+		}
+
+		if _, err := cmd.Flags().GetInt64("infer-distance"); err != nil {
+			return err
+		}
+
+		centromeres, err := cmd.Flags().GetString("centromeres")
+		if err != nil {
+			return err
+		}
+		if centromeres != "" {
+			if err := filecheck(centromeres); err != nil {
+				return err
+			}
+		}
+
+		if _, err := cmd.Flags().GetInt("threads"); err != nil {
+			return err
+		}
+
+		if _, err := cmd.Flags().GetFloat64("improper-pair-penalty"); err != nil {
+			return err
+		}
+
+		if _, err := cmd.Flags().GetBool("comments"); err != nil {
+			return err
+		}
+
+		if _, err := cmd.Flags().GetBool("verbose"); err != nil {
+			return err
+		}
+
+		if _, err := cmd.Flags().GetBool("no-unmapped"); err != nil {
+			return err
+		}
+
 		return nil
 	},
 	RunE: arachneAlign,
@@ -77,53 +116,19 @@ func init() {
 func arachneAlign(cmd *cobra.Command, args []string) error {
 	//---Flag validations and failsafes -------------
 	var debugSpoof bool
-	sampleID, err := cmd.Flags().GetString("sample-id")
-	if err != nil {
-		return err
-	}
-
-	inferDistance, err := cmd.Flags().GetInt64("infer-distance")
-	if err != nil {
-		return err
-	}
+	sampleID, _ := cmd.Flags().GetString("sample-id")
+	inferDistance, _ := cmd.Flags().GetInt64("infer-distance")
 	inferDistance = max(inferDistance, 100)
-
-	centromeres, err := cmd.Flags().GetString("centromeres")
-	if err != nil {
-		return err
-	}
-	if centromeres != "" {
-		if err := filecheck(centromeres); err != nil {
-			return err
-		}
-	}
-
-	threads, err := cmd.Flags().GetInt("threads")
-	if err != nil {
-		return err
-	}
-	threads = max(threads, 1)
-
-	improperPairPenalty, err := cmd.Flags().GetFloat64("improper-pair-penalty")
-	if err != nil {
-		return err
-	}
+	centromeres, _ := cmd.Flags().GetString("centromeres")
+	improperPairPenalty, _ := cmd.Flags().GetFloat64("improper-pair-penalty")
 	improperPairPenalty = normalizeImproperPairPenalty(improperPairPenalty)
+	comments, _ := cmd.Flags().GetBool("comments")
+	verbose, _ := cmd.Flags().GetBool("verbose")
+	noUnmapped, _ := cmd.Flags().GetBool("no-unmapped")
+	threads, _ := cmd.Flags().GetInt("threads")
+	threads = min(runtime.NumCPU(), max(threads, 1))
+	runtime.GOMAXPROCS(threads)
 
-	comments, err := cmd.Flags().GetBool("comments")
-	if err != nil {
-		return err
-	}
-
-	verbose, err := cmd.Flags().GetBool("verbose")
-	if err != nil {
-		return err
-	}
-
-	noUnmapped, err := cmd.Flags().GetBool("no-unmapped")
-	if err != nil {
-		return err
-	}
 	//--- Setup config and run --------------------
 	config := aligner.ArachneArgs{
 		Reference:             &args[0],
@@ -142,11 +147,15 @@ func arachneAlign(cmd *cobra.Command, args []string) error {
 		NoUnmapped:            &noUnmapped,
 	}
 	start := time.Now()
-	fmt.Fprintf(os.Stderr, "🕷️  Starting arachne. Version: %s\n", aligner.VERSION)
+	if verbose {
+		fmt.Fprintf(os.Stderr, "🕷️  Starting arachne. Version: %s\n", aligner.VERSION)
+	}
 
 	aligner.Arachne(config)
 
-	elapsed := time.Since(start).Round(time.Second).String()
-	fmt.Fprintf(os.Stderr, "🕸️  Arachne finished successfully! Elapsed: %s\n\n", elapsed)
+	if verbose {
+		elapsed := time.Since(start).Round(time.Second).String()
+		fmt.Fprintf(os.Stderr, "🕸️  Arachne finished successfully! Elapsed: %s\n\n", elapsed)
+	}
 	return nil
 }

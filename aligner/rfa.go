@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strconv"
 	"sync"
 
 	"arachne/fastqreader"
@@ -52,7 +53,6 @@ func DoRFAForOneBarcode(work *WorkUnit,
 	contigs map[string]*sam.Reference,
 	debugtags *bool,
 	reads []fastqreader.FastQRecord) {
-	//TODO STATS ARENT USED ANYWHERE?
 	stats.total = 0
 	stats.mapq = 0
 	//barcode_num := work.barcodenum
@@ -112,8 +112,6 @@ func DoRFAForOneBarcode(work *WorkUnit,
 	arena.Free()
 }
 
-// Was the deconv format super necessary?
-
 // Determine if there are enough fragments (3) to run RFA
 func worthRunningRFA(barcode_fragments []fastqreader.FastQRecord, uniqueBarcode bool) bool {
 	if len(barcode_fragments) == 0 || !uniqueBarcode {
@@ -148,7 +146,7 @@ func acceptMove(move Move) {
 			num, has := move.source.mismatchLocs[mismatchLoc]
 			if !has || num == 0 {
 				//there is a problem
-				panic("source molecule should have this entry")
+				panic("source molecule should have this entry: " + strconv.Itoa(mismatchLoc))
 			}
 			if *debugPrintMove {
 				fmt.Println("removing mismatchLoc", mismatchLoc, move.source.mismatchLocs[mismatchLoc])
