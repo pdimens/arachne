@@ -4,7 +4,6 @@ package aligner
 
 import (
 	"C"
-	"bufio"
 	"crypto/md5"
 	"encoding/binary"
 	"fmt"
@@ -42,6 +41,7 @@ type ArachneArgs struct {
 	Verbose           *bool
 	Comments          *bool
 	NoUnmapped        *bool
+	Method            *string // "rfa" (default) or "em"
 }
 
 type ChainedHit struct {
@@ -156,7 +156,18 @@ func Arachne(args ArachneArgs) {
 		fmt.Fprint(os.Stderr, "Reference loaded\n")
 	}
 	settings := gobwa.GoBwaAllocSettings()
-	config := &RFAConfig{*improper_pair_penalty}
+	methodName := ""
+	if args.Method != nil {
+		methodName = *args.Method
+	}
+	method, err := ParseMethod(methodName)
+	if err != nil {
+		panic(err)
+	}
+	process := barcodeFuncFor(method, *improper_pair_penalty)
+	if *verbose {
+		fmt.Fprintf(os.Stderr, "Resolution method: %s\n", method)
+	}
 
 	// ------- SAM output writer -------------------------
 	// chanCap sized to absorb worker bursts
@@ -172,17 +183,13 @@ func Arachne(args ArachneArgs) {
 		bufChan <- &s
 	}
 
-	var w *bufio.Writer
-	stats := &RFAStats{file: w}
-	//stats.file = w
-
 	// ── workers ─────────────────────────────────────────────────────────────
 	work_to_do := make(chan *WorkUnit, 2)
 	var wg sync.WaitGroup
 	for range *threads {
 		wg.Go(
 			func() {
-				WorkerThread(work_to_do, writeChannel, bufChan, ref, settings, config, stats, contigs, debugTags)
+				WorkerThread(work_to_do, writeChannel, bufChan, ref, settings, process, contigs, debugTags)
 			})
 	}
 	//finished := make (chan bool);
@@ -224,12 +231,11 @@ func WorkerThread(
 	bufChan chan *[]fastqreader.FastQRecord,
 	ref *gobwa.GoBwaReference,
 	settings *gobwa.GoBwaSettings,
-	config *RFAConfig,
-	stats *RFAStats,
+	process BarcodeFunc,
 	contigs map[string]*sam.Reference,
 	debugtags *bool) {
 	for work := range input {
-		DoRFAForOneBarcode(work, out, ref, settings, config, stats, contigs, debugtags, work.reads)
+		process(work, out, ref, settings, contigs, debugtags)
 		bufChan <- work.poolBuf // return buffer for reuse
 	}
 }
