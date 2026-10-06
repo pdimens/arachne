@@ -237,3 +237,119 @@ func TestParseMethod(t *testing.T) {
 		t.Error("ParseMethod(bogus) should fail")
 	}
 }
+
+func TestEMALikelihood(t *testing.T) {
+	cfg := DefaultEMConfig(-4.0)
+	perfect := &Alignment{matches: 100}
+	oneMismatch := &Alignment{matches: 99, mismatches: 1}
+	clipped := &Alignment{matches: 90, soft_clipped: 1, soft_clipped_length: 10}
+	indel := &Alignment{matches: 99, indels: 1}
+
+	wantPerfect := 100 * math.Log(1-0.001)
+	if got := cfg.logLikelihood(perfect); math.Abs(got-wantPerfect) > 1e-12 {
+		t.Errorf("perfect = %v, want %v", got, wantPerfect)
+	}
+	wantMismatch := 99*math.Log(1-0.001) + math.Log(0.001)
+	if got := cfg.logLikelihood(oneMismatch); math.Abs(got-wantMismatch) > 1e-12 {
+		t.Errorf("one mismatch = %v, want %v", got, wantMismatch)
+	}
+	wantClipped := 90*math.Log(1-0.001) + 10*math.Log(0.03)
+	if got := cfg.logLikelihood(clipped); math.Abs(got-wantClipped) > 1e-12 {
+		t.Errorf("clipped = %v, want %v", got, wantClipped)
+	}
+	wantIndel := 99*math.Log(1-0.001) + math.Log(1e-4)
+	if got := cfg.logLikelihood(indel); math.Abs(got-wantIndel) > 1e-12 {
+		t.Errorf("indel = %v, want %v", got, wantIndel)
+	}
+	if !(cfg.logLikelihood(perfect) > cfg.logLikelihood(oneMismatch) && cfg.logLikelihood(oneMismatch) > cfg.logLikelihood(clipped)) {
+		t.Error("expected perfect > one mismatch > clipped")
+	}
+
+	// arachne's likelihood is read from log_alignment_probability (log10)
+	cfg.Likelihood = LikelihoodArachne
+	a := &Alignment{log_alignment_probability: -2}
+	if got, want := cfg.logLikelihood(a), -2*math.Ln10; math.Abs(got-want) > 1e-12 {
+		t.Errorf("arachne likelihood = %v, want %v", got, want)
+	}
+}
+
+func TestEMAScoreMapqCeiling(t *testing.T) {
+	cfg := DefaultEMConfig(-4.0)
+	if got := cfg.scoreMapq(&Alignment{matches: 100}); got != 60 {
+		t.Errorf("perfect ceiling = %v, want 60", got)
+	}
+	// each mismatch costs 3 (log10 0.001), an indel 4, a clipped base ~1.52
+	if got := cfg.scoreMapq(&Alignment{mismatches: 2}); math.Abs(got-54) > 1e-9 {
+		t.Errorf("two mismatches ceiling = %v, want 54", got)
+	}
+	if got := cfg.scoreMapq(&Alignment{indels: 1}); math.Abs(got-56) > 1e-9 {
+		t.Errorf("one indel ceiling = %v, want 56", got)
+	}
+}
+
+// With EMA's likelihood a uniquely placed but heavily mismatched read must
+// not get a confident MAPQ, however certain its placement.
+func TestEMMapqCappedByAlignmentQuality(t *testing.T) {
+	setEMGlobals()
+	f := &emFixture{}
+	for i := 0; i < 40; i++ {
+		f.addPair(i, "chr1", int64(1000+i*500))
+	}
+	bad := f.alignments[0][0]
+	bad.matches, bad.mismatches = 90, 10 // ceiling 60 - 30 = 30
+
+	runEM(f.alignments, f.positions(), DefaultEMConfig(-4.0))
+	if bad.mapq != 30 {
+		t.Errorf("mapq = %d, want 30", bad.mapq)
+	}
+	if good := f.alignments[2][0]; good.mapq != 60 {
+		t.Errorf("clean unique read mapq = %d, want 60", good.mapq)
+	}
+}
+
+// With cloud weights off, a candidate in a crowded cloud no longer beats an
+// otherwise identical isolated candidate unless the mate breaks the tie.
+func TestEMCloudWeightsToggle(t *testing.T) {
+	setEMGlobals()
+	build := func() (*emFixture, *Alignment, *Alignment) {
+		f := &emFixture{}
+		for i := 0; i < 40; i++ {
+			f.addPair(i, "chr1", int64(1000+i*500))
+		}
+		// the ambiguous read's mate is unmapped, so only the clouds differ
+		in := f.add(80, "chr1", 5000, false)
+		out := f.add(80, "chr2", 100, false)
+		f.add(81, "", -1, true)
+		return f, in, out
+	}
+
+	f, in, out := build()
+	cfg := DefaultEMConfig(-4.0)
+	runEM(f.alignments, f.positions(), cfg)
+	if !in.active || out.active {
+		t.Fatalf("with cloud weights the crowded cloud should win (in=%v out=%v)", in.active, out.active)
+	}
+
+	f, in, out = build()
+	cfg = DefaultEMConfig(-4.0)
+	cfg.UseCloudWeights = false
+	runEM(f.alignments, f.positions(), cfg)
+	if g := in.molecule_confidence; in.active && math.Abs(g-0.5) > 0.01 {
+		t.Errorf("without cloud weights gamma = %v, want ~0.5", g)
+	}
+	if g := out.molecule_confidence; out.active && math.Abs(g-0.5) > 0.01 {
+		t.Errorf("without cloud weights gamma = %v, want ~0.5", g)
+	}
+}
+
+func TestParseLikelihood(t *testing.T) {
+	for in, want := range map[string]Likelihood{"": LikelihoodEMA, "ema": LikelihoodEMA, "EMA": LikelihoodEMA, "arachne": LikelihoodArachne} {
+		got, err := ParseLikelihood(in)
+		if err != nil || got != want {
+			t.Errorf("ParseLikelihood(%q) = %q, %v; want %q", in, got, err, want)
+		}
+	}
+	if _, err := ParseLikelihood("bogus"); err == nil {
+		t.Error("ParseLikelihood(bogus) should fail")
+	}
+}

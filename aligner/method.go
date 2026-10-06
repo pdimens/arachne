@@ -45,10 +45,13 @@ type BarcodeFunc func(work *WorkUnit,
 	debugtags *bool)
 
 // barcodeFuncFor returns the per-barcode processor for the given method.
-func barcodeFuncFor(m Method, improperPenalty float64) BarcodeFunc {
+func barcodeFuncFor(m Method, improperPenalty float64, em *EMConfig) BarcodeFunc {
 	switch m {
 	case MethodEM:
-		config := DefaultEMConfig(improperPenalty)
+		config := em
+		if config == nil {
+			config = DefaultEMConfig(improperPenalty)
+		}
 		return func(work *WorkUnit, out chan *sam.Record, ref *gobwa.GoBwaReference,
 			settings *gobwa.GoBwaSettings, contigs map[string]*sam.Reference, debugtags *bool) {
 			DoEMForOneBarcode(work, out, ref, settings, config, contigs, debugtags, work.reads)

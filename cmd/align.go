@@ -91,6 +91,22 @@ var alignCmd = &cobra.Command{
 			return err
 		}
 
+		likelihood, err := cmd.Flags().GetString("em-likelihood")
+		if err != nil {
+			return err
+		}
+		if _, err := aligner.ParseLikelihood(likelihood); err != nil {
+			return err
+		}
+
+		errorRate, err := cmd.Flags().GetFloat64("em-error-rate")
+		if err != nil {
+			return err
+		}
+		if errorRate <= 0 || errorRate >= 1 {
+			return fmt.Errorf("--em-error-rate must be between 0 and 1 (exclusive), got %v", errorRate)
+		}
+
 		return nil
 	},
 	RunE: arachneAlign,
@@ -112,6 +128,8 @@ func init() {
 	alignCmd.Flags().BoolP("comments", "C", false, "Append comments (non-BX/VX) to SAM output")
 	alignCmd.Flags().Float64P("improper-pair-penalty", "i", 4.0, "Penalty for improper pair")
 	alignCmd.Flags().Int64P("infer-distance", "d", 50000, "Distance at which to consider reads with the same barcode to be from different molecules")
+	alignCmd.Flags().Float64("em-error-rate", 0.001, "Per-base mismatch rate in the EM likelihood (--method em)")
+	alignCmd.Flags().String("em-likelihood", "ema", "Alignment likelihood for --method em: ema or arachne")
 	alignCmd.Flags().StringP("method", "m", "rfa", "Method for resolving multi-mapping reads: rfa or em")
 	alignCmd.Flags().BoolP("no-unmapped", "u", false, "Exclude unmapped reads from output")
 	alignCmd.Flags().StringP("sample-id", "s", "", "Sample name (required)")
@@ -140,6 +158,8 @@ func arachneAlign(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	methodStr := string(method)
+	emLikelihood, _ := cmd.Flags().GetString("em-likelihood")
+	emErrorRate, _ := cmd.Flags().GetFloat64("em-error-rate")
 	threads, _ := cmd.Flags().GetInt("threads")
 	threads = min(runtime.NumCPU(), max(threads, 1))
 	runtime.GOMAXPROCS(threads)
@@ -161,6 +181,8 @@ func arachneAlign(cmd *cobra.Command, args []string) error {
 		Comments:              &comments,
 		NoUnmapped:            &noUnmapped,
 		Method:                &methodStr,
+		EMLikelihood:          &emLikelihood,
+		EMErrorRate:           &emErrorRate,
 	}
 	start := time.Now()
 	if verbose {

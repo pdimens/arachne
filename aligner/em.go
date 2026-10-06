@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"strings"
 
 	"arachne/fastqreader"
 	"arachne/gobwa"
@@ -31,9 +32,11 @@ import (
 //     instead links the sub-clouds produced by splitting a cloud in which
 //     one read collides with itself (split.c); that disjoint-set machinery
 //     is not ported.
-//   - alignment likelihoods are arachne's log_alignment_probability
-//     (mismatch/indel/soft-clip penalties) rather than EMA's own model.
-//   - MAPQ is capped using arachne's pseudo-count alignment, not BWA's MAPQ.
+//   - the default likelihood is EMA's (score_alignment), but alignment
+//     errors are read from arachne's own SW alignments rather than EMA's;
+//     arachne's own penalties are available as an alternative.
+//   - MAPQ takes EMA's alignment-only ceiling from the same likelihood
+//     parameters, since arachne has no BWA MAPQ at this stage.
 
 // EMConfig holds parameters of the EM method. Constant after creation.
 type EMConfig struct {
@@ -48,6 +51,44 @@ type EMConfig struct {
 	MinPairs int
 	// Stop iterating early once no gamma changes by more than this.
 	Tolerance float64
+
+	// Likelihood selects the per-alignment likelihood model.
+	Likelihood Likelihood
+	// Parameters of the EMA likelihood. ErrorRate is the per-base
+	// mismatch rate (EMA: 0.001 for 10x, haplotag, dbs and tellseq).
+	ErrorRate float64
+	IndelRate float64 // per indel event (EMA: 1e-4)
+	ClipRate  float64 // per clipped base (EMA: 0.03)
+
+	// Weight candidates by the expected coverage of their cloud. Turning
+	// this off leaves only alignment likelihood and mate placement, which is
+	// what EMA's default (non-many_clouds) mode reduces to for clouds that
+	// were never split.
+	UseCloudWeights bool
+}
+
+// Likelihood is the model used to score a single alignment.
+type Likelihood string
+
+const (
+	// LikelihoodArachne uses arachne's mismatch/indel/soft-clip penalties
+	// (Alignment.log_alignment_probability).
+	LikelihoodArachne Likelihood = "arachne"
+	// LikelihoodEMA uses EMA's model: matches, mismatches, indel events and
+	// clipped bases scored by fixed per-event probabilities.
+	LikelihoodEMA Likelihood = "ema"
+)
+
+// ParseLikelihood converts a user-supplied string to a Likelihood. The
+// empty string selects the default (EMA).
+func ParseLikelihood(s string) (Likelihood, error) {
+	switch Likelihood(strings.ToLower(strings.TrimSpace(s))) {
+	case "", LikelihoodEMA:
+		return LikelihoodEMA, nil
+	case LikelihoodArachne:
+		return LikelihoodArachne, nil
+	}
+	return "", fmt.Errorf("unknown likelihood %q (valid: %s, %s)", s, LikelihoodEMA, LikelihoodArachne)
 }
 
 // DefaultEMConfig returns EMA's defaults with the given improper pair penalty.
@@ -57,6 +98,11 @@ func DefaultEMConfig(improperPenalty float64) *EMConfig {
 		Iterations:      5,
 		MinPairs:        3,
 		Tolerance:       1e-6,
+		Likelihood:      LikelihoodEMA,
+		ErrorRate:       0.001,
+		IndelRate:       1e-4,
+		ClipRate:        0.03,
+		UseCloudWeights: true,
 	}
 }
 
@@ -140,7 +186,7 @@ func runEM(alignments [][]*Alignment, positions [][]*Alignment, config *EMConfig
 			cands[read_id][i] = emCand{
 				aln:      aln,
 				cloud:    cloud,
-				logScore: aln.log_alignment_probability * math.Ln10,
+				logScore: config.logLikelihood(aln),
 			}
 		}
 	}
@@ -151,7 +197,29 @@ func runEM(alignments [][]*Alignment, positions [][]*Alignment, config *EMConfig
 			break
 		}
 	}
-	emSelect(cands, clouds)
+	emSelect(cands, clouds, config)
+}
+
+// logLikelihood returns the natural-log likelihood of one alignment.
+func (c *EMConfig) logLikelihood(aln *Alignment) float64 {
+	if c.Likelihood != LikelihoodEMA {
+		return aln.log_alignment_probability * math.Ln10
+	}
+	// EMA (score_alignment): matches, mismatches, indel events and clipped
+	// bases each contribute a fixed log probability. The unmapped
+	// placeholder has none of these and scores 0.
+	return float64(aln.matches)*math.Log(1-c.ErrorRate) +
+		float64(aln.mismatches)*math.Log(c.ErrorRate) +
+		float64(aln.indels)*math.Log(c.IndelRate) +
+		float64(aln.soft_clipped_length)*math.Log(c.ClipRate)
+}
+
+// scoreMapq is EMA's alignment-only MAPQ ceiling: 60 less the log10
+// likelihood penalty of the mismatches, indel events and clipped bases.
+func (c *EMConfig) scoreMapq(aln *Alignment) float64 {
+	return 60.0 + float64(aln.mismatches)*math.Log10(c.ErrorRate) +
+		float64(aln.indels)*math.Log10(c.IndelRate) +
+		float64(aln.soft_clipped_length)*math.Log10(c.ClipRate)
 }
 
 // Group candidate alignments into clouds. positions must be sorted by
@@ -232,7 +300,10 @@ func emIterate(cands [][]emCand, clouds []*emCloud, config *EMConfig) float64 {
 			if total > 0 {
 				prior = cloudWeight(clouds, c.cloud) / total
 			}
-			next[r][i] = c.logScore + math.Log(math.Max(prior, emWeightFloor)) + bestMateScore(c, mates, improperNat)
+			next[r][i] = c.logScore + bestMateScore(c, mates, improperNat)
+			if config.UseCloudWeights {
+				next[r][i] += math.Log(math.Max(prior, emWeightFloor))
+			}
 		}
 		normalizeLogProbs(next[r])
 	}
@@ -280,7 +351,7 @@ func bestMateScore(c emCand, mates []emCand, improperNat float64) float64 {
 
 // Pick the highest-responsibility candidate for each read, link mates,
 // and convert responsibilities to MAPQ.
-func emSelect(cands [][]emCand, clouds []*emCloud) {
+func emSelect(cands [][]emCand, clouds []*emCloud, config *EMConfig) {
 	chosen := make([]int, len(cands))
 	for r := range cands {
 		best := 0
@@ -319,35 +390,45 @@ func emSelect(cands [][]emCand, clouds []*emCloud) {
 		if len(cands[r]) == 0 {
 			continue
 		}
-		emAssignMapq(cands[r], chosen[r], clouds, readsInCloud)
+		emAssignMapq(cands[r], chosen[r], readsInCloud, config)
 	}
 }
 
 // Fill in MAPQ and the mapq_data used for SAM tags for the chosen
 // candidate of one read.
-func emAssignMapq(read []emCand, chosen int, clouds []*emCloud, readsInCloud map[int]int) {
+func emAssignMapq(read []emCand, chosen int, readsInCloud map[int]int, config *EMConfig) {
 	best := read[chosen]
 	aln := best.aln
 
-	// Confidence that the read belongs to any of its candidates at all, as
-	// opposed to somewhere not found: weigh the candidates against arachne's
-	// pseudo-count alignment (log10 domain, same as RFA's estimate).
+	// The alignment-only term of the MAPQ differs by likelihood model. EMA
+	// caps the posterior-derived MAPQ at a ceiling set by the alignment's own
+	// mismatches, indels and clipping. For arachne's likelihood the posterior
+	// is instead discounted by the probability that none of the candidates is
+	// right, weighing them against arachne's pseudo-count alignment (log10
+	// domain, as in RFA's estimate).
 	pseudo := psuedoCountAlignmentScore(aln, 0.0)
-	shift := pseudo
-	for _, c := range read {
-		shift = math.Max(shift, c.aln.log_alignment_probability)
-	}
-	pseudoMass := math.Exp((pseudo - shift) * math.Ln10)
-	candMass := 0.0
-	for _, c := range read {
-		candMass += math.Exp((c.aln.log_alignment_probability - shift) * math.Ln10)
-	}
-	confidence := 1.0 - pseudoMass/(pseudoMass+candMass)
-
-	p := best.gamma * confidence
-	mapq := 60.0
-	if p < 0.999999 {
-		mapq = math.Min(60.0, -10.0*math.Log10(1.0-p))
+	var mapq float64
+	if config.Likelihood == LikelihoodEMA {
+		mapq = 60.0
+		if best.gamma <= 0.999999 {
+			mapq = -10.0 * math.Log10(1.0-best.gamma)
+		}
+		mapq = math.Max(0, math.Min(mapq, config.scoreMapq(aln)))
+	} else {
+		shift := pseudo
+		for _, c := range read {
+			shift = math.Max(shift, c.aln.log_alignment_probability)
+		}
+		pseudoMass := math.Exp((pseudo - shift) * math.Ln10)
+		candMass := 0.0
+		for _, c := range read {
+			candMass += math.Exp((c.aln.log_alignment_probability - shift) * math.Ln10)
+		}
+		p := best.gamma * (1.0 - pseudoMass/(pseudoMass+candMass))
+		mapq = 60.0
+		if p < 0.999999 {
+			mapq = math.Min(60.0, -10.0*math.Log10(1.0-p))
+		}
 	}
 	if aln.pos == -1 {
 		mapq = 0

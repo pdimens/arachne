@@ -42,6 +42,8 @@ type ArachneArgs struct {
 	Comments          *bool
 	NoUnmapped        *bool
 	Method            *string // "rfa" (default) or "em"
+	EMLikelihood      *string // "ema" (default) or "arachne"; only used by method em
+	EMErrorRate       *float64
 }
 
 type ChainedHit struct {
@@ -164,7 +166,16 @@ func Arachne(args ArachneArgs) {
 	if err != nil {
 		panic(err)
 	}
-	process := barcodeFuncFor(method, *improper_pair_penalty)
+	emConfig := DefaultEMConfig(*improper_pair_penalty)
+	if args.EMLikelihood != nil {
+		if emConfig.Likelihood, err = ParseLikelihood(*args.EMLikelihood); err != nil {
+			panic(err)
+		}
+	}
+	if args.EMErrorRate != nil {
+		emConfig.ErrorRate = *args.EMErrorRate
+	}
+	process := barcodeFuncFor(method, *improper_pair_penalty, emConfig)
 	if *verbose {
 		fmt.Fprintf(os.Stderr, "Resolution method: %s\n", method)
 	}
