@@ -1,6 +1,6 @@
 export CGO_LDFLAGS = -L$(shell pwd)/gobwa/bwa
 
-VERSION=0.2
+VERSION=0.2.1
 
 all: arachne gobwa/bwa/libbwa.a gobwa/bwa/bwa
 

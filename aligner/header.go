@@ -57,3 +57,12 @@ func buildHeader(ref *gobwa.GoBwaReference, sampleid, version string) (*sam.Head
 	h.AddProgram(prog)
 	return h, contigs
 }
+
+// Sum of all contig lengths in the reference.
+func totalReferenceLength(contigs map[string]*sam.Reference) float64 {
+	total := 0.0
+	for _, c := range contigs {
+		total += float64(c.Len())
+	}
+	return total
+}

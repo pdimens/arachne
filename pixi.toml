@@ -3,7 +3,7 @@ authors = ["pdimens <pdimens@gmail.com>"]
 channels = ["conda-forge", "bioconda"]
 name = "arachne"
 platforms = ["linux-64"]
-version = "0.2"
+version = "0.2.1"
 
 [dependencies]
 c-compiler = "*"
@@ -13,7 +13,7 @@ zlib = "*"
 jemalloc = "*"
 
 [tasks]
-build = "make clean; make"
+build = "make clean; make VERSION=0.2.1"
 
 [activation.env]
 CGO_ENABLED = "1"

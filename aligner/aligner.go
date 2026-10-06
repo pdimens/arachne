@@ -122,6 +122,11 @@ var inferDistance *int64
 var AddComments *bool
 var noUnmapped *bool
 
+// Total length of the reference, used to scale the off-molecule penalty in MAPQ
+// estimation. Set from the loaded index in Arachne(); the default is the human genome,
+// the value this was previously hard-coded to.
+var referenceLength = 3200000000.0
+
 // this is the actual arachne program
 func Arachne(args ArachneArgs) {
 	r1 = args.R1
@@ -161,6 +166,7 @@ func Arachne(args ArachneArgs) {
 	// ------- SAM output writer -------------------------
 	// chanCap sized to absorb worker bursts
 	header, contigs := buildHeader(ref, *sample_id, VERSION)
+	referenceLength = totalReferenceLength(contigs)
 	writeChannel, doneChan := NewSamWriterChannel(header, *threads*500, 2<<20, *threads)
 
 	// ── buffer pool ─────────────────────────────────────────────────────────
@@ -481,7 +487,7 @@ func estimateMapQualities(alignments [][]*Alignment, candidate_molecules []*Cand
 	// Now to update alignment probabilities for being singleton/outside active molecules
 	// this part only happens if we ran RFA, bad barcodes etc get no more probability updates
 	updateAlignmentsMoleculeStatus(alignments, candidate_molecules, read_copies_in_active_molecule, read_copies_not_in_active_molecule, unique_molecules_active)
-	log_molecule_penalty := calculateLogMoleculePenalty(candidate_molecules, 3200000000.0) //hard coding length of human reference
+	log_molecule_penalty := calculateLogMoleculePenalty(candidate_molecules, referenceLength)
 	//now go through every read_id and normalize all alternate alignment probabilities
 	for read_id, alignmentArray := range alignments {
 		// find best pair for alignments and make list of those alignment pair scores for use of probability normalization to sum to 1.0
