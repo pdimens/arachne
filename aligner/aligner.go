@@ -42,7 +42,6 @@ type ArachneArgs struct {
 	Comments          *bool
 	NoUnmapped        *bool
 	Method            *string // "rfa" (default) or "em"
-	EMLikelihood      *string // "ema" (default) or "arachne"; only used by method em
 	EMErrorRate       *float64
 }
 
@@ -167,11 +166,6 @@ func Arachne(args ArachneArgs) {
 		panic(err)
 	}
 	emConfig := DefaultEMConfig(*improper_pair_penalty)
-	if args.EMLikelihood != nil {
-		if emConfig.Likelihood, err = ParseLikelihood(*args.EMLikelihood); err != nil {
-			panic(err)
-		}
-	}
 	if args.EMErrorRate != nil {
 		emConfig.ErrorRate = *args.EMErrorRate
 	}

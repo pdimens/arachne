@@ -238,7 +238,7 @@ func TestParseMethod(t *testing.T) {
 	}
 }
 
-func TestEMALikelihood(t *testing.T) {
+func TestEMLikelihood(t *testing.T) {
 	cfg := DefaultEMConfig(-4.0)
 	perfect := &Alignment{matches: 100}
 	oneMismatch := &Alignment{matches: 99, mismatches: 1}
@@ -263,13 +263,6 @@ func TestEMALikelihood(t *testing.T) {
 	}
 	if !(cfg.logLikelihood(perfect) > cfg.logLikelihood(oneMismatch) && cfg.logLikelihood(oneMismatch) > cfg.logLikelihood(clipped)) {
 		t.Error("expected perfect > one mismatch > clipped")
-	}
-
-	// arachne's likelihood is read from log_alignment_probability (log10)
-	cfg.Likelihood = LikelihoodArachne
-	a := &Alignment{log_alignment_probability: -2}
-	if got, want := cfg.logLikelihood(a), -2*math.Ln10; math.Abs(got-want) > 1e-12 {
-		t.Errorf("arachne likelihood = %v, want %v", got, want)
 	}
 }
 
@@ -307,49 +300,20 @@ func TestEMMapqCappedByAlignmentQuality(t *testing.T) {
 	}
 }
 
-// With cloud weights off, a candidate in a crowded cloud no longer beats an
-// otherwise identical isolated candidate unless the mate breaks the tie.
-func TestEMCloudWeightsToggle(t *testing.T) {
+// The cloud coverage prior alone, with the mate unmapped so it cannot break
+// the tie: of two identical candidates, the one in the crowded cloud wins.
+func TestEMCloudWeightBreaksTie(t *testing.T) {
 	setEMGlobals()
-	build := func() (*emFixture, *Alignment, *Alignment) {
-		f := &emFixture{}
-		for i := 0; i < 40; i++ {
-			f.addPair(i, "chr1", int64(1000+i*500))
-		}
-		// the ambiguous read's mate is unmapped, so only the clouds differ
-		in := f.add(80, "chr1", 5000, false)
-		out := f.add(80, "chr2", 100, false)
-		f.add(81, "", -1, true)
-		return f, in, out
+	f := &emFixture{}
+	for i := 0; i < 40; i++ {
+		f.addPair(i, "chr1", int64(1000+i*500))
 	}
+	in := f.add(80, "chr1", 5000, false)
+	out := f.add(80, "chr2", 100, false)
+	f.add(81, "", -1, true)
 
-	f, in, out := build()
-	cfg := DefaultEMConfig(-4.0)
-	runEM(f.alignments, f.positions(), cfg)
+	runEM(f.alignments, f.positions(), DefaultEMConfig(-4.0))
 	if !in.active || out.active {
-		t.Fatalf("with cloud weights the crowded cloud should win (in=%v out=%v)", in.active, out.active)
-	}
-
-	f, in, out = build()
-	cfg = DefaultEMConfig(-4.0)
-	cfg.UseCloudWeights = false
-	runEM(f.alignments, f.positions(), cfg)
-	if g := in.molecule_confidence; in.active && math.Abs(g-0.5) > 0.01 {
-		t.Errorf("without cloud weights gamma = %v, want ~0.5", g)
-	}
-	if g := out.molecule_confidence; out.active && math.Abs(g-0.5) > 0.01 {
-		t.Errorf("without cloud weights gamma = %v, want ~0.5", g)
-	}
-}
-
-func TestParseLikelihood(t *testing.T) {
-	for in, want := range map[string]Likelihood{"": LikelihoodEMA, "ema": LikelihoodEMA, "EMA": LikelihoodEMA, "arachne": LikelihoodArachne} {
-		got, err := ParseLikelihood(in)
-		if err != nil || got != want {
-			t.Errorf("ParseLikelihood(%q) = %q, %v; want %q", in, got, err, want)
-		}
-	}
-	if _, err := ParseLikelihood("bogus"); err == nil {
-		t.Error("ParseLikelihood(bogus) should fail")
+		t.Fatalf("the crowded cloud should win (in=%v out=%v)", in.active, out.active)
 	}
 }

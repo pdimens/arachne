@@ -89,7 +89,6 @@ arachne align -t 24 -s MC_001 Rclamitans.fa MC_001.F.fq.gz MC_001.R.fq.gz > MC_0
 | `--improper-pair-penalty` | `-i` | 4.0 | Penalty for improper read pair (magnitude; always applied as a penalty regardless of sign) |
 | `--infer-distance` | `-d` | `50000` | Distance at which to consider reads with the same barcode to originate from different molecules [!badge variant="info" text="under construction"]|
 | `--em-error-rate` | | `0.001` | Per-base mismatch rate used in the likelihood of `--method em` |
-| `--em-likelihood` | | `ema` | Alignment likelihood for `--method em`: `ema` or `arachne` |
 | `--method` | `-m` | `rfa` | Method for resolving multi-mapping reads within a barcode: `rfa` or `em` [!badge variant="info" text="experimental"] |
 | `--no-unmapped` | `-u` | false | Exclude unmapped reads from output |
 | `--sample-id` | `-s` | | Sample name [!badge variant="info" text="required"]|
@@ -122,10 +121,9 @@ alignments are grouped into clouds (using `--infer-distance`), and each candidat
 updated from its alignment score, the expected coverage of its cloud, and the placement of its mate. The highest
 posterior candidate is reported and the posterior sets the MAPQ. This method is experimental.
 
-With `--em-likelihood ema` (the default), an alignment is scored the way EMA does: each matching base contributes
-`log(1 - e)`, each mismatch `log(e)`, each indel event `log(1e-4)` and each clipped base `log(0.03)`, where `e` is
-`--em-error-rate`, and the MAPQ is also capped by that alignment-only score. `--em-likelihood arachne` instead uses
-arachne's own mismatch, indel and soft-clip penalties, with the MAPQ discounted by arachne's pseudo-count alignment.
+An alignment is scored the way EMA does: each matching base contributes `log(1 - e)`, each mismatch `log(e)`, each
+indel event `log(1e-4)` and each clipped base `log(0.03)`, where `e` is `--em-error-rate`. The MAPQ is also capped by that
+alignment-only score.
 
 ### sample-id
 This is the field that populations the `@RG SM:` SAM field and is required, since we cannot reliably infer
