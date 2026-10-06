@@ -19,6 +19,8 @@ import (
 // that the read truly originates there. The EM alternates between
 //
 //	E: gamma_i ∝ P(alignment_i) * w(cloud_i) * P(best mate placement in the same cloud)
+//	   (w excludes the read's own contribution, and the mate's placement is
+//	   scored from the mate's own evidence, not its full posterior)
 //	M: w(cloud) = Σ gamma_i of the candidates in that cloud
 //
 // for a fixed number of iterations. Each read is then assigned its
@@ -26,6 +28,10 @@ import (
 //
 // Differences from EMA, kept deliberately small for this first
 // implementation:
+//   - a read takes its mate's evidence without the read's own contribution
+//     relayed back through the pair (EMA feeds the mate's full posterior in,
+//     which makes a pair's log-odds grow with every iteration), and likewise
+//     a read's cloud weights exclude its own share;
 //   - cloud weights are always normalised per read across that read's
 //     candidate clouds (EMA's "many_clouds" branch). EMA's default branch
 //     instead links the sub-clouds produced by splitting a cloud in which
@@ -237,26 +243,51 @@ func emUpdateWeights(cands [][]emCand, clouds []*emCloud) {
 // previous iteration's gammas), so the result is independent of read order.
 func emIterate(cands [][]emCand, clouds []*emCloud, config *EMConfig) float64 {
 	improperNat := config.ImproperPenalty * math.Ln10
-	next := make([][]float64, len(cands))
+
+	// Pass 1: each read's evidence on its own, from its alignment likelihood
+	// and the weights of its candidate clouds. The weights are leave-one-out:
+	// a read must not support the cloud it is deciding about.
+	prior := make([][]float64, len(cands)) // log prior of each candidate
+	local := make([][]float64, len(cands)) // normalised belief without the mate
 	for r := range cands {
 		n := len(cands[r])
-		next[r] = make([]float64, n)
-
-		// each read normalises the weights of the clouds it could be in
+		weights := make([]float64, n)
 		total := 0.0
-		for _, c := range cands[r] {
-			total += cloudWeight(clouds, c.cloud)
-		}
-		var mates []emCand
-		if n > 0 {
-			mates = cands[cands[r][0].aln.mate_id]
-		}
 		for i, c := range cands[r] {
-			prior := 1.0
-			if total > 0 {
-				prior = cloudWeight(clouds, c.cloud) / total
+			weights[i] = emWeightFloor
+			if c.cloud >= 0 {
+				own := 0.0
+				for _, o := range cands[r] {
+					if o.cloud == c.cloud {
+						own += o.gamma
+					}
+				}
+				weights[i] = math.Max(clouds[c.cloud].weight-own, emWeightFloor)
 			}
-			next[r][i] = c.logScore + math.Log(math.Max(prior, emWeightFloor)) + bestMateScore(c, mates, improperNat)
+			total += weights[i]
+		}
+		prior[r] = make([]float64, n)
+		local[r] = make([]float64, n)
+		for i, c := range cands[r] {
+			prior[r][i] = math.Log(weights[i] / total)
+			local[r][i] = c.logScore + prior[r][i]
+		}
+		normalizeLogProbs(local[r])
+	}
+
+	// Pass 2: add the mate. The mate contributes its local belief, not its
+	// full posterior: that posterior already contains this read's own
+	// evidence relayed back through the pair, and feeding it in again makes
+	// the pair's log-odds grow on every iteration instead of converging.
+	next := make([][]float64, len(cands))
+	for r := range cands {
+		next[r] = make([]float64, len(cands[r]))
+		if len(cands[r]) == 0 {
+			continue
+		}
+		mateID := cands[r][0].aln.mate_id
+		for i, c := range cands[r] {
+			next[r][i] = c.logScore + prior[r][i] + bestMateScore(c, cands[mateID], local[mateID], improperNat)
 		}
 		normalizeLogProbs(next[r])
 	}
@@ -272,30 +303,23 @@ func emIterate(cands [][]emCand, clouds []*emCloud, config *EMConfig) float64 {
 	return maxChange
 }
 
-func cloudWeight(clouds []*emCloud, id int) float64 {
-	if id < 0 {
-		return emWeightFloor
-	}
-	return math.Max(clouds[id].weight, emWeightFloor)
-}
-
 // Best log score of the mate being placed consistently with candidate c:
-// in the same cloud, on the opposite strand, weighted by the mate's own
-// responsibility. An unpaired placement scores the improper pair penalty.
-func bestMateScore(c emCand, mates []emCand, improperNat float64) float64 {
+// in the same cloud, on the opposite strand, weighted by the mate's belief
+// in that placement. An unpaired placement scores the improper pair penalty.
+func bestMateScore(c emCand, mates []emCand, belief []float64, improperNat float64) float64 {
 	best := improperNat
 	if c.cloud < 0 {
 		return best
 	}
-	for _, m := range mates {
-		if m.cloud != c.cloud || m.aln.reversed == c.aln.reversed || m.gamma == 0 {
+	for j, m := range mates {
+		if m.cloud != c.cloud || m.aln.reversed == c.aln.reversed || belief[j] == 0 {
 			continue
 		}
 		penalty := improperNat
 		if isPair(c.aln, m.aln) {
 			penalty = 0
 		}
-		if s := penalty + math.Log(m.gamma); s > best {
+		if s := penalty + math.Log(belief[j]); s > best {
 			best = s
 		}
 	}

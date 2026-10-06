@@ -305,3 +305,37 @@ func TestEMCloudWeightBreaksTie(t *testing.T) {
 		t.Fatalf("the crowded cloud should win (in=%v out=%v)", in.active, out.active)
 	}
 }
+
+// A pair whose reads are both ambiguous between the same two clouds must
+// reach a stable posterior. If each read took its mate's full posterior as
+// evidence, the pair's own evidence would circulate and the log-odds would
+// grow with every iteration, so more iterations would mean more confidence.
+func TestEMPairPosteriorConverges(t *testing.T) {
+	posterior := func(iterations int) (float64, int) {
+		setEMGlobals()
+		f := &emFixture{}
+		f.addPair(0, "chr1", 1000) // cloud A: two pairs, weight 4
+		f.addPair(1, "chr1", 3000)
+		f.addPair(2, "chr2", 1000) // cloud B: one pair, weight 2
+		a1 := f.add(6, "chr1", 2000, false)
+		b1 := f.add(6, "chr2", 2000, false)
+		f.add(7, "chr1", 2300, true)
+		f.add(7, "chr2", 2300, true)
+		cfg := DefaultEMConfig(-4.0)
+		cfg.Iterations = iterations
+		cfg.Tolerance = 0 // never stop early
+		runEM(f.alignments, f.positions(), cfg)
+		if !a1.active || b1.active {
+			t.Fatalf("the better supported cloud should win (A=%v B=%v)", a1.active, b1.active)
+		}
+		return a1.molecule_confidence, a1.mapq
+	}
+	g5, _ := posterior(5)
+	g60, q60 := posterior(60)
+	if math.Abs(g5-g60) > 0.03 {
+		t.Errorf("posterior moved from %.3f at 5 iterations to %.3f at 60: it should converge", g5, g60)
+	}
+	if g60 > 0.95 || q60 > 12 {
+		t.Errorf("posterior %.3f (mapq %d) is overconfident for a 2:1 contest", g60, q60)
+	}
+}
