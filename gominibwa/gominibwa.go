@@ -1,5 +1,3 @@
-//go:build minibwa
-
 package gominibwa
 
 // #cgo CFLAGS: -I${SRCDIR}/minibwa
@@ -199,6 +197,11 @@ func (o *Options) SetFlag(flag uint64, on bool) {
 	}
 }
 
+// MatchScore returns the score awarded per matching base. minibwa's default
+// is 2, twice bwa-mem's 1, so divide Hit.DPScore by it to compare with
+// bwa-style scores.
+func (o *Options) MatchScore() int { return int(o.opt.a) }
+
 // Flags returns the current MB_F_* flag bits.
 func (o *Options) Flags() uint64 { return uint64(o.opt.flag) }
 
@@ -255,6 +258,12 @@ func (x *Index) NewMapper(opt *Options) *Mapper {
 	runtime.SetFinalizer(m, func(m *Mapper) { m.Close() })
 	return m
 }
+
+// Index returns the index this Mapper aligns against.
+func (m *Mapper) Index() *Index { return m.idx }
+
+// Options returns the options this Mapper was created with.
+func (m *Mapper) Options() *Options { return m.opt }
 
 // Close releases the Mapper's buffers.
 func (m *Mapper) Close() {

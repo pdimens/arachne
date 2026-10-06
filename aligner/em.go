@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"arachne/fastqreader"
-	"arachne/gobwa"
+	"arachne/gominibwa"
 
 	"github.com/biogo/hts/sam"
 )
@@ -97,17 +97,14 @@ func worthRunningEM(barcode_fragments []fastqreader.FastQRecord, uniqueBarcode b
 
 func DoEMForOneBarcode(work *WorkUnit,
 	out chan *sam.Record,
-	ref *gobwa.GoBwaReference,
-	settings *gobwa.GoBwaSettings,
+	mapper *gominibwa.Mapper,
 	config *EMConfig,
 	contigs map[string]*sam.Reference,
 	debugtags *bool,
 	reads []fastqreader.FastQRecord) {
 	barcode_reads := work.reads
-	arena := gobwa.NewArena()
 	worthEM := worthRunningEM(barcode_reads, work.unique_barcode, config)
-	barcode_chains, _ := GetChains(ref, settings, barcode_reads, arena, 25)
-	alignments, stashed_alignments := GetAlignments(ref, settings, barcode_chains, 17, arena)
+	alignments, stashed_alignments, _ := GetAlignments(mapper, barcode_reads, 17)
 
 	// also sets the initial best-pair placement (active) for every read
 	positions := tagBestAlignments(alignments)
@@ -129,7 +126,6 @@ func DoEMForOneBarcode(work *WorkUnit,
 	CheckSplitReads(stashed_alignments, centromeres)
 	flushToChannel(alignments, out, contigs, debugtags)
 	ReturnBuffer(reads)
-	arena.Free()
 }
 
 // runEM resolves the candidate alignments of one barcode in place: on

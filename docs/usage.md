@@ -21,7 +21,7 @@ If using haplotagging, TELLseq, or stLFR data that isn't in standard format, use
 !!!
 
 >>> `index`
-index the reference FASTA to be used for alignment (just a wrapper for `bwa index`)
+index the reference FASTA to be used for alignment (just a wrapper for `minibwa index`)
 ```bash
 arachne index ref.fa
 ```
@@ -59,12 +59,13 @@ combinatorial, an invalid barcode segment (e.g., `C00` or `0`, respectively) wou
 the unique segment combination unreliable, thus invalid.
 
 ## index
-The `arachne index` command is provided for convenience. It's a very simple wrapper for `bwa index`.
+The `arachne index` command is provided for convenience. It's a very simple wrapper for `minibwa index`.
 
 ```bash usage
 arachne index file.fasta
 ```
-This will create `file.fasta.amb`, `file.fasta.ann`, `file.fasta.bwt`, `file.fasta.pac`, `file.fasta.sa`.
+This will create `file.fasta.l2b` and `file.fasta.mbw`. Indexes made with `bwa index` cannot be used.
+The `--threads` option speeds up index construction.
 
 ```bash example
 arachne index galapagos_tortoise.fasta
@@ -72,7 +73,8 @@ arachne index galapagos_tortoise.fasta
 
 ## align
 Once your input FASTQ files are in barcode-sorted standard format and the reference fasta is indexed,
-you are ready to align your sample onto the reference. The command arguments follows the BWA design and writes to `stdout`:
+you are ready to align your sample onto the reference. Reads are aligned with [minibwa](https://github.com/lh3/minibwa) (short-read, paired-end mode with mate rescue),
+and the command writes to `stdout`:
 ```bash usage
 arachne align [options] -s <sampleID> ref.fa r1.fq r2.fq
 ```

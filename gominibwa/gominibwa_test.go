@@ -1,5 +1,3 @@
-//go:build minibwa
-
 package gominibwa
 
 import (

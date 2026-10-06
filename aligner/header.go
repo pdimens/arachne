@@ -5,24 +5,25 @@ import (
 	"strings"
 	"time"
 
-	"arachne/gobwa"
+	"arachne/gominibwa"
 
 	"github.com/biogo/hts/sam"
 )
 
 // Return a SAM header built from the reference, sample ID, and arachne version
-func buildHeader(ref *gobwa.GoBwaReference, sampleid, version string) (*sam.Header, map[string]*sam.Reference) {
+func buildHeader(idx *gominibwa.Index, sampleid, version string) (*sam.Header, map[string]*sam.Reference) {
 	contigs := make(map[string]*sam.Reference)
 	references := make([]*sam.Reference, 0)
 
-	gobwa.EnumerateContigs(ref, func(name string, length int) {
-		r, err := sam.NewReference(name, name, "NA", length, nil, nil)
+	names, lengths := idx.Contigs()
+	for i, name := range names {
+		r, err := sam.NewReference(name, name, "NA", int(lengths[i]), nil, nil)
 		if err != nil {
 			panic(err)
 		}
 		references = append(references, r)
 		contigs[name] = r
-	})
+	}
 
 	h, err := sam.NewHeader([]byte(""), references)
 	if err != nil {

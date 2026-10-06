@@ -1,3 +1,5 @@
+//go:build bwa_archive
+
 // Copyright (c) 2015 10X Genomics, Inc. All rights reserved.
 
 #include <stdio.h>

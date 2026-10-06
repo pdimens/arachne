@@ -38,7 +38,7 @@ jobs:
         run: pixi run build
       - name: Run Go unit tests
         run: |
-          export CGO_LDFLAGS="-L$(pwd)/gobwa/bwa"
+          export CGO_LDFLAGS="-L$(pwd)/gominibwa/minibwa"
           pixi run go test ./...
       - name: Create test data
         run: test/data.py

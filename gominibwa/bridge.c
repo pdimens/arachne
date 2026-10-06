@@ -1,5 +1,3 @@
-//go:build minibwa
-
 #include <stdlib.h>
 #include "mbpriv.h"
 #include "l2bit.h"

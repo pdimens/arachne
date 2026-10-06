@@ -38,11 +38,11 @@ var alignCmd = &cobra.Command{
 				return err
 			}
 		}
-		// if reference index files don't exist, run bwa index on reference
-		exts := []string{".amb", ".ann", ".bwt", ".pac", ".sa"}
+		// the reference must have been indexed with minibwa
+		exts := []string{".l2b", ".mbw"}
 		for _, i := range exts {
 			if _, err := os.Stat(args[0] + i); err != nil {
-				return fmt.Errorf("missing reference index file: %s\nPlease index reference with \033[94;1marachne index\033[0m or (\033[94;1mbwa index\033[0m)", filepath.Base(args[0])+i)
+				return fmt.Errorf("missing reference index file: %s\nPlease index reference with \033[94;1marachne index\033[0m or (\033[94;1mminibwa index\033[0m)", filepath.Base(args[0])+i)
 			}
 		}
 		if _, err := cmd.Flags().GetString("sample-id"); err != nil {

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"arachne/gobwa"
+	"arachne/gominibwa"
 
 	"github.com/biogo/hts/sam"
 )
@@ -39,8 +39,7 @@ func ParseMethod(s string) (Method, error) {
 // specific configuration is captured by the closure.
 type BarcodeFunc func(work *WorkUnit,
 	out chan *sam.Record,
-	ref *gobwa.GoBwaReference,
-	settings *gobwa.GoBwaSettings,
+	mapper *gominibwa.Mapper,
 	contigs map[string]*sam.Reference,
 	debugtags *bool)
 
@@ -52,16 +51,16 @@ func barcodeFuncFor(m Method, improperPenalty float64, em *EMConfig) BarcodeFunc
 		if config == nil {
 			config = DefaultEMConfig(improperPenalty)
 		}
-		return func(work *WorkUnit, out chan *sam.Record, ref *gobwa.GoBwaReference,
-			settings *gobwa.GoBwaSettings, contigs map[string]*sam.Reference, debugtags *bool) {
-			DoEMForOneBarcode(work, out, ref, settings, config, contigs, debugtags, work.reads)
+		return func(work *WorkUnit, out chan *sam.Record, mapper *gominibwa.Mapper,
+			contigs map[string]*sam.Reference, debugtags *bool) {
+			DoEMForOneBarcode(work, out, mapper, config, contigs, debugtags, work.reads)
 		}
 	default:
 		config := &RFAConfig{improperPenalty}
 		stats := &RFAStats{}
-		return func(work *WorkUnit, out chan *sam.Record, ref *gobwa.GoBwaReference,
-			settings *gobwa.GoBwaSettings, contigs map[string]*sam.Reference, debugtags *bool) {
-			DoRFAForOneBarcode(work, out, ref, settings, config, stats, contigs, debugtags, work.reads)
+		return func(work *WorkUnit, out chan *sam.Record, mapper *gominibwa.Mapper,
+			contigs map[string]*sam.Reference, debugtags *bool) {
+			DoRFAForOneBarcode(work, out, mapper, config, stats, contigs, debugtags, work.reads)
 		}
 	}
 }

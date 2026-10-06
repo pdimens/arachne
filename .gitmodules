@@ -1,5 +1,5 @@
 [submodule "gobwa/bwa"]
-	path = gobwa/bwa
+	path = archive/gobwa/bwa
 	url = https://github.com/lh3/bwa
 [submodule "gominibwa/minibwa"]
 	path = gominibwa/minibwa
