@@ -88,10 +88,10 @@ arachne align -t 24 -s MC_001 Rclamitans.fa MC_001.F.fq.gz MC_001.R.fq.gz > MC_0
 |Long {.whitespace-nowrap}  | Short {.whitespace-nowrap} | Default {.whitespace-nowrap}  | Description |
 |:----------|:----------|:----------|:----------|
 | `--centromeres` | `-c` |  | BED file describing known centromeres |
+| `--em` | | false | Resolve multi-mapping reads with an expectation-maximization instead of RFA [!badge variant="info" text="experimental"] |
+| `--em-error-rate` | | `0.001` | Per-base mismatch rate used in the likelihood of `--em` |
 | `--improper-pair-penalty` | `-i` | 4.0 | Penalty for improper read pair (magnitude; always applied as a penalty regardless of sign) |
 | `--infer-distance` | `-d` | `50000` | Distance at which to consider reads with the same barcode to originate from different molecules [!badge variant="info" text="under construction"]|
-| `--em-error-rate` | | `0.001` | Per-base mismatch rate used in the likelihood of `--method em` |
-| `--method` | `-m` | `rfa` | Method for resolving multi-mapping reads within a barcode: `rfa` or `em` [!badge variant="info" text="experimental"] |
 | `--no-unmapped` | `-u` | false | Exclude unmapped reads from output |
 | `--sample-id` | `-s` | | Sample name [!badge variant="info" text="required"]|
 | `--threads` | `-t` | `4` | Threads to use |
@@ -114,14 +114,13 @@ Poccidentalis_chr1 0 180000
 The `infer-distance` option controls the alignment distance-based deconvolution, as described [here](https://blinkseq.github.io/linkedreads/clashing/#barcode-thresholds).
 I still need to investigate exactly what's happening under the hood.
 
-### method
-Selects how reads with several candidate alignments are resolved within a barcode.
-
-- `rfa` (default): the original read-cloud optimizer, which searches over assignments of reads to candidate molecules.
-- `em`: an expectation-maximization over candidate clouds, modelled on [EMA](https://github.com/arshajii/ema). Candidate
-alignments are grouped into clouds (using `--infer-distance`), and each candidate's posterior probability is iteratively
-updated from its alignment score, the expected coverage of its cloud, and the placement of its mate. The highest
-posterior candidate is reported and the posterior sets the MAPQ. This method is experimental.
+### em
+By default, reads with several candidate alignments are resolved within a barcode by RFA, the read-cloud optimizer, which
+searches over assignments of reads to candidate molecules. With `--em`, an expectation-maximization over candidate clouds,
+modelled on [EMA](https://github.com/arshajii/ema), is used instead. Candidate alignments are grouped into clouds
+(using `--infer-distance`), and each candidate's posterior probability is iteratively updated from its alignment score,
+the expected coverage of its cloud, and the placement of its mate. The highest posterior candidate is reported and the
+posterior sets the MAPQ. This option is experimental.
 
 An alignment is scored the way EMA does: each matching base contributes `log(1 - e)`, each mismatch `log(e)`, each
 indel event `log(1e-4)` and each clipped base `log(0.03)`, where `e` is `--em-error-rate`. The MAPQ is also capped by that

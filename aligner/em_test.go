@@ -226,18 +226,6 @@ func TestWorthRunningEM(t *testing.T) {
 	}
 }
 
-func TestParseMethod(t *testing.T) {
-	for in, want := range map[string]Method{"": MethodRFA, "rfa": MethodRFA, "RFA": MethodRFA, "em": MethodEM, " EM ": MethodEM} {
-		got, err := ParseMethod(in)
-		if err != nil || got != want {
-			t.Errorf("ParseMethod(%q) = %q, %v; want %q", in, got, err, want)
-		}
-	}
-	if _, err := ParseMethod("bogus"); err == nil {
-		t.Error("ParseMethod(bogus) should fail")
-	}
-}
-
 func TestEMLikelihood(t *testing.T) {
 	cfg := DefaultEMConfig(-4.0)
 	perfect := &Alignment{matches: 100}

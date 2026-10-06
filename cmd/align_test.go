@@ -21,3 +21,18 @@ func TestNormalizeImproperPairPenalty(t *testing.T) {
 		}
 	}
 }
+
+// --em is a plain boolean switch, off by default; the old --method string
+// flag is gone.
+func TestEMFlag(t *testing.T) {
+	f := alignCmd.Flags().Lookup("em")
+	if f == nil {
+		t.Fatal("--em flag is not defined")
+	}
+	if f.Value.Type() != "bool" || f.DefValue != "false" {
+		t.Errorf("--em is %s defaulting to %s, want bool defaulting to false", f.Value.Type(), f.DefValue)
+	}
+	if alignCmd.Flags().Lookup("method") != nil {
+		t.Error("--method should no longer exist")
+	}
+}

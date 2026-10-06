@@ -45,7 +45,10 @@ pixi add arachne
 #### Manually
 Requires:
 - Go installation
-- a C compiler and zlib (minibwa needs SSE4.2 on x86-64 or NEON on arm64)
+- a C compiler and zlib
+- a CPU with SSE4.2 (x86-64) or NEON (arm64), which minibwa requires
+- optionally OpenMP (`libgomp`), used by `arachne index` for multi-threaded index construction. It is detected
+  automatically when building; without it indexing is single-threaded
 
 From the root of the repo:
 ```

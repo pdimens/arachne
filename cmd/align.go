@@ -83,11 +83,7 @@ var alignCmd = &cobra.Command{
 			return err
 		}
 
-		method, err := cmd.Flags().GetString("method")
-		if err != nil {
-			return err
-		}
-		if _, err := aligner.ParseMethod(method); err != nil {
+		if _, err := cmd.Flags().GetBool("em"); err != nil {
 			return err
 		}
 
@@ -120,8 +116,8 @@ func init() {
 	alignCmd.Flags().BoolP("comments", "C", false, "Append comments (non-BX/VX) to SAM output")
 	alignCmd.Flags().Float64P("improper-pair-penalty", "i", 4.0, "Penalty for improper pair")
 	alignCmd.Flags().Int64P("infer-distance", "d", 50000, "Distance at which to consider reads with the same barcode to be from different molecules")
-	alignCmd.Flags().Float64("em-error-rate", 0.001, "Per-base mismatch rate in the EM likelihood (--method em)")
-	alignCmd.Flags().StringP("method", "m", "rfa", "Method for resolving multi-mapping reads: rfa or em")
+	alignCmd.Flags().Bool("em", false, "Resolve multi-mapping reads with EM (experimental) instead of RFA")
+	alignCmd.Flags().Float64("em-error-rate", 0.001, "Per-base mismatch rate in the EM likelihood (with --em)")
 	alignCmd.Flags().BoolP("no-unmapped", "u", false, "Exclude unmapped reads from output")
 	alignCmd.Flags().StringP("sample-id", "s", "", "Sample name (required)")
 	if err := alignCmd.MarkFlagRequired("sample-id"); err != nil {
@@ -143,12 +139,7 @@ func arachneAlign(cmd *cobra.Command, args []string) error {
 	comments, _ := cmd.Flags().GetBool("comments")
 	verbose, _ := cmd.Flags().GetBool("verbose")
 	noUnmapped, _ := cmd.Flags().GetBool("no-unmapped")
-	methodName, _ := cmd.Flags().GetString("method")
-	method, err := aligner.ParseMethod(methodName)
-	if err != nil {
-		return err
-	}
-	methodStr := string(method)
+	em, _ := cmd.Flags().GetBool("em")
 	emErrorRate, _ := cmd.Flags().GetFloat64("em-error-rate")
 	threads, _ := cmd.Flags().GetInt("threads")
 	threads = min(runtime.NumCPU(), max(threads, 1))
@@ -170,7 +161,7 @@ func arachneAlign(cmd *cobra.Command, args []string) error {
 		Verbose:               &verbose,
 		Comments:              &comments,
 		NoUnmapped:            &noUnmapped,
-		Method:                &methodStr,
+		EM:                    &em,
 		EMErrorRate:           &emErrorRate,
 	}
 	start := time.Now()
