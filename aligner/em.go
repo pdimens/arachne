@@ -125,6 +125,7 @@ func DoEMForOneBarcode(work *WorkUnit,
 
 	if worthEM {
 		runEM(alignments, positions, config)
+		emMoleculeMapq(alignments, positions, config)
 	} else {
 		estimateMapQualities(alignments, nil, config.ImproperPenalty)
 	}
@@ -132,6 +133,34 @@ func DoEMForOneBarcode(work *WorkUnit,
 	CheckSplitReads(stashed_alignments, centromeres)
 	flushToChannel(alignments, out, contigs, debugtags)
 	ReturnBuffer(reads)
+}
+
+// emMoleculeMapq caps each active alignment's MAPQ with RFA's molecule-level
+// estimate. The EM's posterior treats every ambiguous read as a separate
+// vote, which leaves reads in a contest between two molecules too confident;
+// RFA's estimate instead scores the probability of moving whole molecules'
+// reads to a competing molecule. Candidate molecules are inferred from the
+// candidate positions, the EM's active alignments are marked in them, and
+// estimateMapQualities is run as RFA does after its optimizer. A read's final
+// MAPQ is the lower of the two estimates, so the EM's own calibration at high
+// MAPQ is kept.
+func emMoleculeMapq(alignments, positions [][]*Alignment, config *EMConfig) {
+	emMapq := map[*Alignment]int{}
+	for _, alns := range alignments {
+		for _, a := range alns {
+			if a.active {
+				emMapq[a] = a.mapq
+			}
+		}
+	}
+	molecules := inferMolecules(positions)
+	markBestAlignmentForReadInMolecule(molecules)
+	molecules = scrapMolecules(molecules)
+	setMoleculeDifferences(molecules, false)
+	estimateMapQualities(alignments, molecules, config.ImproperPenalty)
+	for a, m := range emMapq {
+		a.mapq = min(a.mapq, m)
+	}
 }
 
 // runEM resolves the candidate alignments of one barcode in place: on

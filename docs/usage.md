@@ -120,7 +120,9 @@ searches over assignments of reads to candidate molecules. With `--em`, an expec
 modelled on [EMA](https://github.com/arshajii/ema), is used instead. Candidate alignments are grouped into clouds
 (using `--infer-distance`), and each candidate's posterior probability is iteratively updated from its alignment score,
 the expected coverage of its cloud, and the placement of its mate. The highest posterior candidate is reported and the
-posterior sets the MAPQ. This option is experimental.
+posterior sets the MAPQ. As a second check, RFA's molecule-level estimate (the probability of moving a whole molecule's reads
+to a competing molecule) is computed for the chosen placement, and each read's MAPQ is the lower of the two. This keeps reads
+that are ambiguous between two molecules from being reported with a high MAPQ. This option is experimental.
 
 An alignment is scored the way EMA does: each matching base contributes `log(1 - e)`, each mismatch `log(e)`, each
 indel event `log(1e-4)` and each clipped base `log(0.03)`, where `e` is `--em-error-rate`. The MAPQ is also capped by that

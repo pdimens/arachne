@@ -38,6 +38,8 @@ func (f *emFixture) add(read_id int, contig string, pos int64, reversed bool) *A
 		reversed:  reversed,
 		read_seq:  &seq,
 		mapq_data: &MapQData{},
+		// as set by GetAlignments; RFA's molecule-move MAPQ divides by it
+		sum_move_probability_change: 1.0,
 		// perfect alignment: no mismatches, indels or clipping
 		log_alignment_probability: 0,
 	}
@@ -337,5 +339,50 @@ func TestEMPairPosteriorConverges(t *testing.T) {
 	}
 	if g60 > 0.95 || q60 > 12 {
 		t.Errorf("posterior %.3f (mapq %d) is overconfident for a 2:1 contest", g60, q60)
+	}
+}
+
+// The molecule-level estimate may only lower a read's MAPQ, never raise it,
+// and must leave exactly one active alignment per read with mates linked.
+func TestEMMoleculeMapqOnlyLowers(t *testing.T) {
+	setEMGlobals()
+	dbg := false
+	debugPrintMove = &dbg
+	f := &emFixture{}
+	for i := 0; i < 40; i++ {
+		f.addPair(i, "chr1", int64(1000+i*500))
+	}
+	f.add(80, "chr1", 5000, false) // repeat read: one copy in the crowded cloud...
+	f.add(80, "chr2", 100, false)  // ...one in empty sequence
+	f.add(81, "chr1", 5300, true)
+	positions := f.positions()
+
+	runEM(f.alignments, positions, DefaultEMConfig(-4.0))
+	before := map[*Alignment]int{}
+	for _, alns := range f.alignments {
+		for _, a := range alns {
+			if a.active {
+				before[a] = a.mapq
+			}
+		}
+	}
+	emMoleculeMapq(f.alignments, positions, DefaultEMConfig(-4.0))
+
+	for r, alns := range f.alignments {
+		if n := activeCount(alns); n != 1 {
+			t.Fatalf("read %d has %d active alignments, want 1", r, n)
+		}
+	}
+	for a, m := range before {
+		if a.mapq > m {
+			t.Errorf("read %d: MAPQ rose from %d to %d", a.read_id, m, a.mapq)
+		}
+		if a.mapq < 0 || a.mapq > 60 {
+			t.Errorf("read %d: MAPQ %d out of range", a.read_id, a.mapq)
+		}
+	}
+	// a uniquely placed read in a well supported molecule stays confident
+	if got := f.alignments[0][0].mapq; got < 20 {
+		t.Errorf("unique read mapq = %d, want it to stay confident", got)
 	}
 }
