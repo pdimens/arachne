@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark">
     <meta name="turbo-root" content="/arachne">
-    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="4.6.0.844698810537">
+    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="4.6.0.844710205443">
 
     <!-- See retype.com -->
     <meta name="generator" content="Retype 4.6.0">
@@ -39,12 +39,12 @@
     <script data-cfasync="false">(function(){var cl=document.documentElement.classList,ls=localStorage.getItem("retype_scheme"),hd=cl.contains("dark"),hl=cl.contains("light"),wm=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches;if(ls==="dark"||(!ls&&wm&&!hd&&!hl)){cl.remove("light");cl.add("dark")}else if(ls==="light"||(!ls&&!wm&&!hd&&!hl)){cl.remove("dark");cl.add("light")}})();</script>
 
     <link id="retype-favicon" rel="icon" href="../static/favicon.png" />
-    <link href="../resources/css/retype.css?v=4.6.0.844698810537" rel="stylesheet">
+    <link href="../resources/css/retype.css?v=4.6.0.844710205443" rel="stylesheet">
 
-    <script data-cfasync="false" src="../resources/js/config.js?v=4.6.0.844698810537" data-turbo-eval="false" defer></script>
+    <script data-cfasync="false" src="../resources/js/config.js?v=4.6.0.844710205443" data-turbo-eval="false" defer></script>
     <script data-cfasync="false" src="../resources/js/retype.js?v=4.6.0" data-turbo-eval="false" defer></script>
-    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=4.6.0.844698810537" data-turbo-eval="false" defer></script>
-    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=4.6.0.844698810537" defer></script>
+    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=4.6.0.844710205443" data-turbo-eval="false" defer></script>
+    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=4.6.0.844710205443" defer></script>
 </head>
 <body>
     <div id="retype-app" class="relative text-base antialiased text-base-text bg-base-bg font-body">
@@ -331,7 +331,7 @@ and the command writes to <code translate="no" v-pre>stdout</code>:</p>
 <retype-table copy-text="|Long| Short| Default| Description |
 |:----------|:----------|:----------|:----------|
 | `--centromeres` | `-c` |  | BED file describing known centromeres |
-| `--em-error-rate` | | `0.001` | Per-base mismatch rate used in the likelihood of the default EM method (ignored with `--rfa`) |
+| `--em-error-rate` | `-e` | `0.001` | Per-base mismatch rate used in the likelihood of the default EM method (ignored with `--rfa`) |
 | `--improper-pair-penalty` | `-i` | 4.0 | Penalty for improper read pair (magnitude; always applied as a penalty regardless of sign) |
 | `--infer-distance` | `-d` | `50000` | Distance at which to consider reads with the same barcode to originate from different molecules [!badge variant=&quot;info&quot; text=&quot;under construction&quot;]|
 | `--no-unmapped` | `-u` | false | Exclude unmapped reads from output |
@@ -358,7 +358,7 @@ and the command writes to <code translate="no" v-pre>stdout</code>:</p>
 </tr>
 <tr>
 <td style="text-align: left;" class="whitespace-nowrap"><code translate="no" v-pre>--em-error-rate</code></td>
-<td style="text-align: left;" class="whitespace-nowrap"> </td>
+<td style="text-align: left;" class="whitespace-nowrap"><code translate="no" v-pre>-e</code></td>
 <td style="text-align: left;" class="whitespace-nowrap"><code translate="no" v-pre>0.001</code></td>
 <td style="text-align: left;">Per-base mismatch rate used in the likelihood of the default EM method (ignored with <code translate="no" v-pre>--rfa</code>)</td>
 </tr>
@@ -441,20 +441,96 @@ reads that are ambiguous between two molecules from being reported with a high M
 candidate molecules. On simulated linked-read data, including simulated reads on <em>Drosophila</em> chromosomes, EM placed
 slightly more repeat reads correctly than RFA and gave MAPQ values at least as well calibrated, which is why it is the
 default.</p>
-<p>An alignment is scored the way EMA does: each matching base contributes <code translate="no" v-pre>log(1 - e)</code>, each mismatch <code translate="no" v-pre>log(e)</code>, each
-indel event <code translate="no" v-pre>log(1e-4)</code> and each clipped base <code translate="no" v-pre>log(0.03)</code>, where <code translate="no" v-pre>e</code> is <code translate="no" v-pre>--em-error-rate</code>. The MAPQ is also capped by that
-alignment-only score. These options apply to the EM method only.</p>
+<h3 id="em-error-rate">em-error-rate</h3>
+<p>The expected sequencing error rate. The default value, <code translate="no" v-pre>0.001</code> is inherited from EMA and is typically a safe bet.
+This option applies to the EM method only, meaning it&#x27;s ignored when using <code translate="no" v-pre>--rfa</code>.</p>
+<doc-panel id="the-number-does" collapsed>
+    <template #title>the number does</template>
+<p>It is the model&#x27;s belief about how often a single base in a read is wrong. The EM uses it to decide how suspicious a mismatch is when it compares candidate placements. Each mismatch makes a placement less likely by a factor of about <code translate="no" v-pre>1/e</code>:</p>
+<retype-table copy-text="| `--em-error-rate` | Each mismatch makes a placement about… | Max MAPQ lost per mismatch |
+|--:|--:|--:|
+| 0.0001 | 10,000 times less likely | 4 |
+| **0.001 (default)** | **1,000 times less likely** | **3** |
+| 0.01 | 100 times less likely | 2 |
+| 0.1 | 9 times less likely | 1 |">
+<div class="table-wrapper scrollbar overflow-hidden">
+<table class="comfortable">
+<thead>
+<tr>
+<th style="text-align: right;"><code translate="no" v-pre>--em-error-rate</code></th>
+<th style="text-align: right;">Each mismatch makes a placement about…</th>
+<th style="text-align: right;">Max MAPQ lost per mismatch</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">0.0001</td>
+<td style="text-align: right;">10,000 times less likely</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr>
+<td style="text-align: right;"><strong>0.001 (default)</strong></td>
+<td style="text-align: right;"><strong>1,000 times less likely</strong></td>
+<td style="text-align: right;"><strong>3</strong></td>
+</tr>
+<tr>
+<td style="text-align: right;">0.01</td>
+<td style="text-align: right;">100 times less likely</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr>
+<td style="text-align: right;">0.1</td>
+<td style="text-align: right;">9 times less likely</td>
+<td style="text-align: right;">1</td>
+</tr>
+</tbody>
+</table>
+</div>
+</retype-table>
+<p>The last column is the ceiling on a read&#x27;s MAPQ. It starts at 60 and loses that many points per mismatch.
+The indel and clipping costs are fixed constants, so changing this number also shifts how mismatches trade off against clipping and indels.</p>
+<h5 id="going-higher">going higher</h5>
+<p>When you increase the value (e.g., 0.01 or 0.1), the model expects noisy reads, so a mismatch counts for less.</p>
+<ul>
+<li>When a read could belong to two near-identical repeat copies, the few differences between the copies carry little weight, so EM relies more on the other evidence: how many reads are in each cloud, and where the mate sits</li>
+<li>If the evidence is balanced, more reads end up with a wishy-washy split and a lower MAPQ</li>
+<li>At 0.1 a mismatch is almost ignored, so EM can hardly tell diverged copies apart by sequence</li>
+<li>Reads with several mismatches get a higher MAPQ ceiling. The method is more forgiving of messy alignments, and so more willing to call a low-quality alignment confident</li>
+<li>It is the better setting if your real error rate is high (which you probably don&#x27;t with Illumina data)</li>
+</ul>
+<h5 id="going-lower">going lower</h5>
+<p>When you decrease the value (e.g., 0.0001), the model expects very clean reads, so a mismatch is a strong signal.</p>
+<ul>
+<li>A single difference between two repeat copies can decide the placement almost on its own, which can be good when the difference is real</li>
+<li>A single sequencing error can push a read onto the wrong copy with high confidence</li>
+<li>Reads with two or three real mismatches (or true variants) lose 8–12 MAPQ points, so they look unreliable
+<ul>
+<li>clean reads are barely affected</li>
+</ul>
+</li>
+<li>It over-trusts the sequence evidence.
+<ul>
+<li>it suits very clean data, <strong>but it gives confident wrong answers on data with more errors than it expects</strong></li>
+</ul>
+</li>
+</ul>
+</doc-panel>
 <h3 id="sample-id">sample-id</h3>
-<p>This is the field that populations the <code translate="no" v-pre>@RG SM:</code> SAM field and is required, since we cannot reliably infer
+<p>This is the field that populations the <code translate="no" v-pre>@RG SM:</code> SAM field and is required, since you cannot reliably infer
 sample names from files.</p>
 <h3 id="improper-pair-penalty">improper-pair-penalty</h3>
-<p>As described in BWA, this is a penalty applied to read scores for an unpaired read pair. BWA-MEM scores an unpaired read pair as <code translate="no" v-pre>scoreRead1</code>+<code translate="no" v-pre>scoreRead2</code>-<code translate="no" v-pre>improperPairPenalty</code> and
-scores a paired one as <code translate="no" v-pre>scoreRead1</code>+<code translate="no" v-pre>scoreRead2</code>-<code translate="no" v-pre>insertPenalty</code>. It compares these two scores to determine whether pairing should be forced.</p>
+<p>A read pair that isn&#x27;t &quot;proper&quot; gets the penalty added to its MAPQ score. The term proper here refers to reads on opposite strands of the
+same contig, with the reverse read starting between −35 and +750 bp from the forward read. It does not use the aligner&#x27;s estimate of the insert size.</p>
+<p><strong>RFA</strong>: This is in log10 probability, so the default of <code translate="no" v-pre>4.0</code> means
+an improperly paired placement is treated as 10,000 times less likely than a properly paired one, other things equal.</p>
+<p><strong>EM</strong>: The same, but the math uses natural logs, so that becomes 4 × ln 10 ≈ 10,000. The sign is ignored, so you always get a penalty.</p>
 <h2 id="marking-duplicates">Marking Duplicates</h2>
 <p>Since linked-read barcodes are technically a kind of UMI, Arachne automatically performs duplicate
-identification for reads with the same barcode. You will not need to perform subsequent duplicate marking
-on Arachne-derived alignments. A caveat is that, unlike <code translate="no" v-pre>samtools markdup</code>, Arachne makes no distinction
-between PCR and optical duplicates.</p>
+identification for reads with the same barcode. A caveat is that, unlike <code translate="no" v-pre>samtools markdup</code>, Arachne makes no distinction
+between PCR and optical duplicates. You will still need to perform subsequent duplicate marking
+on Arachne-derived alignments because invalid-barcoded alignments do not go through deduplication. Using a tool
+like <code translate="no" v-pre>samtools markdup</code> <strong>will not</strong> overwrite existing duplicate flags on alignments, so alignments already marked
+as duplicates will not be modified. In other words, you can safely use <code translate="no" v-pre>samtools markdup</code> on Arachne-derived alignments.</p>
 
                 
                 <!-- Required only on API pages -->
@@ -470,11 +546,11 @@ between PCR and optical duplicates.</p>
             
                 <nav id="retype-nextprev" class="print:hidden flex mt-14">
                     <div class="w-1/2">
-                        <a class="px-5 py-4 h-full flex items-center break-normal font-medium text-body-link border border-base-border hover:border-base-border-hover rounded-l-lg transition-colors duration-150 relative hover:z-5" href="../install/">
+                        <a class="px-5 py-4 h-full flex items-center break-normal font-medium text-body-link border border-base-border hover:border-base-border-hover rounded-l-lg transition-colors duration-150 relative hover:z-5" href="../rfa_em/">
                             <svg xmlns="http://www.w3.org/2000/svg" class="mr-3" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" overflow="visible"><path d="M19 11H7.41l5.29-5.29a.996.996 0 10-1.41-1.41l-7 7a1 1 0 000 1.42l7 7a1.024 1.024 0 001.42-.01.996.996 0 000-1.41L7.41 13H19c.55 0 1-.45 1-1s-.45-1-1-1z" /><path fill="none" d="M0 0h24v24H0z" /></svg>
                             <span>
                                 <span class="block text-xs font-normal text-base-text-muted">Previous</span>
-                                <span class="block mt-1">Install arachne</span>
+                                <span class="block mt-1">RFA and EM</span>
                             </span>
                         </a>
                     </div>

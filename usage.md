@@ -81,7 +81,7 @@ arachne align -t 24 -s MC_001 Rclamitans.fa MC_001.F.fq.gz MC_001.R.fq.gz > MC_0
 |Long {.whitespace-nowrap}  | Short {.whitespace-nowrap} | Default {.whitespace-nowrap}  | Description |
 |:----------|:----------|:----------|:----------|
 | `--centromeres` | `-c` |  | BED file describing known centromeres |
-| `--em-error-rate` | | `0.001` | Per-base mismatch rate used in the likelihood of the default EM method (ignored with `--rfa`) |
+| `--em-error-rate` | `-e` | `0.001` | Per-base mismatch rate used in the likelihood of the default EM method (ignored with `--rfa`) |
 | `--improper-pair-penalty` | `-i` | 4.0 | Penalty for improper read pair (magnitude; always applied as a penalty regardless of sign) |
 | `--infer-distance` | `-d` | `50000` | Distance at which to consider reads with the same barcode to originate from different molecules [!badge variant="info" text="under construction"]|
 | `--no-unmapped` | `-u` | false | Exclude unmapped reads from output |
@@ -121,20 +121,62 @@ candidate molecules. On simulated linked-read data, including simulated reads on
 slightly more repeat reads correctly than RFA and gave MAPQ values at least as well calibrated, which is why it is the
 default.
 
-An alignment is scored the way EMA does: each matching base contributes `log(1 - e)`, each mismatch `log(e)`, each
-indel event `log(1e-4)` and each clipped base `log(0.03)`, where `e` is `--em-error-rate`. The MAPQ is also capped by that
-alignment-only score. These options apply to the EM method only.
+### em-error-rate
+The expected sequencing error rate. The default value, `0.001` is inherited from EMA and is typically a safe bet.
+This option applies to the EM method only, meaning it's ignored when using `--rfa`.
+
+==-What the number does
+
+It is the model's belief about how often a single base in a read is wrong. The EM uses it to decide how suspicious a mismatch is when it compares candidate placements. Each mismatch makes a placement less likely by a factor of about `1/e`:
+
+| `--em-error-rate` | Each mismatch makes a placement about… | Max MAPQ lost per mismatch |
+|--:|--:|--:|
+| 0.0001 | 10,000 times less likely | 4 |
+| **0.001 (default)** | **1,000 times less likely** | **3** |
+| 0.01 | 100 times less likely | 2 |
+| 0.1 | 9 times less likely | 1 |
+
+The last column is the ceiling on a read's MAPQ. It starts at 60 and loses that many points per mismatch.
+The indel and clipping costs are fixed constants, so changing this number also shifts how mismatches trade off against clipping and indels.
+
+##### going higher
+When you increase the value (e.g., 0.01 or 0.1), the model expects noisy reads, so a mismatch counts for less.
+
+- When a read could belong to two near-identical repeat copies, the few differences between the copies carry little weight, so EM relies more on the other evidence: how many reads are in each cloud, and where the mate sits
+- If the evidence is balanced, more reads end up with a wishy-washy split and a lower MAPQ
+- At 0.1 a mismatch is almost ignored, so EM can hardly tell diverged copies apart by sequence
+- Reads with several mismatches get a higher MAPQ ceiling. The method is more forgiving of messy alignments, and so more willing to call a low-quality alignment confident
+- It is the better setting if your real error rate is high (which you probably don't with Illumina data)
+
+##### going lower
+When you decrease the value (e.g., 0.0001), the model expects very clean reads, so a mismatch is a strong signal.
+
+- A single difference between two repeat copies can decide the placement almost on its own, which can be good when the difference is real
+- A single sequencing error can push a read onto the wrong copy with high confidence
+- Reads with two or three real mismatches (or true variants) lose 8–12 MAPQ points, so they look unreliable
+  - clean reads are barely affected
+- It over-trusts the sequence evidence. 
+  - it suits very clean data, **but it gives confident wrong answers on data with more errors than it expects**
+
+===
 
 ### sample-id
-This is the field that populations the `@RG SM:` SAM field and is required, since we cannot reliably infer
+This is the field that populations the `@RG SM:` SAM field and is required, since you cannot reliably infer
 sample names from files.
 
 ### improper-pair-penalty
-As described in BWA, this is a penalty applied to read scores for an unpaired read pair. BWA-MEM scores an unpaired read pair as `scoreRead1`+`scoreRead2`-`improperPairPenalty` and
-scores a paired one as `scoreRead1`+`scoreRead2`-`insertPenalty`. It compares these two scores to determine whether pairing should be forced. 
+A read pair that isn't "proper" gets the penalty added to its MAPQ score. The term proper here refers to reads on opposite strands of the
+same contig, with the reverse read starting between −35 and +750 bp from the forward read. It does not use the aligner's estimate of the insert size.
+
+**RFA**: This is in log10 probability, so the default of `4.0` means
+an improperly paired placement is treated as 10,000 times less likely than a properly paired one, other things equal. 
+
+**EM**: The same, but the math uses natural logs, so that becomes 4 × ln 10 ≈ 10,000. The sign is ignored, so you always get a penalty.
 
 ## Marking Duplicates
 Since linked-read barcodes are technically a kind of UMI, Arachne automatically performs duplicate
-identification for reads with the same barcode. You will not need to perform subsequent duplicate marking
-on Arachne-derived alignments. A caveat is that, unlike `samtools markdup`, Arachne makes no distinction
-between PCR and optical duplicates.
+identification for reads with the same barcode. A caveat is that, unlike `samtools markdup`, Arachne makes no distinction
+between PCR and optical duplicates. You will still need to perform subsequent duplicate marking
+on Arachne-derived alignments because invalid-barcoded alignments do not go through deduplication. Using a tool
+like `samtools markdup` **will not** overwrite existing duplicate flags on alignments, so alignments already marked
+as duplicates will not be modified. In other words, you can safely use `samtools markdup` on Arachne-derived alignments.

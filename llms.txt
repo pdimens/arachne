@@ -1,4 +1,5 @@
 ﻿#  | Arachne
 
 - [Install arachne](https://pdimens.github.io/arachne/install.md): This assumes an environment has already been created with conda create
+- [RFA and EM](https://pdimens.github.io/arachne/rfa_em.md): Arachne defaults to the EM algorithm from EMA, but provides the option --rfa to use the RFA algorithm from Lariat. This page provides some background context about the two.
 - [Using arachne](https://pdimens.github.io/arachne/usage.md): Use --help or -h, or call arachne (or its subcommands) without arguments to call up the docstring.
