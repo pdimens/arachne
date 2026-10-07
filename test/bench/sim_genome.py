@@ -3,7 +3,7 @@
 
   sim_genome.py --build-ref DIR --fasta genome.fa.gz --chroms chr2R,chr3L
       writes DIR/ref.fa (upper-case) and DIR/repeats.tsv (soft-masked, i.e. lower-case, runs)
-  sim_genome.py --ref DIR --out DIR2 --profile tenx --seed 1 --coverage 8
+  sim_genome.py --ref DIR --out DIR2 --profile dense --seed 1 --coverage 8
       simulates reads like sim_realistic.py from DIR/ref.fa; DIR2 symlinks the reference, its index and repeats.tsv
 """
 import argparse, gzip, json, os, random, sys
@@ -50,7 +50,7 @@ def simulate(a):
         else: contigs[name].append(l)
     contigs = {k: "".join(v).encode() for k, v in contigs.items()}
     names = list(contigs); lens = [len(contigs[n]) for n in names]; G = sum(lens); RL = a.read_len
-    prof = PROFILES[a.profile]; M = prof["mol_per_bc"]; N40 = prof["pairs40"]
+    prof = PROFILES[a.profile]; M = a.mol_per_bc or prof["mol_per_bc"]; N40 = a.pairs40 or prof["pairs40"]
     target = int(a.coverage * G / (2 * RL)); idx = 0; b = 0; nmol = 0
     def seqerr(r):
         r = bytearray(r); u = rng.random(); k = 0 if u < 0.74 else 1 if u < 0.963 else 2
@@ -83,7 +83,8 @@ def simulate(a):
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
     p.add_argument("--build-ref"); p.add_argument("--fasta"); p.add_argument("--chroms", default="chr2R,chr3L")
-    p.add_argument("--ref"); p.add_argument("--out"); p.add_argument("--profile", choices=list(PROFILES), default="tenx")
+    p.add_argument("--ref"); p.add_argument("--out"); p.add_argument("--profile", choices=list(PROFILES), default="dense")
+    p.add_argument("--mol-per-bc", type=float, default=0); p.add_argument("--pairs40", type=float, default=0)
     p.add_argument("--seed", type=int, default=1); p.add_argument("--coverage", type=float, default=8.0); p.add_argument("--read-len", type=int, default=150)
     a = p.parse_args()
     build_ref(a) if a.build_ref else simulate(a)

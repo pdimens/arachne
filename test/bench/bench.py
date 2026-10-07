@@ -9,7 +9,7 @@ Simulates linked reads with read-level ground truth, aligns them with the defaul
   bench.py genome --fasta dm6.fa.gz --chroms chr2L [--seeds 2] [--coverage 8]
   bench.py smoke                      # tiny end-to-end check that the harness works
   bench.py report SUITE               # re-print the tables from saved results
-Common options: --arachne PATH  --work DIR  --threads N
+Common options: --arachne PATH  --work DIR  --threads N  --mol-per-bc X --pairs40 Y (custom library)
 """
 import argparse, json, os, subprocess, sys, time
 from concurrent.futures import ProcessPoolExecutor
@@ -20,7 +20,7 @@ from score import score          # noqa: E402
 from report import print_report  # noqa: E402
 
 METHODS = {"em": [], "rfa": ["--rfa"]}
-PROFILES = ("stlfr", "haplotag", "tenx")
+PROFILES = ("sparse", "moderate", "dense")
 
 def sh(cmd, **kw):
     subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, **kw)
@@ -70,15 +70,27 @@ def evaluate(name, cfg, sam, repeats, wall):
     m = score(sam, repeats); os.remove(sam)
     return {"scenario": name, "config": cfg, "wall": wall, "metrics": m}
 
+def library_args(a):
+    """--mol-per-bc / --pairs40 override the profile (run as a single 'custom' library)"""
+    out = []
+    if a.mol_per_bc: out += ["--mol-per-bc", str(a.mol_per_bc)]
+    if a.pairs40: out += ["--pairs40", str(a.pairs40)]
+    return out
+
+def profile_set(a, profiles):
+    return ("custom",) if library_args(a) else profiles
+
 def suite_realistic(b, a, coverage=None, seeds=None, profiles=PROFILES, suite="realistic"):
     names = []
+    profiles = profile_set(a, profiles)
     for prof in profiles:
         for sd in range(1, (seeds or a.seeds) + 1):
             n = f"real_{prof}_s{sd}"
-            b.dataset(n, "sim_realistic.py", ["--profile", prof, "--seed", str(sd), "--coverage", str(coverage or a.coverage)])
+            b.dataset(n, "sim_realistic.py", ["--profile", "moderate" if prof == "custom" else prof, "--seed", str(sd),
+                                              "--coverage", str(coverage or a.coverage)] + library_args(a))
             names.append(n)
     path = b.run(suite, names)
-    print_report(path, [("All profiles", [r"real_.*"])] + [(f"Profile {p}", [f"real_{p}"]) for p in profiles])
+    print_report(path, [("All libraries", [r"real_.*"])] + [(f"Library {p}", [f"real_{p}"]) for p in profiles])
 
 def suite_controlled(b, a):
     sweeps = []   # (group name, simulator arguments)
@@ -105,16 +117,17 @@ def suite_genome(b, a):
     if not os.path.exists(f"{ref}/ref.fa"):
         sh([sys.executable, f"{HERE}/sim_genome.py", "--build-ref", ref, "--fasta", a.fasta, "--chroms", a.chroms])
     if not os.path.exists(f"{ref}/ref.fa.l2b"): sh([b.arachne, "index", "-t", str(b.threads), f"{ref}/ref.fa"])
-    names = []
-    for prof in PROFILES:
+    names = []; profiles = profile_set(a, PROFILES)
+    for prof in profiles:
         for sd in range(1, a.seeds + 1):
             n = f"{tag}_{prof}_s{sd}"
             if not os.path.exists(f"{b.work}/data/{n}/reads.R2.fq.gz"):
                 sh([sys.executable, f"{HERE}/sim_genome.py", "--ref", ref, "--out", f"{b.work}/data/{n}",
-                    "--profile", prof, "--seed", str(sd), "--coverage", str(a.coverage)])
+                    "--profile", "moderate" if prof == "custom" else prof, "--seed", str(sd),
+                    "--coverage", str(a.coverage)] + library_args(a))
             names.append(n)
     path = b.run(f"genome_{tag}", names)
-    print_report(path, [("All profiles", [f"{tag}_.*"])] + [(f"Profile {p}", [f"{tag}_{p}"]) for p in PROFILES])
+    print_report(path, [("All libraries", [f"{tag}_.*"])] + [(f"Library {p}", [f"{tag}_{p}"]) for p in profiles])
 
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -124,6 +137,8 @@ def main():
     p.add_argument("--work", default=os.path.join(HERE, "_work")); p.add_argument("--threads", type=int, default=4)
     p.add_argument("--seeds", type=int, default=3); p.add_argument("--coverage", type=float, default=None)
     p.add_argument("--fasta"); p.add_argument("--chroms", default="chr2L"); p.add_argument("--tag")
+    p.add_argument("--mol-per-bc", type=float, default=0, help="mean molecules per barcode (replaces the built-in profiles)")
+    p.add_argument("--pairs40", type=float, default=0, help="mean read pairs per 40 kb of molecule (replaces the built-in profiles)")
     a = p.parse_args()
     if a.suite == "report":
         path = f"{os.path.abspath(a.work)}/results_{a.target}.jsonl"
@@ -138,7 +153,7 @@ def main():
         if not a.fasta: sys.exit("genome needs --fasta (a soft-masked genome FASTA, e.g. UCSC dm6)")
         a.coverage = a.coverage or 8.0; a.seeds = min(a.seeds, 2) if a.seeds == 3 else a.seeds; suite_genome(b, a)
     else:   # smoke
-        suite_realistic(b, a, coverage=3, seeds=1, profiles=("tenx",), suite="smoke")
+        suite_realistic(b, a, coverage=3, seeds=1, profiles=("dense",), suite="smoke")
 
 if __name__ == "__main__":
     main()

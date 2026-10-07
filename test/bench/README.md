@@ -22,7 +22,7 @@ become the repeat annotation.
 | file | role |
 |:--|:--|
 | `sim_controlled.py` | one factor at a time: repeat divergence, reads per molecule, molecules per barcode, tandem / nearby copies, repeat unit length. Fixed or Poisson reads per molecule |
-| `sim_realistic.py` | variable molecule length (Gamma, mean 40 kb), overdispersed reads per molecule, variable molecules per barcode, a mixture of repeat families (200 bp-15 kb, 2-8 copies, 0-5% divergence, dispersed / nearby / tandem), ~10% of the genome. Profiles `stlfr` (~1 molecule per barcode, sparse), `haplotag`, `tenx` (~8 molecules per barcode, deeper) |
+| `sim_realistic.py` | variable molecule length (Gamma, mean 40 kb), overdispersed reads per molecule, variable molecules per barcode, a mixture of repeat families (200 bp-15 kb, 2-8 copies, 0-5% divergence, dispersed / nearby / tandem), ~10% of the genome. Library profiles `sparse`, `moderate`, `dense` (see below) |
 | `sim_genome.py` | the same molecule model on a real genome FASTA |
 | `score.py` | scores a SAM against the truth |
 | `report.py` | markdown tables |
@@ -38,6 +38,19 @@ against the error each MAPQ bin promises, 10^(-MAPQ/10)); and the share of corre
 at the lowest MAPQ whose error rate is within a budget, which compares methods fairly when one reports
 higher MAPQs than the other.
 
+## Library profiles are assumptions
+
+The `sparse`, `moderate` and `dense` profiles set the mean number of molecules per barcode (1.2, 4, 8) and
+the mean read pairs per 40 kb of molecule (6, 10, 15). **These values are illustrative assumptions chosen to
+span sparse to dense libraries. They are not measurements of any particular linked-read chemistry and are not
+taken from published figures.** Likewise the molecule-length distribution (Gamma, mean 40 kb), the
+overdispersion of coverage across molecules, and the repeat-family mixture are modelling choices. How
+representative they are of a given protocol is unknown. To test a library you know, give its parameters:
+
+```bash
+python3 test/bench/bench.py realistic --mol-per-bc 3 --pairs40 12
+```
+
 ## Results so far
 
 Repeat reads, default EM against `--rfa`, minibwa. Run on the development build; exact numbers move with
@@ -49,8 +62,8 @@ seeds and versions, so treat them as a guide and re-run to check.
 | D. melanogaster 2R + 3L, 8x | 11.12% / 10.62% | 0.203% / 0.182% | 1473 / 1011 | 80.7% / 81.5% |
 | D. melanogaster 2L, 8x, 2 seeds | 9.51% / 9.02% | 0.197% / 0.129% | 541 / 219 | 82.5% / 83.3% |
 
-EM placed fewer repeat reads wrongly in every Drosophila dataset (6 of 6 on 2L) and in sparse-molecule
-(`stlfr`-like) data in particular, with MAPQ at least as well calibrated and the same runtime. At strict
+EM placed fewer repeat reads wrongly in every Drosophila dataset (6 of 6 on 2L) and in the `sparse`
+profile in particular, with MAPQ at least as well calibrated and the same runtime. At strict
 error budgets (0.1%) it keeps many more correct reads than RFA (about 81-84% against 64% on the
 synthetic data).
 

@@ -15,10 +15,14 @@ import argparse, gzip, json, math, os, random
 COMP = bytes.maketrans(b"ACGTN", b"TGCAN")
 def revcomp(b): return b.translate(COMP)[::-1]
 
-PROFILES = {   # mol_per_bc: mean molecules per barcode; pairs40: mean pairs per 40 kb of molecule
-    "stlfr": dict(mol_per_bc=1.2, pairs40=6.0),
-    "haplotag": dict(mol_per_bc=4.0, pairs40=10.0),
-    "tenx": dict(mol_per_bc=8.0, pairs40=15.0),
+# Illustrative settings that span sparse to dense linked-read libraries. They are ASSUMPTIONS chosen for
+# this benchmark, not measurements of any particular chemistry, and are not taken from published figures.
+# Override them with --mol-per-bc / --pairs40 to match the library you care about.
+#   mol_per_bc: mean molecules per barcode; pairs40: mean read pairs per 40 kb of molecule
+PROFILES = {
+    "sparse": dict(mol_per_bc=1.2, pairs40=6.0),
+    "moderate": dict(mol_per_bc=4.0, pairs40=10.0),
+    "dense": dict(mol_per_bc=8.0, pairs40=15.0),
 }
 
 def mutate(seq, d, rng):
@@ -128,7 +132,7 @@ def simulate(a):
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
     p.add_argument("--out", required=True); p.add_argument("--seed", type=int, default=1)
-    p.add_argument("--profile", choices=list(PROFILES), default="tenx")
+    p.add_argument("--profile", choices=list(PROFILES), default="dense")
     p.add_argument("--mol-per-bc", type=float, default=0); p.add_argument("--pairs40", type=float, default=0)
     p.add_argument("--contigs", type=int, default=4); p.add_argument("--contig-len", type=int, default=500000)
     p.add_argument("--coverage", type=float, default=30.0); p.add_argument("--read-len", type=int, default=150)
