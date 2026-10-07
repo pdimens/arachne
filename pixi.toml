@@ -13,7 +13,7 @@ zlib = "*"
 libgomp = "*"
 
 [tasks]
-build = "make clean; make VERSION=0.2.1"
+build = "make clean; make VERSION=0.3.0"
 
 [activation.env]
 CGO_ENABLED = "1"

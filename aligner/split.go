@@ -15,17 +15,6 @@ func (a SortSplitScoring) Len() int           { return len(a) }
 func (a SortSplitScoring) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a SortSplitScoring) Less(i, j int) bool { return a[i].score > a[j].score }
 
-/*
-FLAG FOR REMOVAL, it's not used
-
-	func abs(x int) int {
-		if x < 0 {
-			return -x
-		} else {
-			return x
-		}
-	}
-*/
 func GetSplitAlignment(primary *Alignment, alignments []*Alignment, centromeres map[string]Region) (*Alignment, float64) {
 
 	//var normalizer float64;
