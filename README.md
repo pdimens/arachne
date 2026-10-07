@@ -2,11 +2,11 @@
 
 # Arachne linked-read aligner
 
-Arachne is the platform-agnostic successor to the [Lariat](https://github.com/10XGenomics/lariat) aligner for
-barcoded linked reads, which was originally written for the 10X Genomics GEMcode platform and included in the
-LongRanger software suite to use with a bespoke FASTQ-adjacent data format. The 10X linked-read chemistry
-was discontinued in 2019 and Arachne drops support for 10X-style data in favor of a [standard linked-read data format](#standard-input-file-format).
+Arachne is the platform-agnostic successor to the [Lariat](https://github.com/10XGenomics/lariat) and [EMA](https://github.com/arshajii/ema)
+aligners for barcoded linked reads. Both were originally written for the 10X Genomics GEMcode platform, which was discontinued in 2019
+and Arachne drops support for 10X-style data in favor of a [standard linked-read data format](#standard-input-file-format).
 Conversion to standard format from TELLseq, Haplotagging, 10X, and stLFR are provided in [Djinn](https://github.com/pdimens/djinn).
+See the documentation for the full description of Lariat and EMA and the rationale behind Arachne.
 
 ## Status
 - [x] Awesome new logo
@@ -21,11 +21,6 @@ Conversion to standard format from TELLseq, Haplotagging, 10X, and stLFR are pro
 - [x] Add build and run tests
 - [x] Replace bwa with [minibwa](https://github.com/lh3/minibwa) (bwa is kept in `archive/`)
 - [x] Establish unit tests
-
-## About Lariat
-Lariat was designed to align all reads sharing the same barcode simultaneously, assuming that those reads came from the
-same molecule. This approach results in reads mapping better in repetitive regions of the genome. Lariat is based on
-the original RFA method developed by Batzoglou’s lab at Stanford: [Genome Res. 2015. 25:1570-1580](http://genome.cshlp.org/content/25/10/1570).
 
 ## Install
 ### Using `conda`:
@@ -50,8 +45,7 @@ Requires:
 - optionally OpenMP (`libgomp`), used by `arachne index` for multi-threaded index construction. It is detected
   automatically when building; without it indexing is single-threaded
 
-From the root of the repo:
-```
+```bash
 git clone --recursive https://github.com/pdimens/arachne.git
 cd arachne
 make           # Build arachne
@@ -59,6 +53,7 @@ bin/arachne    # Show help
 ```
 
 #### With pixi
+All the dependencies are provided, so it's just a matter of cloning and building.
 ```bash
 git clone --recursive https://github.com/pdimens/arachne.git
 cd arachne
