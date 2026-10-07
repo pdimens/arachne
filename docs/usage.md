@@ -98,7 +98,7 @@ arachne align -t 24 -s MC_001 Rclamitans.fa MC_001.F.fq.gz MC_001.R.fq.gz > MC_0
 | `--verbose` | `-v` | false | Verbose output |
 
 ### centromeres 
-A BED file of centromere locations can be provided, and any sequences that map to centromeric regions will have their 
+An optional BED file of centromere locations can be provided, and any sequences that map within centromeric regions will have their 
 mapping qualities (MAPQ) dropped to `0`, because alignments to centromeric regions are unreliable. BED files are **tab-delimited**
 and the first three columns must be 1) the chromosome/contig name, 2) the start position, 3) the end position. All other
 columns are skipped. Empty lines, or lines that start with `#`, `track`, or `browser` are skipped.
@@ -112,21 +112,17 @@ Poccidentalis_chr1 0 180000
 
 ### infer-distance
 The `infer-distance` option controls the alignment distance-based deconvolution, as described [here](https://blinkseq.github.io/linkedreads/clashing/#barcode-thresholds).
-I still need to investigate exactly what's happening under the hood.
+Arachne gathers reads that have the same barcode and aligns them together, and when evaluating the placement of those alignments, this parameter
+determines the maximum alignment distance between reads (sharing a barcode) that will still consider those reads as actually coming from the same molecule. Since
+each inferred molecule goes through EM or RFA separately, the read cluster will first be evaluated for "how many molecules is this?", then 
+each molecule gets processed separately.
 
 ### rfa
 Reads with several candidate alignments are resolved within a barcode by an expectation-maximization (EM) over candidate
-clouds, modelled on [EMA](https://github.com/arshajii/ema). Candidate alignments are grouped into clouds (using
-`--infer-distance`), and each candidate's posterior probability is iteratively updated from its alignment score, the
-expected coverage of its cloud, and the placement of its mate. The highest posterior candidate is reported and the
-posterior sets the MAPQ. As a second check, the probability of moving a whole molecule's reads to a competing molecule
-(the estimate RFA uses) is computed for the chosen placement, and each read's MAPQ is the lower of the two. This keeps
-reads that are ambiguous between two molecules from being reported with a high MAPQ.
-
-With `--rfa`, the original RFA method developed for Lariat is used instead: it searches over assignments of reads to
-candidate molecules. On simulated linked-read data, including simulated reads on *Drosophila* chromosomes, EM placed
-slightly more repeat reads correctly than RFA and gave MAPQ values at least as well calibrated, which is why it is the
-default.
+clouds, modelled on [EMA](https://github.com/arshajii/ema). With the `--rfa` flag, Arachne instead uses the original RFA method developed
+for Lariat, which searches over assignments of reads to candidate molecules. On simulated linked-read data, including
+simulated reads on *Drosophila* chromosomes (Dm6: 2R, 2L, 3R), EM placed slightly more repeat reads correctly than RFA and
+gave MAPQ values at least as well calibrated, which is why it is the default.
 
 ### em-error-rate
 The expected sequencing error rate. The default value, `0.001` is inherited from EMA and is typically a safe bet.

@@ -17,7 +17,7 @@ theme:
     image-rounded: 0.75rem
     nav-item-text-stack: "#1e66f5"
 branding:
-  label: 0.2
+  label: 0.3
   logo: static/logo.png
   logoDark: static/logo_dark.png
   logoAlign: left
@@ -44,10 +44,6 @@ links:
   - text: Source
     link: https://github.com/pdimens/arachne
     icon: mark-github
-    target: blank
-  - text: Submit Issue
-    link: https://github.com/pdimens/arachne/issues/new/
-    icon: bug
     target: blank
 exclude:
   - "aligner/"
