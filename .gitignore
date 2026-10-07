@@ -11,3 +11,4 @@ scratch/
 
 # benchmark working data
 test/bench/_work/
+__pycache__/
