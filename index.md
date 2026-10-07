@@ -28,13 +28,12 @@ data format across all current and future linked-read chemistries.
 - [x] Replace custom FASTQ reader with `fastx` (used by seqkit)
 - [x] Rewrite internals to match Standard FASTQ format
 - [x] Create `preprocess` subcommand
-- [x] Expose bwa index for convenience
+- [x] Expose minibwa index for convenience
 - [x] Output SAM to `stdout` instead of to many files
 - [x] Create test data
 - [x] Get everything to compile and run
 - [x] Add build and run tests
-- [x] Restore BWA as a submodule to get latest upstream fixes
-- [x] Add jemalloc as a submodule to get latest upstream fixes
+- [x] Replace bwa with [minibwa](https://github.com/lh3/minibwa) (bwa is kept in `archive/`)
 - [ ] validate output
 
 ## About Lariat

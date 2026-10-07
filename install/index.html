@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark">
     <meta name="turbo-root" content="/arachne">
-    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="4.6.0.844178521790">
+    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="4.6.0.844698810537">
 
     <!-- See retype.com -->
     <meta name="generator" content="Retype 4.6.0">
@@ -39,12 +39,12 @@
     <script data-cfasync="false">(function(){var cl=document.documentElement.classList,ls=localStorage.getItem("retype_scheme"),hd=cl.contains("dark"),hl=cl.contains("light"),wm=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches;if(ls==="dark"||(!ls&&wm&&!hd&&!hl)){cl.remove("light");cl.add("dark")}else if(ls==="light"||(!ls&&!wm&&!hd&&!hl)){cl.remove("dark");cl.add("light")}})();</script>
 
     <link id="retype-favicon" rel="icon" href="../static/favicon.png" />
-    <link href="../resources/css/retype.css?v=4.6.0.844178521790" rel="stylesheet">
+    <link href="../resources/css/retype.css?v=4.6.0.844698810537" rel="stylesheet">
 
-    <script data-cfasync="false" src="../resources/js/config.js?v=4.6.0.844178521790" data-turbo-eval="false" defer></script>
+    <script data-cfasync="false" src="../resources/js/config.js?v=4.6.0.844698810537" data-turbo-eval="false" defer></script>
     <script data-cfasync="false" src="../resources/js/retype.js?v=4.6.0" data-turbo-eval="false" defer></script>
-    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=4.6.0.844178521790" data-turbo-eval="false" defer></script>
-    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=4.6.0.844178521790" defer></script>
+    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=4.6.0.844698810537" data-turbo-eval="false" defer></script>
+    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=4.6.0.844698810537" defer></script>
 </head>
 <body>
     <div id="retype-app" class="relative text-base antialiased text-base-text bg-base-bg font-body">
@@ -251,7 +251,7 @@
 <div class="codeblock-wrapper"><doc-codeblock>
 <pre translate="no" class="language-bash"><code v-pre class="language-bash">git clone --recursive https://github.com/pdimens/arachne.git</code></pre>
 </doc-codeblock></div>
-<p>The inclusion of <code translate="no" v-pre>--recursive</code> is important to make sure the <code translate="no" v-pre>bwa</code> dependency is cloned as well.</p>
+<p>The inclusion of <code translate="no" v-pre>--recursive</code> is important to make sure the <code translate="no" v-pre>minibwa</code> dependency is cloned as well.</p>
    </doc-step>
    <doc-step id="execute-the-makefile" step-number="2">
       <template #title>Execute the makefile</template>
@@ -261,7 +261,10 @@
 <p>Direct compilation requires a few dependencies in your software environment:</p>
 <ul>
 <li>Go</li>
-<li>jemalloc</li>
+<li>a C compiler and zlib</li>
+<li>a CPU with SSE4.2 (x86-64) or NEON (arm64), which minibwa requires</li>
+<li>optionally OpenMP (<code translate="no" v-pre>libgomp</code>), used by <code translate="no" v-pre>arachne index</code> for multi-threaded index construction. It is detected
+automatically when building; without it indexing is single-threaded</li>
 </ul>
 <div class="codeblock-wrapper"><doc-codeblock>
 <pre translate="no" class="language-bash"><code v-pre class="language-bash">cd arachne
@@ -279,7 +282,7 @@ pixi run build</code></pre>
 </doc-codeblock></div>
    </doc-panel>
 </doc-panels>
-<p>This results in the compiled executable binaries <code translate="no" v-pre>bin/arachne</code> and <code translate="no" v-pre>bin/bwa</code>. You can use them there
+<p>This results in the compiled executable binaries <code translate="no" v-pre>bin/arachne</code> and <code translate="no" v-pre>bin/minibwa</code>. You can use them there
 or copy them into another path.</p>
    </doc-step>
 </doc-steps>

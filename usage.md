@@ -15,7 +15,7 @@ If using haplotagging, TELLseq, or stLFR data that isn't in standard format, use
 !!!
 
 >>> `index`
-index the reference FASTA to be used for alignment (just a wrapper for `bwa index`)
+index the reference FASTA to be used for alignment (just a wrapper for `minibwa index`)
 ```bash
 arachne index ref.fa
 ```
@@ -52,12 +52,13 @@ combinatorial, an invalid barcode segment (e.g., `C00` or `0`, respectively) wou
 the unique segment combination unreliable, thus invalid.
 
 ## index
-The `arachne index` command is provided for convenience. It's a very simple wrapper for `bwa index`.
+The `arachne index` command is provided for convenience. It's a very simple wrapper for `minibwa index`.
 
 ```bash usage
 arachne index file.fasta
 ```
-This will create `file.fasta.amb`, `file.fasta.ann`, `file.fasta.bwt`, `file.fasta.pac`, `file.fasta.sa`.
+This will create `file.fasta.l2b` and `file.fasta.mbw`. Indexes made with `bwa index` cannot be used.
+The `--threads` option speeds up index construction.
 
 ```bash example
 arachne index galapagos_tortoise.fasta
@@ -65,7 +66,8 @@ arachne index galapagos_tortoise.fasta
 
 ## align
 Once your input FASTQ files are in barcode-sorted standard format and the reference fasta is indexed,
-you are ready to align your sample onto the reference. The command arguments follows the BWA design and writes to `stdout`:
+you are ready to align your sample onto the reference. Reads are aligned with [minibwa](https://github.com/lh3/minibwa) (short-read, paired-end mode with mate rescue),
+and the command writes to `stdout`:
 ```bash usage
 arachne align [options] -s <sampleID> ref.fa r1.fq r2.fq
 ```
@@ -79,9 +81,11 @@ arachne align -t 24 -s MC_001 Rclamitans.fa MC_001.F.fq.gz MC_001.R.fq.gz > MC_0
 |Long {.whitespace-nowrap}  | Short {.whitespace-nowrap} | Default {.whitespace-nowrap}  | Description |
 |:----------|:----------|:----------|:----------|
 | `--centromeres` | `-c` |  | BED file describing known centromeres |
+| `--em-error-rate` | | `0.001` | Per-base mismatch rate used in the likelihood of the default EM method (ignored with `--rfa`) |
 | `--improper-pair-penalty` | `-i` | 4.0 | Penalty for improper read pair (magnitude; always applied as a penalty regardless of sign) |
 | `--infer-distance` | `-d` | `50000` | Distance at which to consider reads with the same barcode to originate from different molecules [!badge variant="info" text="under construction"]|
 | `--no-unmapped` | `-u` | false | Exclude unmapped reads from output |
+| `--rfa` | | false | Resolve multi-mapping reads with the original RFA method instead of the default EM |
 | `--sample-id` | `-s` | | Sample name [!badge variant="info" text="required"]|
 | `--threads` | `-t` | `4` | Threads to use |
 | `--verbose` | `-v` | false | Verbose output |
@@ -102,6 +106,24 @@ Poccidentalis_chr1 0 180000
 ### infer-distance
 The `infer-distance` option controls the alignment distance-based deconvolution, as described [here](https://blinkseq.github.io/linkedreads/clashing/#barcode-thresholds).
 I still need to investigate exactly what's happening under the hood.
+
+### rfa
+Reads with several candidate alignments are resolved within a barcode by an expectation-maximization (EM) over candidate
+clouds, modelled on [EMA](https://github.com/arshajii/ema). Candidate alignments are grouped into clouds (using
+`--infer-distance`), and each candidate's posterior probability is iteratively updated from its alignment score, the
+expected coverage of its cloud, and the placement of its mate. The highest posterior candidate is reported and the
+posterior sets the MAPQ. As a second check, the probability of moving a whole molecule's reads to a competing molecule
+(the estimate RFA uses) is computed for the chosen placement, and each read's MAPQ is the lower of the two. This keeps
+reads that are ambiguous between two molecules from being reported with a high MAPQ.
+
+With `--rfa`, the original RFA method developed for Lariat is used instead: it searches over assignments of reads to
+candidate molecules. On simulated linked-read data, including simulated reads on *Drosophila* chromosomes, EM placed
+slightly more repeat reads correctly than RFA and gave MAPQ values at least as well calibrated, which is why it is the
+default.
+
+An alignment is scored the way EMA does: each matching base contributes `log(1 - e)`, each mismatch `log(e)`, each
+indel event `log(1e-4)` and each clipped base `log(0.03)`, where `e` is `--em-error-rate`. The MAPQ is also capped by that
+alignment-only score. These options apply to the EM method only.
 
 ### sample-id
 This is the field that populations the `@RG SM:` SAM field and is required, since we cannot reliably infer

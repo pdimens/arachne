@@ -16,13 +16,16 @@ pixi add arachne
 ```bash
 git clone --recursive https://github.com/pdimens/arachne.git
 ```
-The inclusion of `--recursive` is important to make sure the `bwa` dependency is cloned as well. 
+The inclusion of `--recursive` is important to make sure the `minibwa` dependency is cloned as well. 
 
 >>> Execute the makefile
 === Direct compilation
 Direct compilation requires a few dependencies in your software environment:
 - Go
-- jemalloc
+- a C compiler and zlib
+- a CPU with SSE4.2 (x86-64) or NEON (arm64), which minibwa requires
+- optionally OpenMP (`libgomp`), used by `arachne index` for multi-threaded index construction. It is detected
+  automatically when building; without it indexing is single-threaded
 
 ```bash
 cd arachne
@@ -38,6 +41,6 @@ pixi run build
 ```
 ===
 
-This results in the compiled executable binaries `bin/arachne` and `bin/bwa`. You can use them there
+This results in the compiled executable binaries `bin/arachne` and `bin/minibwa`. You can use them there
 or copy them into another path.
 >>>
