@@ -2,18 +2,22 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://pdimens.github.io/arachne/</loc>
-    <lastmod>2026-10-07T13:43:00Z</lastmod>
-  </url>
-  <url>
-    <loc>https://pdimens.github.io/arachne/rfa_em/</loc>
-    <lastmod>2026-10-07T13:43:00Z</lastmod>
-  </url>
-  <url>
-    <loc>https://pdimens.github.io/arachne/usage/</loc>
-    <lastmod>2026-10-07T13:43:00Z</lastmod>
+    <lastmod>2026-10-07T15:54:59Z</lastmod>
   </url>
   <url>
     <loc>https://pdimens.github.io/arachne/install/</loc>
-    <lastmod>2026-10-07T13:43:00Z</lastmod>
+    <lastmod>2026-10-07T15:54:59Z</lastmod>
+  </url>
+  <url>
+    <loc>https://pdimens.github.io/arachne/usage/</loc>
+    <lastmod>2026-10-07T15:54:59Z</lastmod>
+  </url>
+  <url>
+    <loc>https://pdimens.github.io/arachne/rfa_em/</loc>
+    <lastmod>2026-10-07T15:54:59Z</lastmod>
+  </url>
+  <url>
+    <loc>https://pdimens.github.io/arachne/about/</loc>
+    <lastmod>2026-10-07T15:54:59Z</lastmod>
   </url>
 </urlset>
