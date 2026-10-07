@@ -72,6 +72,40 @@ per molecule, RFA misplaced fewer repeat reads (about 8.1% against 9.5%). Copies
 or within 50 kb) cannot be separated by either method (about 21% misplaced), and both report a low MAPQ
 for them.
 
+## Performance by barcode size
+
+Both resolvers only run when a barcode group has at least 3 read pairs (`EMConfig.MinPairs` and
+`worthRunningRFA`); smaller groups fall back to the best-pair placement. Every suite therefore also reports
+results stratified by the number of read pairs in the read's barcode group (bins 1-2, 3, 4-5, 6-10, 11-20,
+21-50, 51-100, 101+), for repeat reads and for all reads. It is printed by `realistic`, `controlled` and
+`genome` (and by `report`, for results saved after this was added).
+
+Repeat reads misplaced, RFA / EM (default). `realistic`: 3 profiles x 3 seeds, 30x. `chr2L`: D. melanogaster
+chr2L, 8x, 3 profiles, 1 seed (`bench.py genome --fasta dm6.fa.gz --chroms chr2L --seeds 1`):
+
+| pairs in barcode | `realistic` | `chr2L` |
+|:--|--:|--:|
+| 1-2 (below threshold, same fallback) | 16.15% / 16.15% | 28.82% / 28.82% |
+| 3 | 4.21% / 3.23% | 9.96% / 8.93% |
+| 4-5 | 5.20% / 2.76% | 12.46% / 7.23% |
+| 6-10 | 2.49% / 2.20% | 8.42% / 7.58% |
+| 11-20 | 2.67% / 2.46% | 7.87% / 7.52% |
+| 21-50 | 3.79% / 3.71% | 8.22% / 8.03% |
+| 51-100 | 5.33% / 5.32% | 9.29% / 8.77% |
+| 101+ | 6.67% / 6.82% | 10.26% / 10.13% |
+
+- EM's placement advantage is concentrated in small barcode groups: at 4-5 pairs it misplaces about 45% fewer
+  repeat reads than RFA in both datasets. RFA does about 1.7-2x worse at 3-5 pairs than at 6-10; EM is roughly
+  flat across 3-10.
+- Above about 20 pairs the methods are nearly the same, and in the largest group (101+) EM is marginally
+  worse on `realistic`.
+- Barcodes of 1-2 pairs misplace far more repeat reads than groups of 3 or more, but that comparison is
+  confounded (small groups are different barcodes) and thresholds other than 3 have not been tried.
+- Misplacement rises again for large groups in both methods. That mostly reflects barcode composition (more
+  molecules per barcode means more contests between molecules), not a difference between the methods.
+- Counts in the 3-pair and 4-5-pair bins are small for the MAPQ columns (single digits to low tens of wrong
+  reads), so read those columns with care.
+
 ## Caveats
 
 - Everything is simulated: no real chimeras, duplicates, or sequencing bias, and molecules and reads are

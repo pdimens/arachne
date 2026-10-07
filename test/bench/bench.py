@@ -16,7 +16,7 @@ from concurrent.futures import ProcessPoolExecutor
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from score import score          # noqa: E402
+from score import score, barcode_sizes  # noqa: E402
 from report import print_report  # noqa: E402
 
 METHODS = {"em": [], "rfa": ["--rfa"]}
@@ -59,15 +59,15 @@ class Bench:
                     subprocess.run([self.arachne, "align", "-t", str(self.threads)] + extra +
                                    ["-s", "bench", f"{d}/ref.fa", f"{d}/reads.R1.fq.gz", f"{d}/reads.R2.fq.gz"],
                                    stdout=fh, stderr=subprocess.DEVNULL, check=True)
-                pending.append(pool.submit(evaluate, name, cfg, sam, f"{d}/repeats.tsv", round(time.perf_counter() - t0, 2)))
+                pending.append(pool.submit(evaluate, name, cfg, sam, f"{d}/repeats.tsv", f"{d}/reads.R1.fq.gz", round(time.perf_counter() - t0, 2)))
                 drain()
                 while len(pending) > 3: time.sleep(0.3); drain()
             print("done", name, flush=True)
         drain(block=True)
         return out
 
-def evaluate(name, cfg, sam, repeats, wall):
-    m = score(sam, repeats); os.remove(sam)
+def evaluate(name, cfg, sam, repeats, reads_r1, wall):
+    m = score(sam, repeats, sizes=barcode_sizes(reads_r1)); os.remove(sam)
     return {"scenario": name, "config": cfg, "wall": wall, "metrics": m}
 
 def library_args(a):
