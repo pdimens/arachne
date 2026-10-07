@@ -16,10 +16,10 @@ type BarcodeFunc func(work *WorkUnit,
 	debugtags *bool)
 
 // barcodeFuncFor returns the per-barcode processor: the EMA-style
-// expectation-maximization if em is true, otherwise RFA (the default).
-func barcodeFuncFor(em bool, improperPenalty float64, emConfig *EMConfig) BarcodeFunc {
+// expectation-maximization (the default), or RFA if rfa is true.
+func barcodeFuncFor(rfa bool, improperPenalty float64, emConfig *EMConfig) BarcodeFunc {
 	switch {
-	case em:
+	case !rfa:
 		config := emConfig
 		if config == nil {
 			config = DefaultEMConfig(improperPenalty)

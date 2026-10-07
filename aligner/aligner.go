@@ -39,7 +39,7 @@ type ArachneArgs struct {
 	Verbose           *bool
 	Comments          *bool
 	NoUnmapped        *bool
-	EM                *bool // resolve multi-mapping reads with EM instead of RFA
+	RFA               *bool // resolve multi-mapping reads with RFA instead of the default EM
 	EMErrorRate       *float64
 }
 
@@ -145,16 +145,16 @@ func Arachne(args ArachneArgs) {
 	if err != nil {
 		panic(err)
 	}
-	useEM := args.EM != nil && *args.EM
+	useRFA := args.RFA != nil && *args.RFA
 	emConfig := DefaultEMConfig(*improper_pair_penalty)
 	if args.EMErrorRate != nil {
 		emConfig.ErrorRate = *args.EMErrorRate
 	}
-	process := barcodeFuncFor(useEM, *improper_pair_penalty, emConfig)
+	process := barcodeFuncFor(useRFA, *improper_pair_penalty, emConfig)
 	if *verbose {
-		resolver := "RFA"
-		if useEM {
-			resolver = "EM"
+		resolver := "EM"
+		if useRFA {
+			resolver = "RFA"
 		}
 		fmt.Fprintf(os.Stderr, "Resolving multi-mapping reads with: %s\n", resolver)
 	}

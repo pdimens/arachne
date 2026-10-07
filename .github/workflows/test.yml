@@ -52,3 +52,5 @@ jobs:
         run: bin/arachne align -t 4 -s TestSample test/hap1.fa test/test.R{1,2}.fq.gz
       - name: Align with -C comments
         run: bin/arachne align -t 4 -C -s TestSample test/hap1.fa test/test.R{1,2}.fq.gz
+      - name: Align with RFA
+        run: bin/arachne align -t 4 --rfa -s TestSample test/hap1.fa test/test.R{1,2}.fq.gz

@@ -22,17 +22,19 @@ func TestNormalizeImproperPairPenalty(t *testing.T) {
 	}
 }
 
-// --em is a plain boolean switch, off by default; the old --method string
-// flag is gone.
-func TestEMFlag(t *testing.T) {
-	f := alignCmd.Flags().Lookup("em")
+// --rfa is a plain boolean switch, off by default (EM is the default
+// method); the old --method string flag and the --em switch are gone.
+func TestRFAFlag(t *testing.T) {
+	f := alignCmd.Flags().Lookup("rfa")
 	if f == nil {
-		t.Fatal("--em flag is not defined")
+		t.Fatal("--rfa flag is not defined")
 	}
 	if f.Value.Type() != "bool" || f.DefValue != "false" {
-		t.Errorf("--em is %s defaulting to %s, want bool defaulting to false", f.Value.Type(), f.DefValue)
+		t.Errorf("--rfa is %s defaulting to %s, want bool defaulting to false", f.Value.Type(), f.DefValue)
 	}
-	if alignCmd.Flags().Lookup("method") != nil {
-		t.Error("--method should no longer exist")
+	for _, old := range []string{"method", "em"} {
+		if alignCmd.Flags().Lookup(old) != nil {
+			t.Errorf("--%s should no longer exist", old)
+		}
 	}
 }

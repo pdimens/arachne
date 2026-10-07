@@ -83,7 +83,7 @@ var alignCmd = &cobra.Command{
 			return err
 		}
 
-		if _, err := cmd.Flags().GetBool("em"); err != nil {
+		if _, err := cmd.Flags().GetBool("rfa"); err != nil {
 			return err
 		}
 
@@ -116,8 +116,8 @@ func init() {
 	alignCmd.Flags().BoolP("comments", "C", false, "Append comments (non-BX/VX) to SAM output")
 	alignCmd.Flags().Float64P("improper-pair-penalty", "i", 4.0, "Penalty for improper pair")
 	alignCmd.Flags().Int64P("infer-distance", "d", 50000, "Distance at which to consider reads with the same barcode to be from different molecules")
-	alignCmd.Flags().Bool("em", false, "Resolve multi-mapping reads with EM (experimental) instead of RFA")
-	alignCmd.Flags().Float64("em-error-rate", 0.001, "Per-base mismatch rate in the EM likelihood (with --em)")
+	alignCmd.Flags().Bool("rfa", false, "Resolve multi-mapping reads with the original RFA method instead of the default EM")
+	alignCmd.Flags().Float64("em-error-rate", 0.001, "Per-base mismatch rate in the EM likelihood (ignored with --rfa)")
 	alignCmd.Flags().BoolP("no-unmapped", "u", false, "Exclude unmapped reads from output")
 	alignCmd.Flags().StringP("sample-id", "s", "", "Sample name (required)")
 	if err := alignCmd.MarkFlagRequired("sample-id"); err != nil {
@@ -139,7 +139,7 @@ func arachneAlign(cmd *cobra.Command, args []string) error {
 	comments, _ := cmd.Flags().GetBool("comments")
 	verbose, _ := cmd.Flags().GetBool("verbose")
 	noUnmapped, _ := cmd.Flags().GetBool("no-unmapped")
-	em, _ := cmd.Flags().GetBool("em")
+	rfa, _ := cmd.Flags().GetBool("rfa")
 	emErrorRate, _ := cmd.Flags().GetFloat64("em-error-rate")
 	threads, _ := cmd.Flags().GetInt("threads")
 	threads = min(runtime.NumCPU(), max(threads, 1))
@@ -161,7 +161,7 @@ func arachneAlign(cmd *cobra.Command, args []string) error {
 		Verbose:               &verbose,
 		Comments:              &comments,
 		NoUnmapped:            &noUnmapped,
-		EM:                    &em,
+		RFA:                   &rfa,
 		EMErrorRate:           &emErrorRate,
 	}
 	start := time.Now()
