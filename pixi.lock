@@ -20,11 +20,9 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gcc-15.3.0-hc6a0c74_7.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gcc_impl_linux-64-15.3.0-h6ad849d_7.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/go-1.27.1-nocgo_h8a70693_5.conda
-      - conda: https://conda.anaconda.org/conda-forge/linux-64/jemalloc-5.4.0-hd2095e1_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/ld_impl_linux-64-2.46.1-default_hbd61a6d_102.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libgcc-16.2.0-ha9f2e26_7.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libgomp-16.2.0-he0feb66_7.conda
-      - conda: https://conda.anaconda.org/conda-forge/linux-64/libjemalloc-5.4.0-hd2095e1_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libsanitizer-15.3.0-h54950a5_7.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libstdcxx-16.2.0-h934c35e_7.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libzlib-1.3.2-h25fd6f3_3.conda
@@ -51,14 +49,12 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gcc_impl_linux-64-15.3.0-h6ad849d_7.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/go-1.27.1-nocgo_h8a70693_5.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/icu-78.3-py310h44b86e0_2.conda
-      - conda: https://conda.anaconda.org/conda-forge/linux-64/jemalloc-5.4.0-hd2095e1_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/juliaup-1.19.9-hdab8a38_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/ld_impl_linux-64-2.46.1-default_hbd61a6d_102.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libexpat-2.8.4-hd2095e1_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libffi-3.7.0-h81df57d_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libgcc-16.2.0-ha9f2e26_7.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libgomp-16.2.0-he0feb66_7.conda
-      - conda: https://conda.anaconda.org/conda-forge/linux-64/libjemalloc-5.4.0-hd2095e1_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/liblzma-5.8.3-hb03c661_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libmpdec-4.0.0-hb03c661_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libpython-3.14.7-hdc7f604_106_cp314.conda
@@ -212,20 +208,6 @@ packages:
     - icu >=78.3,<79.0a0
   size: 14459115
   timestamp: 1786545741408
-- conda: https://conda.anaconda.org/conda-forge/linux-64/jemalloc-5.4.0-hd2095e1_0.conda
-  sha256: 8a107c7d216dbce64468ffa63301d60fd59d1241c4b3cc7b3bb9547088da3a22
-  md5: 9fc9fcb48a4b0e525fbcf783cada3e58
-  depends:
-  - __glibc >=2.17,<3.0.a0
-  - libgcc >=15
-  - libjemalloc 5.4.0 hd2095e1_0
-  - libstdcxx >=15
-  license: BSD-2-Clause
-  run_exports:
-    weak:
-    - libjemalloc >=5.4.0
-  size: 57375
-  timestamp: 1790270032476
 - conda: https://conda.anaconda.org/conda-forge/linux-64/juliaup-1.19.9-hdab8a38_0.conda
   sha256: 992a1b197bd7f487153d12e7c17c359bbcd1c9c61bcdbc8d18ce25036e31229d
   md5: b3de44267a563fb366da43658b49b3c3
@@ -302,19 +284,6 @@ packages:
     - _openmp_mutex >=4.5
   size: 640566
   timestamp: 1790303046034
-- conda: https://conda.anaconda.org/conda-forge/linux-64/libjemalloc-5.4.0-hd2095e1_0.conda
-  sha256: e95934d331b8594c419fb914eab4478c08ea8c331db721dde4ab70ed2bca8ee4
-  md5: 989fe73411ca7a85ac4f691352c94f9b
-  depends:
-  - __glibc >=2.17,<3.0.a0
-  - libgcc >=15
-  - libstdcxx >=15
-  license: BSD-2-Clause
-  run_exports:
-    weak:
-    - libjemalloc >=5.4.0
-  size: 1725671
-  timestamp: 1790269947265
 - conda: https://conda.anaconda.org/conda-forge/linux-64/liblzma-5.8.3-hb03c661_1.conda
   sha256: 9787df8c22a59c9a70d3e5a10db9ad663485e75e9ccc3f09bd092cb7b95e0dab
   md5: 1390b7c5ac0b1d8e447bc5efa6d3c8c2

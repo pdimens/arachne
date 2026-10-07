@@ -38,11 +38,11 @@ var alignCmd = &cobra.Command{
 				return err
 			}
 		}
-		// if reference index files don't exist, run bwa index on reference
-		exts := []string{".amb", ".ann", ".bwt", ".pac", ".sa"}
+		// the reference must have been indexed with minibwa
+		exts := []string{".l2b", ".mbw"}
 		for _, i := range exts {
 			if _, err := os.Stat(args[0] + i); err != nil {
-				return fmt.Errorf("missing reference index file: %s\nPlease index reference with \033[94;1marachne index\033[0m or (\033[94;1mbwa index\033[0m)", filepath.Base(args[0])+i)
+				return fmt.Errorf("missing reference index file: %s\nPlease index reference with \033[94;1marachne index\033[0m or (\033[94;1mminibwa index\033[0m)", filepath.Base(args[0])+i)
 			}
 		}
 		if _, err := cmd.Flags().GetString("sample-id"); err != nil {
@@ -83,6 +83,18 @@ var alignCmd = &cobra.Command{
 			return err
 		}
 
+		if _, err := cmd.Flags().GetBool("rfa"); err != nil {
+			return err
+		}
+
+		errorRate, err := cmd.Flags().GetFloat64("em-error-rate")
+		if err != nil {
+			return err
+		}
+		if errorRate <= 0 || errorRate >= 1 {
+			return fmt.Errorf("--em-error-rate must be between 0 and 1 (exclusive), got %v", errorRate)
+		}
+
 		return nil
 	},
 	RunE: arachneAlign,
@@ -104,6 +116,8 @@ func init() {
 	alignCmd.Flags().BoolP("comments", "C", false, "Append comments (non-BX/VX) to SAM output")
 	alignCmd.Flags().Float64P("improper-pair-penalty", "i", 4.0, "Penalty for improper pair")
 	alignCmd.Flags().Int64P("infer-distance", "d", 50000, "Distance at which to consider reads with the same barcode to be from different molecules")
+	alignCmd.Flags().Bool("rfa", false, "Resolve multi-mapping reads with the original RFA method instead of the default EM")
+	alignCmd.Flags().Float64("em-error-rate", 0.001, "Per-base mismatch rate in the EM likelihood (ignored with --rfa)")
 	alignCmd.Flags().BoolP("no-unmapped", "u", false, "Exclude unmapped reads from output")
 	alignCmd.Flags().StringP("sample-id", "s", "", "Sample name (required)")
 	if err := alignCmd.MarkFlagRequired("sample-id"); err != nil {
@@ -125,6 +139,8 @@ func arachneAlign(cmd *cobra.Command, args []string) error {
 	comments, _ := cmd.Flags().GetBool("comments")
 	verbose, _ := cmd.Flags().GetBool("verbose")
 	noUnmapped, _ := cmd.Flags().GetBool("no-unmapped")
+	rfa, _ := cmd.Flags().GetBool("rfa")
+	emErrorRate, _ := cmd.Flags().GetFloat64("em-error-rate")
 	threads, _ := cmd.Flags().GetInt("threads")
 	threads = min(runtime.NumCPU(), max(threads, 1))
 	runtime.GOMAXPROCS(threads)
@@ -145,6 +161,8 @@ func arachneAlign(cmd *cobra.Command, args []string) error {
 		Verbose:               &verbose,
 		Comments:              &comments,
 		NoUnmapped:            &noUnmapped,
+		RFA:                   &rfa,
+		EMErrorRate:           &emErrorRate,
 	}
 	start := time.Now()
 	if verbose {

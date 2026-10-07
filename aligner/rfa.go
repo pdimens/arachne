@@ -8,7 +8,7 @@ import (
 	"sync"
 
 	"arachne/fastqreader"
-	"arachne/gobwa"
+	"arachne/gominibwa"
 	"arachne/optimizer"
 
 	"github.com/biogo/hts/sam"
@@ -46,8 +46,7 @@ type Optimizer struct {
 
 func DoRFAForOneBarcode(work *WorkUnit,
 	out chan *sam.Record,
-	ref *gobwa.GoBwaReference,
-	settings *gobwa.GoBwaSettings,
+	mapper *gominibwa.Mapper,
 	config *RFAConfig,
 	stats *RFAStats,
 	contigs map[string]*sam.Reference,
@@ -57,12 +56,10 @@ func DoRFAForOneBarcode(work *WorkUnit,
 	stats.mapq = 0
 	//barcode_num := work.barcodenum
 	barcode_reads := work.reads
-	arena := gobwa.NewArena()
 	// worthRunningRFA already requires a valid (unique) barcode and >= 3 read pairs.
 	// Previously this was wrapped in `if !Valid`, which made it always false.
 	worthRFA := worthRunningRFA(barcode_reads, work.unique_barcode)
-	barcode_chains, barcode := GetChains(ref, settings, barcode_reads, arena, 25)
-	alignments, stashed_alignments := GetAlignments(ref, settings, barcode_chains, 17, arena)
+	alignments, stashed_alignments, barcode := GetAlignments(mapper, barcode_reads, 17)
 	//stashed_alignments = StashAlignments(alignments);
 
 	//	positions := tagBestAlignments(alignments, -17)
@@ -83,7 +80,6 @@ func DoRFAForOneBarcode(work *WorkUnit,
 		CheckSplitReads(stashed_alignments, centromeres)
 		flushToChannel(alignments, out, contigs, debugtags)
 		ReturnBuffer(reads) // was inside BamThread after DoDumpToBam, move here
-		arena.Free()
 		return
 	}
 
@@ -109,7 +105,6 @@ func DoRFAForOneBarcode(work *WorkUnit,
 	CheckSplitReads(stashed_alignments, centromeres)
 	flushToChannel(alignments, out, contigs, debugtags)
 	ReturnBuffer(reads) // was inside BamThread after DoDumpToBam, move here
-	arena.Free()
 }
 
 // Determine if there are enough fragments (3) to run RFA

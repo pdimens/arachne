@@ -1,21 +1,21 @@
-export CGO_LDFLAGS = -L$(shell pwd)/gobwa/bwa
+export CGO_LDFLAGS = -L$(shell pwd)/gominibwa/minibwa
 
 VERSION=0.2.1
 
-all: arachne gobwa/bwa/libbwa.a gobwa/bwa/bwa
+all: arachne gominibwa/minibwa/libminibwa.a gominibwa/minibwa/minibwa
 
-arachne: gobwa/bwa/libbwa.a gobwa/bwa/bwa
+arachne: gominibwa/minibwa/libminibwa.a gominibwa/minibwa/minibwa
 	@echo "Building arachne"
 	mkdir -p bin/
 	go build -ldflags "-X arachne/aligner.VERSION=$(VERSION) -s -w" -o bin/$@
-	cp gobwa/bwa/bwa bin/
+	cp gominibwa/minibwa/minibwa bin/
 	chmod +x bin/arachne
 
-gobwa/bwa/libbwa.a gobwa/bwa/bwa &:
-	@echo "Building BWA"
-	$(MAKE) -j 4 -C gobwa/bwa libbwa.a bwa
+gominibwa/minibwa/libminibwa.a gominibwa/minibwa/minibwa &:
+	@echo "Building minibwa"
+	$(MAKE) -j 4 -C gominibwa/minibwa libminibwa.a minibwa
 
 clean:
 	@echo "Cleaning Build"
 	rm -Rf bin/
-	$(MAKE) -j 4 -C gobwa/bwa clean
+	$(MAKE) -j 4 -C gominibwa/minibwa clean

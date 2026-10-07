@@ -3,8 +3,6 @@
 package aligner
 
 import (
-	"C"
-	"bufio"
 	"crypto/md5"
 	"encoding/binary"
 	"fmt"
@@ -14,10 +12,9 @@ import (
 	"runtime"
 	"sort"
 	"sync"
-	"unsafe"
 
 	"arachne/fastqreader"
-	"arachne/gobwa"
+	"arachne/gominibwa"
 	"arachne/optimizer"
 
 	"github.com/biogo/hts/sam"
@@ -42,24 +39,8 @@ type ArachneArgs struct {
 	Verbose           *bool
 	Comments          *bool
 	NoUnmapped        *bool
-}
-
-type ChainedHit struct {
-	contig    string
-	pos       int64
-	aend      int64
-	read_id   int
-	mate_id   int
-	hit_id    int
-	secondary bool
-	read1     bool
-	score     int
-	chain     unsafe.Pointer //*C.mem_alnreg_t
-	read      *[]byte
-	fastq     *fastqreader.FastQRecord
-	aln       *gobwa.EasyAlignment
-	// trim_seq  *[]byte
-	// trim_qual *[]byte
+	RFA               *bool // resolve multi-mapping reads with RFA instead of the default EM
+	EMErrorRate       *float64
 }
 
 // types and functions to be able to sort a list of aligntments by position,
@@ -156,12 +137,32 @@ func Arachne(args ArachneArgs) {
 	if *verbose {
 		fmt.Fprintf(os.Stderr, "Loading reference: %s\n", *reference)
 	}
-	ref := gobwa.GoBwaLoadReference(*reference)
+	ref, err := gominibwa.LoadIndex(*reference)
+	if err != nil {
+		panic(err)
+	}
+	defer ref.Close()
 	if *verbose {
 		fmt.Fprint(os.Stderr, "Reference loaded\n")
 	}
-	settings := gobwa.GoBwaAllocSettings()
-	config := &RFAConfig{*improper_pair_penalty}
+	// short-read preset: paired-end mapping with mate rescue
+	mapOptions, err := gominibwa.NewOptions("sr")
+	if err != nil {
+		panic(err)
+	}
+	useRFA := args.RFA != nil && *args.RFA
+	emConfig := DefaultEMConfig(*improper_pair_penalty)
+	if args.EMErrorRate != nil {
+		emConfig.ErrorRate = *args.EMErrorRate
+	}
+	process := barcodeFuncFor(useRFA, *improper_pair_penalty, emConfig)
+	if *verbose {
+		resolver := "EM"
+		if useRFA {
+			resolver = "RFA"
+		}
+		fmt.Fprintf(os.Stderr, "Resolving multi-mapping reads with: %s\n", resolver)
+	}
 
 	// ------- SAM output writer -------------------------
 	// chanCap sized to absorb worker bursts
@@ -178,17 +179,13 @@ func Arachne(args ArachneArgs) {
 		bufChan <- &s
 	}
 
-	var w *bufio.Writer
-	stats := &RFAStats{file: w}
-	//stats.file = w
-
 	// ── workers ─────────────────────────────────────────────────────────────
 	work_to_do := make(chan *WorkUnit, 2)
 	var wg sync.WaitGroup
 	for range *threads {
 		wg.Go(
 			func() {
-				WorkerThread(work_to_do, writeChannel, bufChan, ref, settings, config, stats, contigs, debugTags)
+				WorkerThread(work_to_do, writeChannel, bufChan, ref.NewMapper(mapOptions), process, contigs, debugTags)
 			})
 	}
 	//finished := make (chan bool);
@@ -228,14 +225,13 @@ func WorkerThread(
 	input chan *WorkUnit,
 	out chan *sam.Record,
 	bufChan chan *[]fastqreader.FastQRecord,
-	ref *gobwa.GoBwaReference,
-	settings *gobwa.GoBwaSettings,
-	config *RFAConfig,
-	stats *RFAStats,
+	mapper *gominibwa.Mapper,
+	process BarcodeFunc,
 	contigs map[string]*sam.Reference,
 	debugtags *bool) {
+	defer mapper.Close()
 	for work := range input {
-		DoRFAForOneBarcode(work, out, ref, settings, config, stats, contigs, debugtags, work.reads)
+		process(work, out, mapper, contigs, debugtags)
 		bufChan <- work.poolBuf // return buffer for reuse
 	}
 }
@@ -1007,237 +1003,4 @@ func tagBestAlignments(alignments [][]*Alignment) [][]*Alignment {
 // corresponds to forward coordinate refEnd-1-i.
 func reverseStrandMismatchRefPos(refEnd int64, refSeqOffset, match int) int {
 	return int(refEnd) - 1 - (refSeqOffset + match)
-}
-
-// returns a map from read id to a map of
-func GetAlignments(ref *gobwa.GoBwaReference, settings *gobwa.GoBwaSettings, barcode_chains [][]ChainedHit, delta int, arena *gobwa.Arena) ([][]*Alignment, [][]*Alignment) {
-
-	toReturn := make([][]*Alignment, len(barcode_chains))
-	full := make([][]*Alignment, len(barcode_chains))
-	for i := range barcode_chains {
-		bestScore := 0
-		for _, chain := range barcode_chains[i] {
-			if chain.score > bestScore {
-				bestScore = chain.score
-			}
-		}
-		// replace barcode_chains[i][j] by calling it as `chain` at the for loop
-		for _, chain := range barcode_chains[i] {
-			var alignment gobwa.SingleReadAlignment
-			if chain.chain != nil {
-				alignment = gobwa.GoBwaSmithWaterman(ref, settings, string(*(chain.read)), chain.chain, arena)
-			} else {
-				alignment = gobwa.SingleReadAlignment{}
-			}
-
-			matches := 0
-			indels := 0
-			indel_length := 0
-			soft_clipping := 0
-			soft_clipping_num := 0
-			soft_clipping_length := 0
-			refStart := chain.pos
-			refEnd := chain.aend
-			if alignment.Reversed {
-				refStart = chain.aend + 1
-				refEnd = chain.pos + 1
-			}
-			mismatchLocs := []int{}
-			mismatchReadLocs := []int{}
-			refSeq := ref.GetSeq(alignment.Chrom, refStart, refEnd, alignment.Reversed)
-			refSeqOffset := 0
-			readOffset := 0
-			readSeq := *chain.read
-			cigarStart := 0
-			cigarIncrement := 2
-			if alignment.Reversed {
-				cigarStart = len(alignment.Cigar) - 2
-				cigarIncrement = -2
-			}
-			for k := cigarStart; k < len(alignment.Cigar) && k >= 0; k += cigarIncrement {
-				op := alignment.Cigar[k]
-				opLen := int(alignment.Cigar[k+1])
-
-				switch op {
-				case 0:
-					matches += opLen
-					for match := range opLen {
-						if refSeqOffset+match >= len(refSeq) {
-							continue
-						}
-						if readOffset+match >= len(readSeq) {
-							panic(fmt.Sprint("cigar string represents sequence larger than read?", len(readSeq), alignment.Cigar))
-						}
-						if refSeqOffset+match < len(refSeq) && readOffset+match < len(readSeq) && refSeq[refSeqOffset+match] != readSeq[readOffset+match] {
-							if alignment.Reversed {
-								mismatchLocs = append(mismatchLocs, reverseStrandMismatchRefPos(refEnd, refSeqOffset, match))
-							} else {
-								mismatchLocs = append(mismatchLocs, refSeqOffset+int(refStart)+match)
-							}
-							mismatchReadLocs = append(mismatchReadLocs, readOffset+match)
-						}
-					}
-					refSeqOffset += opLen
-					readOffset += opLen
-				case 1:
-					indels += 1
-					indel_length += opLen
-					readOffset += opLen
-				case 2:
-					indels += 1
-					indel_length += opLen
-					refSeqOffset += opLen
-				case 3:
-					soft_clipping += 1
-					soft_clipping_num += 1
-					soft_clipping_length += opLen
-					readOffset += opLen
-				}
-			}
-			mismatches := alignment.EditDistance - indel_length
-			matches -= mismatches
-			if mismatches < 0 {
-				mismatches = 0
-			}
-
-			var quals *[]byte
-			if chain.read1 {
-				quals = &chain.fastq.ReadQual1
-			} else {
-				quals = &chain.fastq.ReadQual2
-			}
-			pos := chain.pos
-			aend := chain.aend
-			if pos != -1 && alignment.Reversed {
-				pos = chain.aend + 1
-				aend = chain.pos + 1
-			}
-
-			//trim_seq := &chain.fastq.TrimBases
-			//trim_qual := &chain.fastq.TrimQuals
-
-			full_alignment := Alignment{
-				id:                          chain.hit_id,
-				comments:                    &chain.fastq.Tags,
-				aend:                        aend,
-				read_name:                   &chain.fastq.ReadInfo,
-				read_seq:                    chain.read,
-				read_qual:                   quals,
-				matches:                     matches,
-				mismatches:                  mismatches,
-				mismatchLocs:                mismatchLocs,
-				mismatchReadLocs:            mismatchReadLocs,
-				indels:                      indels,
-				soft_clipped:                soft_clipping,
-				soft_clipped_length:         soft_clipping_length,
-				read1:                       chain.read1,
-				mapq_data:                   &MapQData{active_alignments_in_molecules: ""},
-				barcode:                     &chain.fastq.Barcode,
-				contig:                      alignment.Chrom,
-				pos:                         pos,
-				molecule_id:                 -1,
-				score:                       chain.score,
-				cigar:                       alignment.Cigar,
-				read_id:                     chain.read_id,
-				mate_id:                     chain.mate_id,
-				reversed:                    alignment.Reversed,
-				read_group:                  sample_id, // matches the @RG ID written by buildHeader
-				sum_move_probability_change: 1.0,
-				molecule_confidence:         0.00001875, //0.00075 * 0.025
-				duplicate:                   false,
-			}
-
-			full_alignment.log_alignment_probability = scoreAlignment(&full_alignment, nil, 0.0) - *improper_pair_penalty //remove improper pair penalty
-			full_alignment.updated_log_alignment_probability = full_alignment.log_alignment_probability + 2.0*float64(len(mismatchLocs))
-			if chain.aln != nil {
-				full_alignment.readmap_s = chain.aln.ReadS
-				full_alignment.readmap_e = chain.aln.ReadE
-			}
-			full[chain.read_id] = append(full[chain.read_id], &full_alignment)
-			if full_alignment.score >= bestScore-delta {
-				toReturn[chain.read_id] = append(toReturn[chain.read_id], &full_alignment)
-			}
-		}
-	}
-	return toReturn, full
-}
-
-func GetChains(ref *gobwa.GoBwaReference, settings *gobwa.GoBwaSettings, reads_for_barcode []fastqreader.FastQRecord, arena *gobwa.Arena, score_delta int) ([][]ChainedHit, string) {
-	toReturn := [][]ChainedHit{}
-	hit_num := 0
-	var barcode string
-	for i := range reads_for_barcode {
-		read1_chains, read2_chains := gobwa.GoBwaMemMateSW(ref, settings, &reads_for_barcode[i].Read1, &reads_for_barcode[i].Read2, arena, score_delta)
-		barcode = string(reads_for_barcode[i].Barcode)
-		read1_num := 0
-		toReturn = append(toReturn, []ChainedHit{})
-		for j := range read1_chains {
-			read1_chain_n := ChainedHit{
-				contig:    read1_chains[j].Contig,
-				pos:       read1_chains[j].Offset,
-				aend:      read1_chains[j].Alignment_end,
-				read_id:   i * 2,
-				mate_id:   i*2 + 1,
-				hit_id:    hit_num,
-				read1:     true,
-				secondary: read1_chains[j].Secondary,
-				score:     read1_chains[j].Score,
-				chain:     unsafe.Pointer(read1_chains[j].ChainedHit),
-				fastq:     &reads_for_barcode[i],
-				read:      &reads_for_barcode[i].Read1,
-				aln:       &read1_chains[j],
-			}
-			read1_num++
-			toReturn[len(toReturn)-1] = append(toReturn[len(toReturn)-1], read1_chain_n)
-			hit_num++
-		}
-		if read1_num == 0 {
-			toReturn[len(toReturn)-1] = append(toReturn[len(toReturn)-1], ChainedHit{
-				read_id: i * 2,
-				mate_id: i*2 + 1,
-				pos:     -1,
-				read1:   true,
-				chain:   nil,
-				fastq:   &reads_for_barcode[i],
-				read:    &reads_for_barcode[i].Read1,
-			})
-			hit_num++
-		}
-		toReturn = append(toReturn, []ChainedHit{})
-		read2_num := 0
-		for j := range read2_chains {
-			read2_chain_n := ChainedHit{
-				contig:    read2_chains[j].Contig,
-				pos:       read2_chains[j].Offset,
-				aend:      read2_chains[j].Alignment_end,
-				read_id:   i*2 + 1,
-				mate_id:   i * 2,
-				hit_id:    hit_num,
-				read1:     false,
-				score:     read2_chains[j].Score,
-				chain:     unsafe.Pointer(read2_chains[j].ChainedHit),
-				secondary: read2_chains[j].Secondary,
-				fastq:     &reads_for_barcode[i],
-				read:      &reads_for_barcode[i].Read2,
-				aln:       &read2_chains[j],
-			}
-			read2_num++
-			toReturn[len(toReturn)-1] = append(toReturn[len(toReturn)-1], read2_chain_n)
-			hit_num++
-		}
-		if read2_num == 0 {
-			toReturn[len(toReturn)-1] = append(toReturn[len(toReturn)-1], ChainedHit{
-				read_id: i*2 + 1,
-				mate_id: i * 2,
-				pos:     -1,
-				hit_id:  hit_num,
-				read1:   false,
-				chain:   nil,
-				fastq:   &reads_for_barcode[i],
-				read:    &reads_for_barcode[i].Read2,
-			})
-			hit_num++
-		}
-	}
-	return toReturn, barcode
 }

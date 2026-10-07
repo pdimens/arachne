@@ -14,12 +14,12 @@ Conversion to standard format from TELLseq, Haplotagging, 10X, and stLFR are pro
 - [x] Replace custom FASTQ reader with `fastx` (used by seqkit)
 - [x] Rewrite internals to match Standard FASTQ format
 - [x] Create `preprocess` subcommand
-- [x] Expose bwa index for convenience
+- [x] Expose minibwa index for convenience
 - [x] Output SAM to `stdout` instead of to many files
 - [x] Create test data
 - [x] Get everything to compile and run
 - [x] Add build and run tests
-- [x] Restore BWA as a submodule to get latest upstream fixes
+- [x] Replace bwa with [minibwa](https://github.com/lh3/minibwa) (bwa is kept in `archive/`)
 - [x] Establish unit tests
 
 ## About Lariat
@@ -45,7 +45,10 @@ pixi add arachne
 #### Manually
 Requires:
 - Go installation
-- jemalloc
+- a C compiler and zlib
+- a CPU with SSE4.2 (x86-64) or NEON (arm64), which minibwa requires
+- optionally OpenMP (`libgomp`), used by `arachne index` for multi-threaded index construction. It is detected
+  automatically when building; without it indexing is single-threaded
 
 From the root of the repo:
 ```

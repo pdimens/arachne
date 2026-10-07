@@ -21,3 +21,20 @@ func TestNormalizeImproperPairPenalty(t *testing.T) {
 		}
 	}
 }
+
+// --rfa is a plain boolean switch, off by default (EM is the default
+// method); the old --method string flag and the --em switch are gone.
+func TestRFAFlag(t *testing.T) {
+	f := alignCmd.Flags().Lookup("rfa")
+	if f == nil {
+		t.Fatal("--rfa flag is not defined")
+	}
+	if f.Value.Type() != "bool" || f.DefValue != "false" {
+		t.Errorf("--rfa is %s defaulting to %s, want bool defaulting to false", f.Value.Type(), f.DefValue)
+	}
+	for _, old := range []string{"method", "em"} {
+		if alignCmd.Flags().Lookup(old) != nil {
+			t.Errorf("--%s should no longer exist", old)
+		}
+	}
+}
