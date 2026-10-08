@@ -9,18 +9,19 @@ Conversion to standard format from TELLseq, Haplotagging, 10X, and stLFR are pro
 See the documentation for the full description of Lariat and EMA and the rationale behind Arachne.
 
 ## Status
-- [x] Awesome new logo
+- [x] New logo/identity
 - [x] Modernize Go idioms
 - [x] Replace custom FASTQ reader with `fastx` (used by seqkit)
 - [x] Rewrite internals to match Standard FASTQ format
 - [x] Create `preprocess` subcommand
-- [x] Expose minibwa index for convenience
 - [x] Output SAM to `stdout` instead of to many files
 - [x] Create test data
 - [x] Get everything to compile and run
 - [x] Add build and run tests
 - [x] Replace bwa with [minibwa](https://github.com/lh3/minibwa) (bwa is kept in `archive/`)
-- [x] Establish unit tests
+- [x] Expose minibwa index for convenience
+- [x] validate output
+- [ ] user validation
 
 ## Install
 ### Using `conda`:

@@ -12,7 +12,7 @@ Arachne is a fork of [Lariat](https://github.com/10XGenomics/lariat) that takes 
 not being C++) and marries it with the mapping performance of [EMA](https://github.com/arshajii/ema). Because of this and other improvements
 and updates, Arachne output will be different from either Lariat or EMA output, presumably better. 
 
-## 1.0 release checklist:
+## Status:
 - [x] New logo/identity
 - [x] Modernize Go idioms
 - [x] Replace custom FASTQ reader with `fastx` (used by seqkit)
