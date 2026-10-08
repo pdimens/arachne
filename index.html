@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark">
     <meta name="turbo-root" content="/arachne">
-    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="4.6.0.844785696741">
+    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="4.6.0.844806514140">
 
     <!-- See retype.com -->
     <meta name="generator" content="Retype 4.6.0">
@@ -13,7 +13,7 @@
     <!-- Primary Meta Tags -->
     <title>Arachne linked-read aligner | Arachne</title>
     <meta name="title" content="Arachne linked-read aligner | Arachne">
-    <meta name="description" content="Arachne is a fork of Lariat with the mapping performance of EMA. Arachne output will be different from Lariat or EMA output, and that's by design; there have been updates, improvements, and the core aligning algorithm is now minibwa instead of bwa mem.">
+    <meta name="description" content="Arachne is a fork of Lariat that takes the best parts of lariat (speed, usability, not being C++) and marries it with the mapping performance of EMA. Because of this and other improvements and updates, Arachne output will be different from either Lariat or EMA output, presumably better.">
 
     <!-- Canonical -->
     <link rel="canonical" href="https://pdimens.github.io/arachne/">
@@ -23,7 +23,7 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://pdimens.github.io/arachne/">
     <meta property="og:title" content="Arachne linked-read aligner | Arachne">
-    <meta property="og:description" content="Arachne is a fork of Lariat with the mapping performance of EMA. Arachne output will be different from Lariat or EMA output, and that's by design; there have been updates, improvements, and the core aligning algorithm is now minibwa instead of bwa mem.">
+    <meta property="og:description" content="Arachne is a fork of Lariat that takes the best parts of lariat (speed, usability, not being C++) and marries it with the mapping performance of EMA. Because of this and other improvements and updates, Arachne output will be different from either Lariat or EMA output, presumably better.">
     <meta property="og:image" content="https://pdimens.github.io/arachne/static/logo.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
@@ -35,7 +35,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:url" content="https://pdimens.github.io/arachne/">
     <meta name="twitter:title" content="Arachne linked-read aligner | Arachne">
-    <meta name="twitter:description" content="Arachne is a fork of Lariat with the mapping performance of EMA. Arachne output will be different from Lariat or EMA output, and that's by design; there have been updates, improvements, and the core aligning algorithm is now minibwa instead of bwa mem.">
+    <meta name="twitter:description" content="Arachne is a fork of Lariat that takes the best parts of lariat (speed, usability, not being C++) and marries it with the mapping performance of EMA. Because of this and other improvements and updates, Arachne output will be different from either Lariat or EMA output, presumably better.">
     <meta name="twitter:image" content="https://pdimens.github.io/arachne/static/logo.png">
     <meta name="twitter:image:alt" content="Arachne linked-read aligner | Arachne">
 
@@ -45,11 +45,11 @@
     <script data-cfasync="false">(function(){var cl=document.documentElement.classList,ls=localStorage.getItem("retype_scheme"),hd=cl.contains("dark"),hl=cl.contains("light"),wm=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches;if(ls==="dark"||(!ls&&wm&&!hd&&!hl)){cl.remove("light");cl.add("dark")}else if(ls==="light"||(!ls&&!wm&&!hd&&!hl)){cl.remove("dark");cl.add("light")}})();</script>
 
     <link id="retype-favicon" rel="icon" href="static/favicon.png" />
-    <link href="resources/css/retype.css?v=4.6.0.844785696741" rel="stylesheet">
+    <link href="resources/css/retype.css?v=4.6.0.844806514140" rel="stylesheet">
 
-    <script data-cfasync="false" src="resources/js/config.js?v=4.6.0.844785696741" data-turbo-eval="false" defer></script>
+    <script data-cfasync="false" src="resources/js/config.js?v=4.6.0.844806514140" data-turbo-eval="false" defer></script>
     <script data-cfasync="false" src="resources/js/retype.js?v=4.6.0" data-turbo-eval="false" defer></script>
-    <script id="lunr-js" data-cfasync="false" src="resources/js/lunr.js?v=4.6.0.844785696741" data-turbo-eval="false" defer></script>
+    <script id="lunr-js" data-cfasync="false" src="resources/js/lunr.js?v=4.6.0.844806514140" data-turbo-eval="false" defer></script>
 </head>
 <body>
     <div id="retype-app" class="relative text-base antialiased text-base-text bg-base-bg font-body">
@@ -206,23 +206,24 @@
     <figcaption class="caption"></figcaption>
 </figure>
 <h1 id="arachne-linked-read-aligner">Arachne linked-read aligner</h1>
-<p>Arachne is a fork of <a href="https://github.com/10XGenomics/lariat" class="outbound" target="_blank"><span>Lariat</span><svg xmlns="http://www.w3.org/2000/svg" class="retype-outbound-trigger docs-icon ml-1" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g fill="currentColor"><path d="M15.5 2.25a.75.75 0 0 1 .75-.75h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V4.06l-6.22 6.22a.75.75 0 1 1-1.06-1.06L19.94 3h-3.69a.75.75 0 0 1-.75-.75Z"/><path d="M2.5 4.25c0-.966.784-1.75 1.75-1.75h8.5a.75.75 0 0 1 0 1.5h-8.5a.25.25 0 0 0-.25.25v15.5c0 .138.112.25.25.25h15.5a.25.25 0 0 0 .25-.25v-8.5a.75.75 0 0 1 1.5 0v8.5a1.75 1.75 0 0 1-1.75 1.75H4.25a1.75 1.75 0 0 1-1.75-1.75V4.25Z"/></g></svg></a> with the mapping performance of <a href="https://github.com/arshajii/ema" class="outbound" target="_blank"><span>EMA</span><svg xmlns="http://www.w3.org/2000/svg" class="retype-outbound-trigger docs-icon ml-1" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g fill="currentColor"><path d="M15.5 2.25a.75.75 0 0 1 .75-.75h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V4.06l-6.22 6.22a.75.75 0 1 1-1.06-1.06L19.94 3h-3.69a.75.75 0 0 1-.75-.75Z"/><path d="M2.5 4.25c0-.966.784-1.75 1.75-1.75h8.5a.75.75 0 0 1 0 1.5h-8.5a.25.25 0 0 0-.25.25v15.5c0 .138.112.25.25.25h15.5a.25.25 0 0 0 .25-.25v-8.5a.75.75 0 0 1 1.5 0v8.5a1.75 1.75 0 0 1-1.75 1.75H4.25a1.75 1.75 0 0 1-1.75-1.75V4.25Z"/></g></svg></a>.
-Arachne output will be different from Lariat or EMA output, and that&#x27;s by design; there have been updates, improvements, and
-the core aligning algorithm is now <a href="https://github.com/lh3/minibwa" class="outbound" target="_blank"><span>minibwa</span><svg xmlns="http://www.w3.org/2000/svg" class="retype-outbound-trigger docs-icon ml-1" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g fill="currentColor"><path d="M15.5 2.25a.75.75 0 0 1 .75-.75h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V4.06l-6.22 6.22a.75.75 0 1 1-1.06-1.06L19.94 3h-3.69a.75.75 0 0 1-.75-.75Z"/><path d="M2.5 4.25c0-.966.784-1.75 1.75-1.75h8.5a.75.75 0 0 1 0 1.5h-8.5a.25.25 0 0 0-.25.25v15.5c0 .138.112.25.25.25h15.5a.25.25 0 0 0 .25-.25v-8.5a.75.75 0 0 1 1.5 0v8.5a1.75 1.75 0 0 1-1.75 1.75H4.25a1.75 1.75 0 0 1-1.75-1.75V4.25Z"/></g></svg></a> instead of bwa mem.</p>
+<p>Arachne is a fork of <a href="https://github.com/10XGenomics/lariat" class="outbound" target="_blank"><span>Lariat</span><svg xmlns="http://www.w3.org/2000/svg" class="retype-outbound-trigger docs-icon ml-1" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g fill="currentColor"><path d="M15.5 2.25a.75.75 0 0 1 .75-.75h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V4.06l-6.22 6.22a.75.75 0 1 1-1.06-1.06L19.94 3h-3.69a.75.75 0 0 1-.75-.75Z"/><path d="M2.5 4.25c0-.966.784-1.75 1.75-1.75h8.5a.75.75 0 0 1 0 1.5h-8.5a.25.25 0 0 0-.25.25v15.5c0 .138.112.25.25.25h15.5a.25.25 0 0 0 .25-.25v-8.5a.75.75 0 0 1 1.5 0v8.5a1.75 1.75 0 0 1-1.75 1.75H4.25a1.75 1.75 0 0 1-1.75-1.75V4.25Z"/></g></svg></a> that takes the best parts of lariat (speed, usability,
+not being C++) and marries it with the mapping performance of <a href="https://github.com/arshajii/ema" class="outbound" target="_blank"><span>EMA</span><svg xmlns="http://www.w3.org/2000/svg" class="retype-outbound-trigger docs-icon ml-1" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g fill="currentColor"><path d="M15.5 2.25a.75.75 0 0 1 .75-.75h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V4.06l-6.22 6.22a.75.75 0 1 1-1.06-1.06L19.94 3h-3.69a.75.75 0 0 1-.75-.75Z"/><path d="M2.5 4.25c0-.966.784-1.75 1.75-1.75h8.5a.75.75 0 0 1 0 1.5h-8.5a.25.25 0 0 0-.25.25v15.5c0 .138.112.25.25.25h15.5a.25.25 0 0 0 .25-.25v-8.5a.75.75 0 0 1 1.5 0v8.5a1.75 1.75 0 0 1-1.75 1.75H4.25a1.75 1.75 0 0 1-1.75-1.75V4.25Z"/></g></svg></a>. Because of this and other improvements
+and updates, Arachne output will be different from either Lariat or EMA output, presumably better.</p>
 <h2 id="10-release-checklist">1.0 release checklist:</h2>
 <ul class="contains-task-list">
-<li class="task-list-item"><input disabled="disabled" type="checkbox" checked="checked" /> Awesome new logo</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" checked="checked" /> New logo/identity</li>
 <li class="task-list-item"><input disabled="disabled" type="checkbox" checked="checked" /> Modernize Go idioms</li>
 <li class="task-list-item"><input disabled="disabled" type="checkbox" checked="checked" /> Replace custom FASTQ reader with <code translate="no" v-pre>fastx</code> (used by seqkit)</li>
 <li class="task-list-item"><input disabled="disabled" type="checkbox" checked="checked" /> Rewrite internals to match Standard FASTQ format</li>
 <li class="task-list-item"><input disabled="disabled" type="checkbox" checked="checked" /> Create <code translate="no" v-pre>preprocess</code> subcommand</li>
-<li class="task-list-item"><input disabled="disabled" type="checkbox" checked="checked" /> Expose minibwa index for convenience</li>
 <li class="task-list-item"><input disabled="disabled" type="checkbox" checked="checked" /> Output SAM to <code translate="no" v-pre>stdout</code> instead of to many files</li>
 <li class="task-list-item"><input disabled="disabled" type="checkbox" checked="checked" /> Create test data</li>
 <li class="task-list-item"><input disabled="disabled" type="checkbox" checked="checked" /> Get everything to compile and run</li>
 <li class="task-list-item"><input disabled="disabled" type="checkbox" checked="checked" /> Add build and run tests</li>
 <li class="task-list-item"><input disabled="disabled" type="checkbox" checked="checked" /> Replace bwa with <a href="https://github.com/lh3/minibwa" class="outbound" target="_blank"><span>minibwa</span><svg xmlns="http://www.w3.org/2000/svg" class="retype-outbound-trigger docs-icon ml-1" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g fill="currentColor"><path d="M15.5 2.25a.75.75 0 0 1 .75-.75h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V4.06l-6.22 6.22a.75.75 0 1 1-1.06-1.06L19.94 3h-3.69a.75.75 0 0 1-.75-.75Z"/><path d="M2.5 4.25c0-.966.784-1.75 1.75-1.75h8.5a.75.75 0 0 1 0 1.5h-8.5a.25.25 0 0 0-.25.25v15.5c0 .138.112.25.25.25h15.5a.25.25 0 0 0 .25-.25v-8.5a.75.75 0 0 1 1.5 0v8.5a1.75 1.75 0 0 1-1.75 1.75H4.25a1.75 1.75 0 0 1-1.75-1.75V4.25Z"/></g></svg></a> (bwa is kept in <code translate="no" v-pre>archive/</code>)</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" checked="checked" /> Expose minibwa index for convenience</li>
 <li class="task-list-item"><input disabled="disabled" type="checkbox" checked="checked" /> validate output</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> user validation</li>
 </ul>
 
                 
