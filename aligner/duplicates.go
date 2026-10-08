@@ -1,107 +1,137 @@
 package aligner
 
-// If two reads have the same value, then they are duplicates
-type readDupTuple struct {
-	read1      bool
-	reversed   bool
-	contig     string
-	pos        int64
-	mateContig string
-	matePos    int64
+// dupMinBaseQual is the lowest base quality that counts toward a pair's
+// duplicate score. Picard and samtools markdup use the same cutoff.
+const dupMinBaseQual = 15
+
+// dupEnd is where one mate of a pair was placed.
+type dupEnd struct {
+	contig   string
+	pos      int64
+	reversed bool
 }
 
-// For each read, make a tuple of (bc_sequence, read.is_read1, read.is_reverse, read.tid, read.pos, read.mrnm, read.mpos)
-// reads with an equal value of this tuple are defined as duplicates or one another.
-// mark all but 1 read in each group as a duplicate
+// pairDupKey identifies a set of duplicate pairs. Pairs with equal keys are
+// duplicates of one another.
+//
+// A pair with both mates mapped is keyed on the placement of read 1 and read 2.
+// A pair with only one mapped mate (an orphan) is keyed on that mate alone, and
+// on which mate it is, so orphans compete only with other orphans.
+type pairDupKey struct {
+	orphan      bool
+	orphanRead1 bool // orphans only: the mapped mate is read 1
+	first       dupEnd
+	second      dupEnd
+}
+
+// dupPair is a read pair that is a candidate to be the representative of its
+// duplicate set. Either mate may be nil if it is unmapped.
+type dupPair struct {
+	read1, read2 *Alignment
+	score        int
+}
+
+func (p *dupPair) setDuplicate(dup bool) {
+	if p.read1 != nil {
+		p.read1.duplicate = dup
+	}
+	if p.read2 != nil {
+		p.read2.duplicate = dup
+	}
+}
+
+// activeAlignment returns the selected alignment of a read, or nil.
+func activeAlignment(candidates []*Alignment) *Alignment {
+	for _, a := range candidates {
+		if a.active {
+			return a
+		}
+	}
+	return nil
+}
+
+// mappedForDup reports whether a read will be written as mapped. This mirrors
+// the demotion in buildRecord, so a read written as unmapped is never treated
+// as a placement. Unmapped reads all share pos=-1 and contig="", so counting
+// them as duplicate-eligible would flag unrelated reads as duplicates.
+func mappedForDup(a *Alignment) bool {
+	return a != nil && a.pos != -1 && !a.IsUnmapped()
+}
+
+// baseQualitySum is the sum of the Phred scores of the bases at or above
+// dupMinBaseQual. read_qual is Phred+33 ASCII, as read from the FASTQ.
+func baseQualitySum(a *Alignment) int {
+	if a == nil || a.read_qual == nil {
+		return 0
+	}
+	sum := 0
+	for _, q := range *a.read_qual {
+		if q < 33 {
+			continue
+		}
+		if phred := int(q) - 33; phred >= dupMinBaseQual {
+			sum += phred
+		}
+	}
+	return sum
+}
+
+// markDuplicates marks read pairs that are duplicates of one another and,
+// within each set, keeps the pair with the highest base quality sum. Both mates
+// of a pair always get the same flag. Ties go to the pair seen first.
+//
+// alignments holds one slice of candidates per read in read order: read 1 of
+// pair i at index 2i and read 2 at 2i+1, as GetAlignments returns them. Only
+// each read's active alignment is considered.
+//
+//   - Unmapped reads are never flagged. If one mate is unmapped, the other is
+//     an orphan and is compared only with orphans on the same mate and placement.
+//   - Split (supplementary) records are not scored. buildRecord gives them the
+//     flag of their primary alignment.
 func markDuplicates(alignments [][]*Alignment) {
 	// init at 128 to mitigate performance hits by growing underlying container when too big
-	dupSeen := make(map[readDupTuple]struct{}, 128)
+	best := make(map[pairDupKey]*dupPair, 128)
 
-	//now go through every read_id and normalize all alternate alignment probabilities
-	for _, alignmentArray := range alignments {
-		for _, alignment := range alignmentArray {
-			if !alignment.active {
-				continue
-			}
-			// Unmapped reads (no BWA hit at all) all share pos=-1 and
-			// contig="", so treating them as duplicate-eligible would mark
-			// unrelated unmapped reads as duplicates of one another.
-			if alignment.pos == -1 {
-				continue
-			}
-			readTuple := readDupTuple{
-				read1:      alignment.read1,
-				reversed:   alignment.reversed,
-				contig:     alignment.contig,
-				pos:        alignment.pos,
-				mateContig: alignment.mate_alignment.contig,
-				matePos:    alignment.mate_alignment.pos,
-			}
-			// If we have seen this tuple before, mark it as duplicate
-			// Otherwise note tuple
-			_, haveSeen := dupSeen[readTuple]
-			if haveSeen {
-				alignment.duplicate = true
-			} else {
-				dupSeen[readTuple] = struct{}{}
-			}
+	for i := 0; i < len(alignments); i += 2 {
+		read1 := activeAlignment(alignments[i])
+		var read2 *Alignment
+		if i+1 < len(alignments) {
+			read2 = activeAlignment(alignments[i+1])
+		}
+		if !mappedForDup(read1) {
+			read1 = nil
+		}
+		if !mappedForDup(read2) {
+			read2 = nil
+		}
+
+		var key pairDupKey
+		switch {
+		case read1 != nil && read2 != nil:
+			key.first = dupEnd{read1.contig, read1.pos, read1.reversed}
+			key.second = dupEnd{read2.contig, read2.pos, read2.reversed}
+		case read1 != nil:
+			key.orphan, key.orphanRead1 = true, true
+			key.first = dupEnd{read1.contig, read1.pos, read1.reversed}
+		case read2 != nil:
+			key.orphan = true
+			key.first = dupEnd{read2.contig, read2.pos, read2.reversed}
+		default:
+			continue
+		}
+
+		pair := &dupPair{read1: read1, read2: read2, score: baseQualitySum(read1) + baseQualitySum(read2)}
+		current, seen := best[key]
+		switch {
+		case !seen:
+			pair.setDuplicate(false)
+			best[key] = pair
+		case pair.score > current.score:
+			current.setDuplicate(true)
+			pair.setDuplicate(false)
+			best[key] = pair
+		default:
+			pair.setDuplicate(true)
 		}
 	}
 }
-
-/* alternative implementation
-type dupKey struct {
-	a uint64 // bit 0: read1 | bit 1: reversed | bits 2-17: contigID | bits 18-49: pos
-	b uint64 // bits 0-15: mateContigID | bits 16-47: matePos
-}
-
-func markDuplicates(alignments [][]*Alignment) {
-	contigIDs := make(map[string]uint16, 8) // few distinct contigs per barcode group
-	var nextID uint16
-
-	idFor := func(contig string) uint16 {
-		if id, ok := contigIDs[contig]; ok {
-			return id
-		}
-		id := nextID
-		contigIDs[contig] = id
-		nextID++
-		return id
-	}
-
-	seen := make([]dupKey, 0, 32)
-
-	for _, alignmentArray := range alignments {
-		for _, alignment := range alignmentArray {
-			if !alignment.active {
-				continue
-			}
-
-			var flags uint64
-			if alignment.read1 {
-				flags |= 1
-			}
-			if alignment.reversed {
-				flags |= 1 << 1
-			}
-			key := dupKey{
-				a: flags | uint64(idFor(alignment.contig))<<2 | uint64(uint32(alignment.pos))<<18,
-				b: uint64(idFor(alignment.mate_alignment.contig)) | uint64(uint32(alignment.mate_alignment.pos))<<16,
-			}
-
-			dup := false
-			for _, k := range seen {
-				if k == key {
-					dup = true
-					break
-				}
-			}
-			if dup {
-				alignment.duplicate = true
-			} else {
-				seen = append(seen, key)
-			}
-		}
-	}
-}
-*/

@@ -183,3 +183,13 @@ between PCR and optical duplicates. You will still need to perform subsequent du
 on Arachne-derived alignments because invalid-barcoded alignments do not go through deduplication. Using a tool
 like `samtools markdup` **will not** overwrite existing duplicate flags on alignments, so alignments already marked
 as duplicates will not be modified. In other words, you can safely use `samtools markdup` on Arachne-derived alignments.
+
+Read pairs within a barcode are duplicates of one another when both mates have the same contig, position and
+strand. Within each set of duplicates, Arachne keeps the pair with the highest sum of base qualities (counting
+only bases of Q15 or higher, as Picard and `samtools markdup` do) and flags the rest with `0x400`. Ties go to the pair
+that appears first. Both mates of a pair always get the same flag.
+
+- Unmapped reads are never flagged.
+- When only one mate is mapped, that read is compared only with other pairs where the same mate (read 1 or
+  read 2) is the only one mapped, at the same placement. It never competes with fully mapped pairs.
+- A split (supplementary) record is flagged exactly when its primary record is.
