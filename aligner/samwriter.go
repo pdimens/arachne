@@ -64,7 +64,8 @@ func buildRecord(aln, primary *Alignment, debugTags *bool, contigs map[string]*s
 		} else {
 			flags |= 0x80
 		}
-		if aln.duplicate {
+		// a split (supplementary) record shares the duplicate status of its primary
+		if primary.duplicate {
 			flags |= 0x400
 		}
 
