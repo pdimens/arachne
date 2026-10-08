@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark">
     <meta name="turbo-root" content="/arachne">
-    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="4.6.0.844718122276">
+    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="4.6.0.844785696741">
 
     <!-- See retype.com -->
     <meta name="generator" content="Retype 4.6.0">
@@ -39,12 +39,12 @@
     <script data-cfasync="false">(function(){var cl=document.documentElement.classList,ls=localStorage.getItem("retype_scheme"),hd=cl.contains("dark"),hl=cl.contains("light"),wm=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches;if(ls==="dark"||(!ls&&wm&&!hd&&!hl)){cl.remove("light");cl.add("dark")}else if(ls==="light"||(!ls&&!wm&&!hd&&!hl)){cl.remove("dark");cl.add("light")}})();</script>
 
     <link id="retype-favicon" rel="icon" href="../static/favicon.png" />
-    <link href="../resources/css/retype.css?v=4.6.0.844718122276" rel="stylesheet">
+    <link href="../resources/css/retype.css?v=4.6.0.844785696741" rel="stylesheet">
 
-    <script data-cfasync="false" src="../resources/js/config.js?v=4.6.0.844718122276" data-turbo-eval="false" defer></script>
+    <script data-cfasync="false" src="../resources/js/config.js?v=4.6.0.844785696741" data-turbo-eval="false" defer></script>
     <script data-cfasync="false" src="../resources/js/retype.js?v=4.6.0" data-turbo-eval="false" defer></script>
-    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=4.6.0.844718122276" data-turbo-eval="false" defer></script>
-    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=4.6.0.844718122276" defer></script>
+    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=4.6.0.844785696741" data-turbo-eval="false" defer></script>
+    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=4.6.0.844785696741" defer></script>
 </head>
 <body>
     <div id="retype-app" class="relative text-base antialiased text-base-text bg-base-bg font-body">
@@ -512,6 +512,22 @@ between PCR and optical duplicates. You will still need to perform subsequent du
 on Arachne-derived alignments because invalid-barcoded alignments do not go through deduplication. Using a tool
 like <code translate="no" v-pre>samtools markdup</code> <strong>will not</strong> overwrite existing duplicate flags on alignments, so alignments already marked
 as duplicates will not be modified. In other words, you can safely use <code translate="no" v-pre>samtools markdup</code> on Arachne-derived alignments.</p>
+<p>Read pairs within a barcode are duplicates of one another when both mates have the same contig, position and
+strand. Within each set of duplicates, Arachne keeps the pair with the highest sum of base qualities (counting
+only bases of Q15 or higher, as Picard and <code translate="no" v-pre>samtools markdup</code> do) and flags the rest with <code translate="no" v-pre>0x400</code>. Ties go to the pair
+that appears first. Both mates of a pair always get the same flag.</p>
+<ul>
+<li>
+<p>Unmapped reads are never flagged.</p>
+</li>
+<li>
+<p>When only one mate is mapped, that read is compared only with other pairs where the same mate (read 1 or
+read 2) is the only one mapped, at the same placement. It never competes with fully mapped pairs.</p>
+</li>
+<li>
+<p>A split (supplementary) record is flagged exactly when its primary record is.</p>
+</li>
+</ul>
 
                 
                 <!-- Required only on API pages -->
