@@ -7,8 +7,6 @@ output: .retype
 url: blinkseq.github.io/arachne/
 meta:
   title: " | Arachne"
-footer:
-  copyright: "&copy; Copyright {{ year }}. All rights reserved."
 showSidebarFilter: false
 theme:
   base:
@@ -29,14 +27,6 @@ edit:
   base: /
   branch: "docs"
 links:
-  - text: Therkildsen Lab
-    link: https://www.therkildsenlab.org/
-    icon: https://www.therkildsenlab.org/uploads/1/4/5/5/145548022/published/new-logo-smaller.png
-    target: blank
-  - text: Cornell GIH
-    link: https://www.genomicsinnovation.cornell.edu/
-    icon: https://raw.githubusercontent.com/pdimens/harpy/refs/heads/main/docs/static/biotech.png
-    target: blank
   - text: BLink-Seq
     link: https://blinkseq.github.io/
     icon: https://blinkseq.github.io/_astro/logo.DGThwx8R_1NHPA4.webp
@@ -44,6 +34,20 @@ links:
   - text: Source
     link: https://github.com/pdimens/arachne
     icon: mark-github
+    target: blank
+footer:
+  copyright: |
+      This work is a collaboration between the lab of Nina Therkildsen and the Cornell Genomics Innovation Hub.
+
+      &copy; Copyright {{ year }}. All rights reserved.
+  links:
+  - text: Therkildsen Lab
+    link: https://www.therkildsenlab.org/
+    icon: https://www.therkildsenlab.org/uploads/1/4/5/5/145548022/published/new-logo-smaller.png
+    target: blank
+  - text: Cornell GIH
+    link: https://www.genomicsinnovation.cornell.edu/
+    icon: https://raw.githubusercontent.com/pdimens/harpy/refs/heads/main/docs/static/biotech.png
     target: blank
 exclude:
   - "aligner/"

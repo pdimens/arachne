@@ -35,19 +35,11 @@ arachne align [options] ref.fa r1.fq r2.fq
 ## prep
 The `arachne prep` command sort your input FASTQ files by barcode, which is necessary for `arachne align`. If already
 sorted by barcode, you can skip this step. This process temporarily converts FASTQ records into unaligned SAM records
-for `samtools sort` to efficiently sort them by barcode. This conversion is lossless.
+for `samtools sort` to efficiently sort them by barcode. This conversion is lossless. Input FASTQ files must be in standard
+linked-read format.
 
-```bash usage
-arachne prep [-t/--threads] PREFIX FORWARD_FASTQ REVERSE_FASTQ
-```
-This will create `PREFIX.arachne.R1.fq.gz`, `PREFIX.arachne.R2.fq.gz`.
-
-```bash example
-arachne prep -t 6 sample1 sample1.R1.fq.gz sample1.R2.fq.gz
-```
-
-
-### Standard format ([spec](https://blinkseq.github.io/lastq/#lastq-standardized-format))
+==- Standard linked-read format
+See the ([spec](https://blinkseq.github.io/lastq/#lastq-standardized-format))
 1. "old" CASAVA forward/reverse identifier (i.e. `/1` and `/2`)
 2. barcodes encoded in `BX:Z` SAM tag (e.g. `BX:Z:32_11_58`)
 3. barcode validations encoded in `VX:i` tag
@@ -57,6 +49,16 @@ As an example, a "bad" (invalid) TELLseq barcode would contain an `N` nucleotide
 giving the barcode an unreliable identity. Since haplotagging and stLFR chemistries are
 combinatorial, an invalid barcode segment (e.g., `C00` or `0`, respectively) would make
 the unique segment combination unreliable, thus invalid.
+===
+
+```bash usage
+arachne prep [-t/--threads] PREFIX FORWARD_FASTQ REVERSE_FASTQ
+```
+This will create `PREFIX.arachne.R1.fq.gz`, `PREFIX.arachne.R2.fq.gz`.
+
+```bash example
+arachne prep -t 6 sample1 sample1.R1.fq.gz sample1.R2.fq.gz
+```
 
 ## index
 The `arachne index` command is provided for convenience. It's a very simple wrapper for `minibwa index`.
@@ -83,7 +85,8 @@ arachne align [options] -s <sampleID> ref.fa r1.fq r2.fq
 arachne align -t 24 -s MC_001 Rclamitans.fa MC_001.F.fq.gz MC_001.R.fq.gz > MC_001.arachne.sam
 ```
 
-### Options
+The command line options are:
+
 {.clean .compact}
 |Long {.whitespace-nowrap}  | Short {.whitespace-nowrap} | Default {.whitespace-nowrap}  | Description |
 |:----------|:----------|:----------|:----------|
@@ -97,7 +100,7 @@ arachne align -t 24 -s MC_001 Rclamitans.fa MC_001.F.fq.gz MC_001.R.fq.gz > MC_0
 | `--threads` | `-t` | `4` | Threads to use |
 | `--verbose` | `-v` | false | Verbose output |
 
-### centromeres 
+#### --centromeres 
 An optional BED file of centromere locations can be provided, and any sequences that map within centromeric regions will have their 
 mapping qualities (MAPQ) dropped to `0`, because alignments to centromeric regions are unreliable. BED files are **tab-delimited**
 and the first three columns must be 1) the chromosome/contig name, 2) the start position, 3) the end position. All other
@@ -110,25 +113,25 @@ Example
 Poccidentalis_chr1 0 180000
 ```
 
-### infer-distance
-The `infer-distance` option controls the alignment distance-based deconvolution, as described [here](https://blinkseq.github.io/linkedreads/clashing/#barcode-thresholds).
+#### --infer-distance
+The `--infer-distance` option controls the alignment distance-based deconvolution, as described [here](https://blinkseq.github.io/linkedreads/clashing/#barcode-thresholds).
 Arachne gathers reads that have the same barcode and aligns them together, and when evaluating the placement of those alignments, this parameter
 determines the maximum alignment distance between reads (sharing a barcode) that will still consider those reads as actually coming from the same molecule. Since
 each inferred molecule goes through EM or RFA separately, the read cluster will first be evaluated for "how many molecules is this?", then 
 each molecule gets processed separately.
 
-### rfa
+#### --rfa
 Reads with several candidate alignments are resolved within a barcode by an expectation-maximization (EM) over candidate
 clouds, modelled on [EMA](https://github.com/arshajii/ema). With the `--rfa` flag, Arachne instead uses the original RFA method developed
 for Lariat, which searches over assignments of reads to candidate molecules. On simulated linked-read data, including
 simulated reads on *Drosophila* chromosomes (Dm6: 2R, 2L, 3R), EM placed slightly more repeat reads correctly than RFA and
 gave MAPQ values at least as well calibrated, which is why it is the default.
 
-### em-error-rate
+#### --em-error-rate
 The expected sequencing error rate. The default value, `0.001` is inherited from EMA and is typically a safe bet.
 This option applies to the EM method only, meaning it's ignored when using `--rfa`.
 
-==-What the number does
+==- What the number does
 
 It is the model's belief about how often a single base in a read is wrong. The EM uses it to decide how suspicious a mismatch is when it compares candidate placements. Each mismatch makes a placement less likely by a factor of about `1/e`:
 
@@ -163,11 +166,11 @@ When you decrease the value (e.g., 0.0001), the model expects very clean reads, 
 
 ===
 
-### sample-id
+#### --sample-id
 This is the field that populations the `@RG SM:` SAM field and is required, since you cannot reliably infer
 sample names from files.
 
-### improper-pair-penalty
+#### --improper-pair-penalty
 A read pair that isn't "proper" gets the penalty added to its MAPQ score. The term proper here refers to reads on opposite strands of the
 same contig, with the reverse read starting between −35 and +750 bp from the forward read. It does not use the aligner's estimate of the insert size.
 
@@ -176,7 +179,7 @@ an improperly paired placement is treated as 10,000 times less likely than a pro
 
 **EM**: The same, but the math uses natural logs, so that becomes 4 × ln 10 ≈ 10,000. The sign is ignored, so you always get a penalty.
 
-## Marking Duplicates
+### marking duplicates
 Since linked-read barcodes are technically a kind of UMI, Arachne automatically performs duplicate
 identification for reads with the same barcode. A caveat is that, unlike `samtools markdup`, Arachne makes no distinction
 between PCR and optical duplicates. You will still need to perform subsequent duplicate marking
