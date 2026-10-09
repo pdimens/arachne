@@ -4,7 +4,7 @@ nav:
   mode: stack
 input: .
 output: .retype
-url: pdimens.github.io/arachne/
+url: blinkseq.github.io/arachne/
 meta:
   title: " | Arachne"
 footer:
@@ -25,7 +25,7 @@ favicon: static/favicon.png
 search:
   mode: partial
 edit:
-  repo: "https://github.com/pdimens/arachne/edit"
+  repo: "https://github.com/blinkseq/arachne/edit"
   base: /
   branch: "docs"
 links:
